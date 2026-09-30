@@ -36,13 +36,48 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    "unfold",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "ejranow",
 ]
+
+UNFOLD = {
+    "SITE_TITLE": "ejranow",
+    "SITE_HEADER": "ejranow",
+    "COLORS": {
+        "primary": {
+            "50": "oklch(97.5% 0.022 205.8)",
+            "100": "oklch(94.5% 0.039 205.8)",
+            "200": "oklch(89.5% 0.064 205.8)",
+            "300": "oklch(83.0% 0.088 205.8)",
+            "400": "oklch(82.0% 0.090 205.8)",
+            "500": "oklch(78.0% 0.110 205.8)",
+            "600": "#00B8C8",
+            "700": "oklch(52.0% 0.110 205.8)",
+            "800": "oklch(44.0% 0.092 205.8)",
+            "900": "oklch(37.0% 0.071 205.8)",
+            "950": "oklch(28.0% 0.051 205.8)",
+        },
+        "base": {
+            "50": "oklch(98.5% 0.006 310.6)",
+            "100": "oklch(96.5% 0.007 310.6)",
+            "200": "oklch(92.5% 0.007 310.6)",
+            "300": "oklch(87.0% 0.008 310.6)",
+            "400": "oklch(70.0% 0.010 310.6)",
+            "500": "oklch(55.0% 0.012 310.6)",
+            "600": "oklch(45.0% 0.013 310.6)",
+            "700": "oklch(36.0% 0.015 310.6)",
+            "800": "oklch(28.0% 0.016 310.6)",
+            "900": "#17131A",
+            "950": "oklch(14.5% 0.016 310.6)",
+        },
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
