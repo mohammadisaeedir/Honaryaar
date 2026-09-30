@@ -61,9 +61,29 @@ INSTALLED_APPS = [
     "ejranow",
 ]
 
+def _static_file(path):
+    def resolve(request):
+        from django.templatetags.static import static
+
+        return static(path)
+
+    return resolve
+
+
 UNFOLD = {
     "SITE_TITLE": "ejranow",
     "SITE_HEADER": "ejranow",
+    "SITE_LOGO": {
+        "light": _static_file("brand/logo-en.svg"),
+        "dark": _static_file("brand/logo-en.svg"),
+    },
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "type": "image/svg+xml",
+            "href": _static_file("brand/favicon.svg"),
+        },
+    ],
     "COLORS": {
         "primary": {
             "50": "oklch(97.5% 0.022 205.8)",
@@ -109,7 +129,7 @@ ROOT_URLCONF = 'ejranow.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

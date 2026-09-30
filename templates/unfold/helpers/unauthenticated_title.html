@@ -1,0 +1,8 @@
+{% load i18n static %}
+
+<div class="border-b border-base-200 mb-8 pb-6 dark:border-base-800">
+    <img src="{% static 'brand/logo-en.svg' %}" alt="{% trans 'Ejranow' %}" class="h-16 w-auto"/>
+    {% if subtitle %}
+        <h1 class="font-semibold mt-6 text-font-important-light dark:text-font-important-dark">{{ subtitle }}</h1>
+    {% endif %}
+</div>
