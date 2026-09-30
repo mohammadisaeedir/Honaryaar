@@ -74,8 +74,8 @@ UNFOLD = {
     "SITE_TITLE": "ejranow",
     "SITE_HEADER": "ejranow",
     "SITE_LOGO": {
-        "light": _static_file("brand/logo-en.svg"),
-        "dark": _static_file("brand/logo-en.svg"),
+        "light": _static_file("brand/logo-en-light.svg"),
+        "dark": _static_file("brand/logo-en-dark.svg"),
     },
     "SITE_FAVICONS": [
         {
