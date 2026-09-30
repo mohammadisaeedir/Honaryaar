@@ -127,7 +127,18 @@ WSGI_APPLICATION = 'ejranow.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-def _database_from_env():
+def _local_database():
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "ejranow",
+        "USER": os.environ.get("USER", ""),
+        "PASSWORD": "",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
+
+
+def _neon_database():
     database_url = os.environ.get("DATABASE_URL")
     if database_url:
         url = urlparse(database_url)
@@ -146,21 +157,26 @@ def _database_from_env():
             "DISABLE_SERVER_SIDE_CURSORS": True,
         }
 
-    host = os.environ.get("PGHOST", "localhost") or "localhost"
-    config = {
+    host = os.environ.get("PGHOST", "")
+    return {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("PGDATABASE", "ejranow"),
-        "USER": os.environ.get("PGUSER", os.environ.get("USER", "")),
+        "NAME": os.environ.get("PGDATABASE", ""),
+        "USER": os.environ.get("PGUSER", ""),
         "PASSWORD": os.environ.get("PGPASSWORD", ""),
         "HOST": host,
         "PORT": os.environ.get("PGPORT", "5432"),
+        "OPTIONS": {"sslmode": "require"},
         "CONN_HEALTH_CHECKS": True,
+        "CONN_MAX_AGE": 0,
+        "DISABLE_SERVER_SIDE_CURSORS": True,
     }
-    if host not in {"localhost", "127.0.0.1"}:
-        config["OPTIONS"] = {"sslmode": "require"}
-        config["CONN_MAX_AGE"] = 0
-        config["DISABLE_SERVER_SIDE_CURSORS"] = True
-    return config
+
+
+def _database_from_env():
+    # Vercel sets VERCEL=1 and injects the Neon connection. Local ignores that.
+    if os.environ.get("VERCEL") == "1":
+        return _neon_database()
+    return _local_database()
 
 
 DATABASES = {"default": _database_from_env()}
