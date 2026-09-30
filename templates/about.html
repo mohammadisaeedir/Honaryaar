@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>درباره اجرانو · Ejranow</title>
+  <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --aqua: #00B8C8;
+      --ink: #17131A;
+      --paper: #fff;
+      --line: color-mix(in srgb, #17131A 14%, #fff);
+      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #f6f7f8;
+      font-family: Vazirmatn, Tahoma, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    h1, h2, p { margin: 0; }
+    a { color: inherit; }
+    .wrap { width: min(980px, calc(100% - 32px)); margin: 32px auto 64px; display: grid; gap: 16px; }
+    .box {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .logo { height: 56px; width: auto; }
+    .names { display: flex; align-items: baseline; gap: 10px; direction: ltr; margin-top: 14px; }
+    .en { font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 32px; letter-spacing: -0.03em; }
+    .fa { font-weight: 700; font-size: 28px; }
+    .en span, .fa span { color: var(--aqua); }
+    .tag { margin-top: 8px; font-weight: 700; }
+    .latin { margin-top: 2px; direction: ltr; text-align: right; font-family: Outfit, Vazirmatn, sans-serif; font-weight: 600; }
+    h1 { margin-top: 18px; font-size: 28px; line-height: 1.4; }
+    .lead { margin-top: 10px; max-width: 42rem; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .facts span { display: block; color: var(--aqua); font-size: 13px; font-weight: 700; }
+    .facts strong { display: block; margin-top: 4px; font-size: 16px; }
+    .quote {
+      background: var(--wash);
+      border-inline-start: 3px solid var(--aqua);
+    }
+    .quote p { font-size: 22px; font-weight: 700; line-height: 1.5; }
+    .quote small { display: block; margin-top: 8px; font-weight: 500; font-size: 14px; }
+    .arts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .art h2 { font-size: 16px; }
+    .ord { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; }
+    .art p, .later p { margin-top: 6px; font-size: 14px; }
+    .wait { background: #fafafa; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
+    @media (max-width: 800px) {
+      .facts, .arts { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="box">
+      <img class="logo" src="{% static 'brand/logo-en-light.svg' %}" alt="Ejranow">
+      <p class="names"><span class="en">Ejran<span>ow</span></span><span class="fa">اجرا<span>نو</span></span></p>
+      <p class="tag">خلق کن. اجرا کن. دیده شو.</p>
+      <p class="tag latin" lang="en">Create. Perform. Be Seen.</p>
+      <h1>هر مورد مرتبط با هنر، همین‌جا.</h1>
+      <p class="lead">کاربر می‌آید تا هر چیز مرتبط با هنر را پیدا کند. اول تئاتر، بعد موسیقی، سینما، و نقاشی. هر شخص پروفایل دارد و هر مورد هنری قابل پیگیری است.</p>
+    </section>
+
+    <section class="facts">
+      <article class="box"><span>چشم‌انداز</span><strong>پیدا کردن هر مورد هنری</strong></article>
+      <article class="box"><span>بازار</span><strong>ایران</strong></article>
+      <article class="box"><span>ترتیب</span><strong>تئاتر ← موسیقی ← سینما ← نقاشی</strong></article>
+      <article class="box"><span>فاز اول</span><strong>بازیگر و پروژه‌ی زنده، تهران</strong></article>
+    </section>
+
+    <section class="box quote">
+      <p>به‌عنوان کاربر می‌خواهم هر مورد مرتبط با هنر را روی این پلتفرم پیدا کنم.</p>
+      <small>فاز اول: مهر تا اسفند ۱۴۰۵، تهران.</small>
+    </section>
+
+    <section class="arts">
+      <article class="box art"><div class="ord">01</div><h2>تئاتر</h2><p>سالن، گروه اجرا، بازیگر، قرارداد بلیت، پلاتو.</p></article>
+      <article class="box art"><div class="ord">02</div><h2>موسیقی</h2><p>شاگرد، آموزنده، پرفورمر، آموزشگاه.</p></article>
+      <article class="box art wait"><div class="ord">03</div><h2>سینما</h2><p>هنوز یادداشتی نیست.</p></article>
+      <article class="box art wait"><div class="ord">04</div><h2>نقاشی</h2><p>هنوز یادداشتی نیست.</p></article>
+    </section>
+
+    <section class="box later">
+      <p>این‌ها می‌مانند تا وقتی یادداشتی مثل تئاتر و موسیقی داشته باشند.</p>
+      <div class="chips">
+        <span class="chip">معماری</span>
+        <span class="chip">مجسمه‌سازی</span>
+        <span class="chip">ادبیات / شعر</span>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

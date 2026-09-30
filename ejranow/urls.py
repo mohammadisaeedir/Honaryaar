@@ -17,6 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from ejranow.views import about, home
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path("", home, name="home"),
+    path("about-us/", about, name="about"),
+    path("admin/", admin.site.urls),
 ]
