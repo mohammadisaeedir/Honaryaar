@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -126,16 +127,43 @@ WSGI_APPLICATION = 'ejranow.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
+def _database_from_env():
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        url = urlparse(database_url)
+        query = parse_qs(url.query)
+        sslmode = (query.get("sslmode") or ["require"])[0]
+        return {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": unquote(url.path.lstrip("/")),
+            "USER": unquote(url.username or ""),
+            "PASSWORD": unquote(url.password or ""),
+            "HOST": url.hostname or "",
+            "PORT": str(url.port or 5432),
+            "OPTIONS": {"sslmode": sslmode},
+            "CONN_HEALTH_CHECKS": True,
+            "CONN_MAX_AGE": 0,
+            "DISABLE_SERVER_SIDE_CURSORS": True,
+        }
+
+    host = os.environ.get("PGHOST", "localhost") or "localhost"
+    config = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("PGDATABASE", "ejranow"),
         "USER": os.environ.get("PGUSER", os.environ.get("USER", "")),
         "PASSWORD": os.environ.get("PGPASSWORD", ""),
-        "HOST": os.environ.get("PGHOST", "localhost"),
+        "HOST": host,
         "PORT": os.environ.get("PGPORT", "5432"),
+        "CONN_HEALTH_CHECKS": True,
     }
-}
+    if host not in {"localhost", "127.0.0.1"}:
+        config["OPTIONS"] = {"sslmode": "require"}
+        config["CONN_MAX_AGE"] = 0
+        config["DISABLE_SERVER_SIDE_CURSORS"] = True
+    return config
+
+
+DATABASES = {"default": _database_from_env()}
 
 
 # Password validation
