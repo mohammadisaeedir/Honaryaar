@@ -70,9 +70,48 @@ def _static_file(path):
     return resolve
 
 
+def _sidebar(request):
+    from django.urls import reverse
+
+    groups = [
+        {
+            "title": "Authentication",
+            "items": [
+                {
+                    "title": "Users",
+                    "icon": "person",
+                    "link": reverse("admin:auth_user_changelist"),
+                },
+                {
+                    "title": "Groups",
+                    "icon": "group",
+                    "link": reverse("admin:auth_group_changelist"),
+                },
+            ],
+        }
+    ]
+    if getattr(request.user, "is_superuser", False):
+        groups.append(
+            {
+                "title": "Internal",
+                "items": [
+                    {
+                        "title": "Documents",
+                        "icon": "description",
+                        "link": reverse("admin-documents"),
+                    }
+                ],
+            }
+        )
+    return groups
+
+
 UNFOLD = {
     "SITE_TITLE": "ejranow",
     "SITE_HEADER": "ejranow",
+    "SIDEBAR": {
+        "navigation": _sidebar,
+    },
     "SITE_LOGO": {
         "light": _static_file("brand/logo-en-light.svg"),
         "dark": _static_file("brand/logo-en-dark.svg"),

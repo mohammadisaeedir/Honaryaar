@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اجرانو · Ejranow</title>
+  <link rel="icon" href="/static/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --aqua: #00B8C8;
+      --ink: #17131A;
+      --paper: #fff;
+      --line: color-mix(in srgb, #17131A 14%, #fff);
+      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Vazirmatn, Tahoma, sans-serif;
+      font-size: 13.5px;
+      line-height: 1.55;
+      overflow: hidden;
+    }
+    button, input { font-family: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(22px, 2.4vw, 28px); line-height: 1.35; font-weight: 700; }
+    h2 { font-size: 20px; line-height: 1.35; font-weight: 700; }
+    h3 { font-size: 14px; font-weight: 700; }
+    .brand { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.14em; }
+
+    .top, .dock { position: fixed; left: 0; right: 0; z-index: 5; background: #fff; }
+    .top {
+      top: 0; height: 56px; gap: 14px;
+      display: flex; align-items: center;
+      padding: 0 20px; border-bottom: 1px solid var(--line);
+    }
+    .lockup { display: flex; align-items: center; }
+    .lockup img { height: 34px; width: auto; display: block; }
+    html[lang="en"] .logo-fa, html[lang="fa"] .logo-en { display: none; }
+    .top .name { flex: 1; text-align: center; font-weight: 600; }
+    .count { font-weight: 700; font-variant-numeric: normal; font-family: Outfit, Vazirmatn, sans-serif; }
+    .meter { position: fixed; top: 56px; left: 0; right: 0; height: 3px; background: var(--line); z-index: 6; }
+    .lang {
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 12px; cursor: pointer;
+    }
+    .lang:hover { background: var(--wash); border-color: var(--aqua); }
+    .meter span { display: block; height: 100%; width: 0; background: var(--aqua); transition: width .35s ease; }
+    .dock {
+      bottom: 0; height: 56px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 18px; border-top: 1px solid var(--line);
+    }
+    .dock button {
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      border-radius: 999px; padding: 7px 16px; font-weight: 700; cursor: pointer;
+    }
+    .dock button:hover { border-color: var(--aqua); background: var(--wash); }
+    #next { background: var(--ink); color: #fff; border-color: var(--ink); }
+    #next:hover { background: var(--aqua); color: var(--ink); border-color: var(--aqua); }
+    .dots { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
+    .dots button {
+      width: 7px; height: 7px; padding: 0; border-radius: 99px; border: 0; background: var(--line);
+    }
+    .dots button.on { background: var(--aqua); width: 18px; }
+
+    .stage { height: 100dvh; padding: 68px 0 64px; }
+    .slide { display: none; height: 100%; overflow: auto; }
+    .slide.on { display: flex; flex-direction: column; }
+    .frame { width: min(1040px, calc(100% - 48px)); margin-inline: auto; margin-block: auto; padding: 8px 0 4px; }
+    .lead { max-width: 46rem; margin-top: 6px; font-size: 13.5px; }
+    .lead + .lead { margin-top: 8px; }
+
+    .cover { display: grid; gap: 28px; align-content: start; }
+    .hero { display: grid; gap: 14px; }
+    .hero-logo img { width: min(460px, 100%); height: auto; display: block; }
+    .tag { margin-top: 6px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+    .epigraph { max-width: 36rem; }
+    .epigraph p { font-size: 15px; font-weight: 600; line-height: 1.55; }
+    .epigraph .src {
+      margin-top: 6px;
+      font-family: Fraunces, Georgia, serif;
+      font-style: italic;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    .epigraph footer { margin-top: 8px; font-size: 13px; font-weight: 600; border: 0; padding: 0; background: transparent; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 16px; border-top: 1px solid var(--line); }
+    .facts div { padding: 12px 0 2px; padding-inline-end: 14px; }
+    .facts div + div { border-inline-start: 1px solid var(--line); padding-inline-start: 14px; }
+    .facts span { display: block; font-size: 11px; font-weight: 700; color: var(--aqua); letter-spacing: 0.04em; }
+    .facts strong { font-size: 14px; font-weight: 700; }
+
+    .vision blockquote {
+      margin: 16px 0 0;
+      background: var(--wash);
+      border-inline-start: 3px solid var(--aqua);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.55;
+    }
+    .vision small { display: block; margin-top: 8px; font-size: 13px; font-weight: 500; }
+
+    .arts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .art {
+      border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+      display: flex; gap: 10px; background: #fff;
+    }
+    .ico {
+      width: 36px; height: 36px; border-radius: 12px; flex: none;
+      display: grid; place-items: center; background: var(--wash); color: var(--ink);
+    }
+    .art.wait { background: #fff; }
+    .art.wait .ico { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+    .ico svg { width: 18px; height: 18px; }
+    .ord { font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em; color: var(--aqua); }
+    .art p { margin-top: 4px; font-size: 13px; }
+    .later { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .later span {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 13px;
+    }
+    .later svg { width: 15px; height: 15px; }
+
+    .bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+    .feat { border: 1px solid var(--line); border-radius: 16px; padding: 14px 14px 12px; background: #fff; }
+    .feat b {
+      display: block; width: auto; height: auto; margin: 0 0 6px;
+      background: none; border-radius: 0;
+      font-family: Outfit, Vazirmatn, sans-serif; font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; color: var(--aqua);
+    }
+    .feat strong { display: block; }
+    .feat span, .who p, .card p { font-size: 13px; line-height: 1.5; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 12.5px;
+      background: var(--wash); color: var(--ink);
+    }
+
+    .quote {
+      background: var(--wash);
+      border-inline-start: 3px solid var(--aqua);
+      border-radius: 12px; padding: 12px 14px; margin: 12px 0 4px; font-weight: 700; font-size: 15px;
+    }
+    .quote small { display: block; margin-top: 6px; font-weight: 500; font-size: 13px; }
+    .who, .bands { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .who article, .bands article, .card {
+      border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff;
+    }
+    .bands article { display: grid; grid-template-columns: minmax(108px, 28%) 1fr; gap: 10px; align-items: start; }
+    .bands h3 { background: var(--wash); border-radius: 10px; padding: 8px 10px; }
+    .who p, .bands p, .card p { margin-top: 4px; }
+    .card .tag { font-size: 11px; font-weight: 700; color: var(--aqua); letter-spacing: 0.04em; }
+
+    .board { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
+    .board table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    .board th, .board td { text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+    .board th { background: var(--ink); color: #fff; font-size: 12px; font-weight: 600; }
+    .board tr:last-child td { border-bottom: 0; }
+    .board td:first-child { font-weight: 700; width: 22%; }
+    .rail, .path { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .rail span, .path span {
+      border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-weight: 600; font-size: 12.5px; background: #fff;
+    }
+    .rail span:nth-child(5) { background: var(--aqua); border-color: var(--aqua); color: var(--ink); }
+    .path b { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; margin-inline-end: 4px; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+
+    .ratio { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; margin-top: 12px; }
+    .ratio div { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; }
+    .ratio div:first-child { background: var(--wash); border-color: transparent; }
+    .ratio strong { display: block; font-size: 28px; line-height: 1; font-weight: 700; color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; }
+    .ratio span { display: block; margin-top: 8px; font-size: 13px; color: var(--ink); }
+
+    .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .nums article { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
+    .nums strong { display: block; font-size: 26px; line-height: 1; font-weight: 700; color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; }
+    .nums span { display: block; margin-top: 8px; font-size: 12.5px; }
+
+    .chart { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
+    .chart-in { min-width: 780px; }
+    .chart-head, .chart-row { display: grid; grid-template-columns: 200px 1fr; }
+    .chart-head { background: var(--ink); color: #fff; }
+    .chart-row + .chart-row { border-top: 1px solid var(--line); }
+    .chart-label, .months { min-height: 42px; }
+    .chart-label { display: flex; flex-direction: column; justify-content: center; padding: 8px 12px; font-weight: 700; font-size: 13px; }
+    .chart-label small { font-weight: 500; }
+    .months, .lane { display: grid; grid-template-columns: repeat(6, 1fr); }
+    .months span { display: grid; place-items: center; font-weight: 600; font-size: 12px; border-inline-end: 1px solid rgba(255,255,255,.16); }
+    .months span:last-child { border-inline-end: 0; }
+    .lane {
+      background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(16.666% - 1px), var(--line) calc(16.666% - 1px), var(--line) 16.666%);
+    }
+    .seg {
+      display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+      align-self: center; height: 28px; margin: 7px 6px; border-radius: 8px;
+      background: var(--aqua); color: var(--ink); font-weight: 700; overflow: hidden;
+    }
+    .seg b { display: grid; place-items: center; font-size: 12.5px; }
+    .seg b + b { border-inline-start: 1px solid rgba(23,19,26,.12); }
+    .seg.hot { background: var(--ink); color: #fff; }
+    .seg.hot b + b { border-inline-start-color: rgba(255,255,255,.18); }
+    .seg.mid { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--aqua); }
+    .key { display: flex; gap: 16px; margin-top: 10px; font-size: 12.5px; font-weight: 600; }
+    .key i { display: inline-block; width: 18px; height: 8px; border-radius: 99px; margin-inline-end: 6px; vertical-align: middle; }
+    .k1 { background: var(--aqua); } .k2 { background: var(--ink); } .k3 { background: #fff; box-shadow: inset 0 0 0 1.5px var(--aqua); }
+
+    .band { margin: 8px 0 6px; font-weight: 700; font-size: 13px; color: var(--aqua); }
+    .erd .band.note { direction: rtl; text-align: right; }
+    html[dir="ltr"] .erd .band.note { direction: ltr; text-align: left; }
+    .erd { direction: ltr; }
+    .chain {
+      display: grid;
+      grid-template-columns: minmax(0,1.1fr) 46px minmax(0,1.1fr) 46px minmax(0,1.15fr) 46px minmax(0,1.2fr);
+      align-items: end;
+    }
+    .chain.sub { align-items: start; margin-top: 12px; }
+    .rel {
+      align-self: end; margin-bottom: 34px;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      font-size: 12px; font-weight: 700; color: var(--aqua);
+    }
+    .chain.sub .rel { margin: 0; align-self: stretch; }
+    .rel i { width: 16px; height: 2px; background: var(--aqua); }
+    .col { position: relative; min-width: 0; }
+    .col.has::before {
+      content: ""; position: absolute; top: -20px; left: 50%; width: 2px; height: 22px; background: var(--aqua); transform: translateX(-50%);
+    }
+    .ent { border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: visible; }
+    .ent header {
+      background: var(--ink); color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: .04em; padding: 6px 8px; border-radius: 11px 11px 0 0;
+    }
+    .ent ul { list-style: none; margin: 0; padding: 7px 8px 8px; font-size: 11px; line-height: 1.45; }
+    .ent.match header { background: var(--aqua); color: var(--ink); }
+    .ent.down { position: relative; margin-bottom: 14px; }
+    .ent.down::after {
+      content: ""; position: absolute; left: 50%; bottom: -14px; width: 2px; height: 14px; background: var(--aqua); transform: translateX(-50%);
+    }
+    .fork { position: relative; display: grid; gap: 8px; }
+    .fork::before { content: ""; position: absolute; top: -1px; left: 18%; right: 18%; height: 2px; background: var(--aqua); }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .base {
+      direction: ltr; margin-top: 10px;
+      display: grid; grid-template-columns: minmax(0,1fr) 46px minmax(0,1fr) minmax(0,1.2fr);
+      gap: 8px; align-items: center;
+    }
+    .later-box {
+      justify-self: end; width: min(220px, 100%);
+      border: 1px dashed var(--aqua); border-radius: 12px; text-align: center; padding: 14px 8px;
+    }
+    .later-box strong { display: block; letter-spacing: .04em; font-size: 12px; }
+    .asks { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .asks article {
+      border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff;
+    }
+    html[dir="ltr"] .board th, html[dir="ltr"] .board td { text-align: left; }
+    .asks p { margin-top: 6px; }
+
+    @media (max-width: 900px) {
+      .lockup img { height: 28px; }
+      .hero-logo img { width: min(320px, 100%); }
+      .facts, .arts, .bento, .who, .split, .nums, .asks { grid-template-columns: 1fr; }
+      .facts div + div { border-inline-start: 0; padding-inline-start: 0; }
+      .bands article, .ratio, .pair { grid-template-columns: 1fr; }
+      .ratio { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="lockup">
+      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
+      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+    </div>
+    <span class="name" id="label">شروع</span>
+    <button type="button" id="lang" class="lang">EN</button>
+    <span class="count"><b id="now">۱</b> / <span id="all">۱۲</span></span>
+  </header>
+  <div class="meter" aria-hidden="true"><span id="meter"></span></div>
+
+  <main class="stage">
+    <section class="slide on" id="cover" data-title="شروع" data-en-title="Start">
+      <div class="frame cover">
+        <blockquote class="epigraph">
+          <p data-en="The artist never stops being a student.">هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد.</p>
+          <p class="src" lang="en" dir="ltr">The artist is always a student, of course; but he is not a student only.</p>
+          <footer>Daniel Burleigh Parkhurst · <span lang="en" dir="ltr"><i>The Painter in Oil</i>, 1898</span></footer>
+        </blockquote>
+        <div class="hero">
+          <div class="hero-logo">
+            <img class="logo-fa" src="/static/brand/logo-fa-tag.svg" alt="اجرانو. خلق کن. اجرا کن. دیده شو." width="4030" height="1692" />
+            <img class="logo-en" src="/static/brand/logo-en-tag.svg" alt="Ejranow. Create. Perform. Be Seen." width="4191" height="1340" />
+          </div>
+          <h1 data-en="Every art-related thing, here.">هر مورد مرتبط با هنر، همین‌جا.</h1>
+          <p class="lead" data-en="A person comes here to find anything related to art. Theatre first, then music, film, and painting. Every person has a profile, and every art item can be tracked. The theatre and music searches are already written down.">کاربر می‌آید تا هر چیز مرتبط با هنر را پیدا کند. اول تئاتر، بعد موسیقی، سینما، و نقاشی. هر شخص پروفایل دارد و هر مورد هنری قابل پیگیری است. جست‌وجوهای تئاتر و موسیقی نوشته شده‌اند.</p>
+          <div class="facts">
+            <div><span data-en="Vision">چشم‌انداز</span><strong data-en="Find every art-related item">پیدا کردن هر مورد هنری</strong></div>
+            <div><span data-en="Market">بازار</span><strong data-en="Iran">ایران</strong></div>
+            <div><span data-en="Order">ترتیب</span><strong data-en="Theatre → Music → Film → Painting">تئاتر ← موسیقی ← سینما ← نقاشی</strong></div>
+            <div><span data-en="Phase one">فاز اول</span><strong data-en="Actors and live projects, Tehran">بازیگر و پروژه‌ی زنده، تهران</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="vision" data-title="چشم‌انداز" data-en-title="Vision">
+      <div class="frame vision">
+        <p class="brand" data-en="01">۰۱</p>
+        <h2 data-en="Vision">چشم‌انداز</h2>
+        <blockquote data-en="As a user, I want to find every art-related item on this platform.<small>The chart below is only phase one: Mehr through Esfand 1405, Tehran.</small>">
+          به‌عنوان کاربر می‌خواهم هر مورد مرتبط با هنر را روی این پلتفرم پیدا کنم.
+          <small>نمودار پایین فقط فاز اول است: مهر تا اسفند ۱۴۰۵، تهران.</small>
+        </blockquote>
+      </div>
+    </section>
+
+    <section class="slide" id="arts" data-title="هنرها" data-en-title="Arts">
+      <div class="frame">
+        <p class="brand" data-en="02">۰۲</p>
+        <h2 data-en="Four arts, in this order">چهار هنر، به همین ترتیب</h2>
+        <p class="lead" data-en="Architecture, sculpture, and literature stay until they have notes like theatre and music.">معماری، مجسمه، و ادبیات می‌مانند تا وقتی یادداشتی مثل تئاتر و موسیقی داشته باشند.</p>
+        <div class="arts">
+          <article class="art">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19h16M6 19V10l6-4 6 4v9"/><path d="M10 19v-4h4v4"/></svg></span>
+            <div><div class="ord">01</div><h3 data-en="Theatre">تئاتر</h3><p data-en="Hall, performing company, actor, ticket contract, plateau.">سالن، گروه اجرا، بازیگر، قرارداد بلیت، پلاتو.</p></div>
+          </article>
+          <article class="art">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="16" r="2.4"/><path d="M10.4 16V6.2L18 4v8.2"/><circle cx="15.6" cy="12.2" r="2.2"/></svg></span>
+            <div><div class="ord">02</div><h3 data-en="Music">موسیقی</h3><p data-en="Student, teacher, performer, institute.">شاگرد، آموزنده، پرفورمر، آموزشگاه.</p></div>
+          </article>
+          <article class="art wait">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="11" rx="1.5"/><path d="M8 7v11M3 10.5h5M3 14.5h5M16 7v11M16 10.5h5M16 14.5h5"/></svg></span>
+            <div><div class="ord">03</div><h3 data-en="Film">سینما</h3><p data-en="No notes yet.">هنوز یادداشتی نیست.</p></div>
+          </article>
+          <article class="art wait">
+            <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="13" cy="8.5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg></span>
+            <div><div class="ord">04</div><h3 data-en="Painting">نقاشی</h3><p data-en="No notes yet.">هنوز یادداشتی نیست.</p></div>
+          </article>
+        </div>
+        <div class="later">
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20h16M7 20V9l5-4 5 4v11"/></svg><span data-en="Architecture">معماری</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3"/><path d="M7 20c.6-3.6 2.2-5.5 5-5.5S16.4 16.4 17 20"/></svg><span data-en="Sculpture">مجسمه‌سازی</span></span>
+          <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 5.5h5.5A2.5 2.5 0 0 1 13 8v11H8a3 3 0 0 0-3 3z"/><path d="M19 5.5h-5.5A2.5 2.5 0 0 0 11 8v11h5a3 3 0 0 1 3 3z"/></svg><span data-en="Literature / Poetry">ادبیات / شعر</span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="features" data-title="امکانات" data-en-title="Features">
+      <div class="frame">
+        <p class="brand" data-en="03">۰۳</p>
+        <h2 data-en="Features">امکانات</h2>
+        <p class="lead" data-en="This list is the product map. Day one is one job: the right actor for this project, and the next role for the actor.">این فهرست نقشه‌ی محصول است، نه فهرست روز اول. روز اول یک کار است: بازیگر درست برای این پروژه، و نقش بعدی برای بازیگر.</p>
+        <div class="bento">
+          <article class="feat"><b>01</b><strong data-en="Profile">پروفایل</strong><span data-en="Every person. Until the owner claims it, the label is indexed from a public source. Posts and news belong on the claimed page.">هر شخص. تا وقتی صاحبش ادعا نکند، برچسب «از منبع عمومی» دارد. پست و خبر مال صفحه‌ی ادعا‌شده است.</span></article>
+          <article class="feat"><b>02</b><strong data-en="Story or project">داستان یا پروژه</strong><span data-en="Any user creates one and invites people to collaborate. The difference between the two is still unwritten.">هر کاربر می‌سازد و برای همکاری دعوت می‌کند. تفاوت این دو هنوز نوشته نشده.</span></article>
+          <article class="feat"><b>03</b><strong data-en="Project tracker">پیگیری پروژه</strong><span data-en="On every art item. In theatre: a production. In music: a course, a performance, a recording. What the tracker shows is still open.">روی هر مورد هنری. در تئاتر: اجرا. در موسیقی: دوره، اجرا، ضبط. آنچه پیگیر نشان می‌دهد هنوز باز است.</span></article>
+          <article class="feat"><b>04</b><strong data-en="Finding work">پیدا کردن کار</strong><span data-en="Someone has work. Someone is looking for work.">کسی کار دارد، کسی دنبال کار است.</span></article>
+          <article class="feat"><b>05</b><strong data-en="Education">آموزش</strong><span data-en="In music: a student looks for a teacher, a teacher looks for a student, an institute looks for both for a course.">در موسیقی: شاگرد دنبال معلم، معلم دنبال شاگرد، آموزشگاه دنبال هر دو برای دوره.</span></article>
+          <article class="feat"><b>06</b><strong data-en="Ads">تبلیغات</strong><span data-en="Named. There is still no example.">نام‌گذاری شده. نمونه‌ای هنوز نیست.</span></article>
+          <article class="feat"><b>07</b><strong data-en="Commerce">فروش</strong><span data-en="Tickets, gallery, video on demand. Music also sells a course. Gallery and video still have no example.">بلیت، گالری، ویدیوی درخواستی. در موسیقی فروش دوره هم هست. گالری و ویدیو هنوز نمونه ندارند.</span></article>
+          <article class="feat"><b>08</b><strong data-en="Project consultant">مشاور پروژه</strong><span data-en="A specialist added to a project. The investor stays separate, on the theatre crew list.">متخصصی که به پروژه اضافه می‌شود. سرمایه‌گذار جداست و در فهرست گروه تئاتر می‌ماند.</span></article>
+          <article class="feat"><b>09</b><strong data-en="Contract">قرارداد</strong><span data-en="Simple and safe, between two parties, any role, any place. Each side is a person or a business. What safe means, step by step, is still open.">ساده و امن، بین دو طرف، هر نقش و هر جا. هر طرف شخص است یا کسب‌وکار. معنای «امن» قدم‌به‌قدم هنوز باز است.</span></article>
+        </div>
+        <div class="chips">
+          <span class="chip" data-en="C2C person and person">C2C شخص و شخص</span>
+          <span class="chip" data-en="C2B person and business">C2B شخص و کسب‌وکار</span>
+          <span class="chip" data-en="B2B two businesses">B2B دو کسب‌وکار</span>
+          <span class="chip" data-en="B2C business and person">B2C کسب‌وکار و شخص</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="theatre" data-title="تئاتر" data-en-title="Theatre">
+      <div class="frame">
+        <p class="brand" data-en="04">۰۴</p>
+        <h2 data-en="Theatre · who is looking for whom">تئاتر · کی دنبال کیست</h2>
+        <div class="quote" data-en="The manager of Shahrzad hall wants to fill the hall with productions that already exist in the country.<small>The productions exist. Empty nights in the hall are the problem.</small>">مدیر سالن شهرزاد دنبال پر کردن فضای سالن با اجراهای موجود در کشور است.<small>اجرا هست. شب‌های خالی سالن مسئله است.</small></div>
+        <div class="who">
+          <article><h3 data-en="Hall manager">مدیر سالن</h3><p data-en="Fill the hall with a production that already exists. Shahrzad is an example. The production has already been made in the country. The hall wants a program.">سالن را با اجرای موجود پر کند. شهرزاد نمونه است. اجرا در کشور ساخته شده. سالن برنامه می‌خواهد.</p></article>
+          <article><h3 data-en="Staging a play">ساخت یک اجرا</h3><p data-en="Actor, director, producer, playwright, set designer, costume designer, composer, PR, assistant director, investor, and any role that still belongs on the list.">بازیگر، کارگردان، تهیه‌کننده، نمایشنامه‌نویس، طراح صحنه، طراح لباس، آهنگساز، مدیر روابط عمومی، دستیار کارگردان، سرمایه‌گذار، و هر نقشی که هنوز جا دارد.</p></article>
+          <article><h3 data-en="Actor">بازیگر</h3><p data-en="Work, and the plan after that. They want a performance so they can live and line up the months ahead.">کار، و برنامه‌ی بعد. دنبال موقعیت اجراست تا زندگی کند و ماه‌های بعد را بچیند.</p></article>
+          <article><h3 data-en="Producer">تهیه‌کننده</h3><p data-en="Which hall, and the contract to sell the night. Contracts with Gisheh and Tiwall, and the decision of which hall the production goes to.">کدام سالن، و قرارداد فروش شب. قرارداد با گیشه و تیوال، و تصمیم اینکه اجرا به کدام سالن برود.</p></article>
+          <article><h3 data-en="Producer, director, assistant">تهیه‌کننده، کارگردان، دستیار</h3><p data-en="A plateau. They are looking for a rehearsal space for this production.">پلاتو. برای تمرین همین اجرا دنبال پلاتو هستند.</p></article>
+          <article><h3 data-en="Plateau owner">صاحب پلاتو</h3><p data-en="A group that will rent the room. They want theatre groups to come and rent the space as a plateau.">گروهی که اتاق را اجاره کند. دنبال گروه‌های تئاتر است که بیایند و فضا را به‌عنوان پلاتو اجاره کنند.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="music" data-title="موسیقی" data-en-title="Music">
+      <div class="frame">
+        <p class="brand" data-en="05">۰۵</p>
+        <h2 data-en="Music · who is looking for whom">موسیقی · کی دنبال کیست</h2>
+        <div class="bands">
+          <article><h3 data-en="Student">شاگرد</h3><p data-en="A good teacher, for an instrument or for other specialties.">معلم خوب، برای ساز یا برای تخصص‌های دیگر.</p></article>
+          <article><h3 data-en="Teacher">آموزنده</h3><p data-en="Students. Both potential students, and students who are taking lessons now.">شاگرد. هم شاگرد بالقوه، هم شاگردی که همین حالا درس می‌گیرد.</p></article>
+          <article><h3 data-en="Performer">پرفورمر</h3><p data-en="A live performance or a recording. Includes composer, poet, and lyricist. The other side of the performance and the recording is still unwritten.">اجرا یا ضبط. شامل آهنگساز، شاعر، و ترانه‌سرا. طرف مقابلِ اجرا و ضبط هنوز نوشته نشده.</p></article>
+          <article><h3 data-en="Institute / studio owner">مالک آموزشگاه / استودیو</h3><p data-en="Fill the course and sell it. They want students and teachers for the course, and to sell that course.">دوره را پر کند و بفروشد. دنبال شاگرد و آموزنده برای دوره است، و فروش همان دوره.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="benchmarks" data-title="بنچمارک" data-en-title="Benchmarks">
+      <div class="frame">
+        <p class="brand" data-en="06">۰۶</p>
+        <h2 data-en="Benchmarks">بنچمارک</h2>
+        <p class="lead" data-en="Products that show people pay to be found, to get access, to match, to be seen professionally, to hire, or to buy creative services.">محصول‌هایی که نشان می‌دهند آدم‌ها برای پیدا کردن، دسترسی، مچ، دیده‌شدن حرفه‌ای، استخدام، یا خدمات خلاق پول می‌دهند.</p>
+        <div class="board">
+          <table>
+            <thead><tr>
+              <th data-en="Product">محصول</th>
+              <th data-en="What it proves">چه را ثابت می‌کند</th>
+              <th data-en="Lesson for Ejranow">درس برای اجرانو</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td data-en="Backstage<br>Casting and creative work">Backstage<br>کستینگ و کار خلاق</td>
+                <td data-en="A professional profile, an opportunity from the project side, search between both sides, and money for access, visibility, and hiring.">پروفایل حرفه‌ای، فرصت از سمت پروژه، جستجو بین دو طرف، و پول در ازای دسترسی، دیده‌شدن، و جذب.</td>
+                <td data-en="Start with one pain: the right actor for this project, and the next role for me.">شروع با یک درد: بازیگر درست برای این پروژه، و نقش بعدی برای من.</td>
+              </tr>
+              <tr>
+                <td data-en="Casting Networks<br>Casting workflow">Casting Networks<br>گردش کار کستینگ</td>
+                <td data-en="A structured profile, filters, a resume, media, role fit, and a casting workflow.">پروفایل ساخت‌یافته، فیلتر، رزومه، مدیا، تناسب نقش، و گردش کار کستینگ.</td>
+                <td data-en="The value is a searchable professional identity plus the context of the project.">ارزش، هویت حرفه‌ای قابل جستجو است به‌علاوه‌ی زمینه‌ی پروژه.</td>
+              </tr>
+              <tr>
+                <td data-en="Stage 32<br>Film and TV network">Stage 32<br>شبکه‌ی سینما و تلویزیون</td>
+                <td data-en="Community, work, education, and services can stack later.">جامعه، کار، آموزش، و خدمات می‌توانند بعداً روی هم بنشینند.</td>
+                <td data-en="Community is the second layer, after a transaction core that is actually useful.">جامعه لایه‌ی دوم است، بعد از یک هسته‌ی معاملاتی که به درد بخورد.</td>
+              </tr>
+              <tr>
+                <td data-en="SoundBetter<br>Marketplace for musicians">SoundBetter<br>بازار موزیسین‌ها</td>
+                <td data-en="Creative work is bought and sold in a vertical market. A portfolio and reputation make trust cheaper.">کار خلاق در یک بازار عمودی خرید و فروش می‌شود. نمونه‌کار و اعتبار، اعتماد را کم‌اصطکاک می‌کند.</td>
+                <td data-en="Later, players, composers, producers, lyricists, and studios can be a supply of services.">بعداً نوازنده، آهنگساز، تهیه‌کننده، ترانه‌سرا، و استودیو می‌توانند عرضه‌ی خدمات باشند.</td>
+              </tr>
+              <tr>
+                <td data-en="Peerspace<br>Creative space rental">Peerspace<br>اجاره‌ی فضای خلاق</td>
+                <td data-en="Physical space is a market of its own.">فضای فیزیکی خودش یک بازار است.</td>
+                <td data-en="Hall, plateau, studio, and rehearsal space become a separate marketplace after the people-matching wedge works. In the seed, only a few profiles, as demand nodes.">سالن، پلاتو، استودیو، و فضای تمرین بازار جداگانه‌ای می‌شوند، بعد از اینکه گوه‌ی مچ آدم‌ها جواب بدهد. در بذر فقط چند پروفایل، به‌عنوان گره‌ی تقاضا.</td>
+              </tr>
+              <tr>
+                <td data-en="LinkedIn<br>Professional identity and work">LinkedIn<br>هویت حرفه‌ای و کار</td>
+                <td data-en="A lasting identity accumulates value. A person comes back even when they are not looking for work.">هویت ماندگار ارزش جمع می‌شود. آدم برمی‌گردد حتی وقتی دنبال کار نیست.</td>
+                <td data-en="Ejranow becomes the professional graph of the arts. A classifieds board is only the surface.">اجرانو باید گراف حرفه‌ای هنرها شود، نه فقط تابلوی آگهی.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rail">
+          <span data-en="Profile">پروفایل</span><span data-en="Search">جستجو</span><span data-en="Opportunity">فرصت</span><span data-en="Contact">تماس</span><span data-en="Match">مچ</span><span data-en="Reputation">اعتبار</span><span data-en="Transaction">معامله</span>
+        </div>
+        <div class="split">
+          <article class="card"><div class="tag" data-en="Starting wedge">گوه‌ی شروع</div><h3 data-en="Theatre, actor, project owner">تئاتر، بازیگر، صاحب پروژه</h3><p data-en="Supply: actors. Demand: directors, producers, production owners. First job: find the right actor quickly. Second job: get discovered for a relevant role.">عرضه: بازیگر. تقاضا: کارگردان، تهیه‌کننده، صاحب تولید. کار اول: بازیگر درست را زود پیدا کنم. کار دوم: برای نقش مرتبط دیده شوم.</p></article>
+          <article class="card"><div class="tag" data-en="Money, later hypotheses">پول، فرضیه‌ی بعد</div><h3 data-en="Six hypotheses for a later test">شش فرض برای آزمون بعدی</h3><p data-en="Featured opportunity. Search subscription for the producer. Premium profile. Paid shortlist or concierge match. A transaction fee, after contracts and payments. Ads only after real traffic. Manual matching for the first matches is a learning method and is outside this list.">فرصت ویژه. اشتراک جستجو برای تهیه‌کننده. پروفایل حرفه‌ای. فهرست کوتاه یا مچ همراهِ پولی. کارمزد معامله، بعد از قرارداد و پرداخت. تبلیغ، فقط بعد از ترافیک واقعی. مچ دستیِ اول روش یادگیری است و جزو این فهرست نیست.</p></article>
+        </div>
+        <p class="lead" data-en="LinkedIn, ticketing, project tracking, education, contracts, and ads do not launch together. Strong benchmarks win one use first, then widen.">لینکدین، بلیت، پیگیری پروژه، آموزش، قرارداد، و تبلیغ با هم لانچ نمی‌شوند. بنچمارک‌های قوی اول یک کاربرد را می‌برند و بعد عرض می‌شوند.</p>
+      </div>
+    </section>
+
+    <section class="slide" id="phase" data-title="فاز اول" data-en-title="Phase one">
+      <div class="frame">
+        <p class="brand" data-en="07">۰۷</p>
+        <h2 data-en="Phase one · Tehran, through Esfand 1405">فاز اول · تهران، تا اسفند ۱۴۰۵</h2>
+        <div class="quote" data-en="For now we are not filling the platform. We are making a few real Matches.">ما فعلاً پلتفرم را پر نمی‌کنیم؛ چند Match واقعی می‌سازیم.</div>
+        <p class="lead" data-en="This slice is a serious theatre actor and a project that has an open role this month. Halls and plateaus stay in the seed, in small numbers, as demand nodes. Their rental market and music education are outside this six-month chart.">این برش بازیگر جدی تئاتر و پروژه‌ای است که همین ماه نقش باز دارد. سالن و پلاتو در بذر، با تعداد کم، گره‌ی تقاضا هستند. بازار اجاره‌شان و آموزش موسیقی در نمودار این شش ماه نیستند.</p>
+        <div class="ratio">
+          <div><strong data-en="60%">۶۰٪</strong><span data-en="Early energy on a real project. This percent is energy, and the headcount is a different number.">انرژی اوایل کار روی پروژه‌ی واقعی. این درصد، تعداد آدم‌ها نیست.</span></div>
+          <div><strong data-en="40%">۴۰٪</strong><span data-en="Energy on actors, at the same time, and with quality.">انرژی روی بازیگر، هم‌زمان و با کیفیت.</span></div>
+        </div>
+        <div class="split">
+          <article class="card"><h3 data-en="Actor">بازیگر</h3><p data-en="A serious theatre student and an early-career actor in Tehran. The offer is a lasting resume plus a real opportunity.">دانشجوی جدی تئاتر و بازیگر اوایل کار در تهران. پیشنهاد، پیوستن به پلتفرم نیست؛ رزومه‌ی ماندگار به‌علاوه‌ی فرصت واقعی است.</p></article>
+          <article class="card"><h3 data-en="Project">پروژه</h3><p data-en="Core: directors, producers, theatre groups, and the person who decides the cast. Beside that: short film, student directors, small production houses, ads and content. The value: a structured call, applicants in one place, a simpler filter, a shortlist. Serious project owners arrive first through founder outreach.">هسته: کارگردان، تهیه‌کننده، گروه تئاتر، و کسی که کست را تصمیم می‌گیرد. کنارش فیلم کوتاه، کارگردان دانشجو، خانه‌ی تولید کوچک، تبلیغات و تولید محتوا. ارزش: فراخوان ساخت‌یافته، متقاضی در یک جا، فیلتر ساده‌تر، فهرست کوتاه. صاحب پروژه‌ی جدی اول با ارتباط مؤسس می‌آید.</p></article>
+        </div>
+        <div class="path">
+          <span data-en="<b>1</b> Index or invite"><b>۱</b> ایندکس یا دعوت</span>
+          <span data-en="<b>2</b> Claim and edit"><b>۲</b> ادعا و ویرایش</span>
+          <span data-en="<b>3</b> Complete"><b>۳</b> تکمیل</span>
+          <span data-en="<b>4</b> See projects"><b>۴</b> دیدن پروژه</span>
+          <span data-en="<b>5</b> Apply"><b>۵</b> درخواست</span>
+          <span data-en="<b>6</b> Shortlist"><b>۶</b> فهرست کوتاه</span>
+          <span data-en="<b>7</b> Audition or conversation"><b>۷</b> تست یا گفتگو</span>
+          <span data-en="<b>8</b> Match"><b>۸</b> مچ</span>
+          <span data-en="<b>9</b> Job"><b>۹</b> کار</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="seed" data-title="جذب" data-en-title="Seeding">
+      <div class="frame">
+        <p class="brand" data-en="08">۰۸</p>
+        <h2 data-en="Seeding · the theatre seed">جذب · بذر تئاتر</h2>
+        <p class="lead" data-en="The first theatre base, both sides, so the page is not empty. Only public information is collected. Recent activity matters more than growing the database. The cold seed is the first cells of the chart: through about Azar, 100 quality actors and 10 to 20 real projects. Esfand stays the chart targets.">پایگاه اولیه‌ی تئاتر، هر دو طرف، طوری که صفحه خالی نماند. فقط اطلاعات عمومی جمع می‌شود. فعالیت اخیر مهم‌تر از بزرگ کردن پایگاه است. بذر سرد همان خانه‌های اول نمودار است: تا حدود آذر، ۱۰۰ بازیگر باکیفیت و ۱۰ تا ۲۰ پروژه‌ی واقعی. اسفند همان هدف‌های نمودار می‌ماند.</p>
+        <div class="nums">
+          <article><strong data-en="100">۱۰۰</strong><span data-en="Quality actor profiles. The first hundred are invited in person.">پروفایل بازیگر باکیفیت. صد تای اول حضوری دعوت می‌شوند.</span></article>
+          <article><strong data-en="10–20">۱۰–۲۰</strong><span data-en="Real theatre projects, or an open opportunity.">پروژه‌ی واقعی تئاتر، یا فرصت باز.</span></article>
+          <article><strong data-en="5–10">۵–۱۰</strong><span data-en="Trusted demand-side operators.">طرف تقاضای مورداعتماد.</span></article>
+          <article><strong data-en="Few">کم</strong><span data-en="Hall and plateau profiles. There is no rental marketplace yet.">پروفایل سالن و پلاتو. بازار اجاره هنوز نیست.</span></article>
+        </div>
+        <div class="split">
+          <article class="card"><div class="tag" data-en="Actor supply">عرضه‌ی بازیگر</div><h3 data-en="Where they are found">از کجا پیدا می‌شوند</h3><p data-en="Public calls on Telegram, Instagram, sites, and casting communities. Acting schools, theatre workshops, university groups, and independent teachers: student and alumni profiles, early access, an onboarding day, and a project from that community. Festivals and recent productions, from the brochure, the theatre page, and the announcement. A recently active actor comes ahead of raw count.">فراخوان عمومی در تلگرام، اینستاگرام، سایت، و جمع‌های کستینگ. آموزشگاه بازیگری، ورکشاپ تئاتر، گروه دانشگاهی، و معلم مستقل: پروفایل دانشجو و دانش‌آموخته، دسترسی زود هنگام، روز پذیرش، و پروژه‌ی همان جمع. جشنواره و اجرای اخیر، از بروشور، صفحه‌ی تئاتر، و اعلام اجرا. بازیگر فعالِ اخیر جلوتر از تعداد خام است.</p></article>
+          <article class="card"><div class="tag" data-en="First hundred">صد نفر اول</div><h3 data-en="Direct invite">دعوت مستقیم</h3><p data-en="A personal invite. Public information is already filled in. They claim it and edit it. After identity or work history is checked, a verified badge or a founding-member badge.">دعوت شخصی. اطلاعات عمومی از قبل پر است. خودش ادعا می‌کند و ویرایش می‌کند. بعد از سنجش هویت یا سابقه‌ی کار، نشان «تأییدشده» یا «عضو بنیان‌گذار».</p></article>
+          <article class="card"><div class="tag" data-en="Theatre demand">تقاضای تئاتر</div><h3 data-en="Where they are found">از کجا پیدا می‌شوند</h3><p data-en="Productions that are running or newly announced: director, producer, assistant, production manager, and the casting decision-maker. A hall manager knows active productions and groups that are forming. A plateau owner is a parallel loop: the project wants a plateau, the plateau wants a group. Production companies and independent producers arrive through founder outreach.">اجراهای جاری یا تازه‌اعلام‌شده: کارگردان، تهیه‌کننده، دستیار، مدیر تولید، و تصمیم‌گیرنده‌ی کست. مدیر سالن اجراهای فعال و گروه‌های در حال شکل را می‌شناسد. صاحب پلاتو حلقه‌ی موازی است: پروژه پلاتو می‌خواهد، پلاتو گروه می‌خواهد. شرکت تولید و تهیه‌کننده‌ی مستقل با ارتباط مؤسس می‌آیند.</p></article>
+          <article class="card"><div class="tag" data-en="Three steps">سه قدم</div><h3 data-en="Seed, activate, match by hand">بذر، فعال‌سازی، مچ دستی</h3><p data-en="The seed is the numbers above. Then the actor invite: claim your profile and get discovered for a real theatre opportunity. The project-owner invite: tell us the role; we will help find relevant actors. The first 20 to 50 matches can be manual, to learn which information predicts a useful match.">بذر همان عددهای بالاست. بعد، دعوت بازیگر: «پروفایلت را ادعا کن و برای فرصت واقعی تئاتر دیده شو.» دعوت صاحب پروژه: «نقش را بگو؛ کمک می‌کنیم بازیگر مرتبط را پیدا کنیم.» تا ۲۰ تا ۵۰ مچ اول می‌تواند دستی باشد، تا معلوم شود چه اطلاعاتی مچ مفید را پیش‌بینی می‌کند.</p></article>
+        </div>
+        <div class="chips">
+          <span class="chip" data-en="Indexed · from a public source">ایندکس‌شده · از منبع عمومی</span>
+          <span class="chip" data-en="Claimed · owned by the person">ادعا‌شده · در اختیار خود شخص</span>
+          <span class="chip" data-en="Phone or email">تلفن یا ایمیل</span>
+          <span class="chip" data-en="Identity">هویت</span>
+          <span class="chip" data-en="Professional credit">سابقه‌ی حرفه‌ای</span>
+          <span class="chip" data-en="Completed collaboration">همکاری انجام‌شده</span>
+        </div>
+        <p class="lead" data-en="An indexed profile must look like a page collected from public sources. Verification layers sit on the claimed profile.">ظاهر پروفایل ایندکس‌شده نباید بگوید این شخص خودش ثبت‌نام کرده. لایه‌های تأیید روی پروفایل ادعا‌شده می‌نشینند.</p>
+        <p class="lead" data-en="Paid ads come after the landing page and the matching loop convert without ads. The first test is narrow: an Instagram ad for theatre actors in Tehran, a return to someone who viewed an opportunity and did not claim a profile, and promotion of one specific real casting call.">تبلیغ پولی بعد از این است که صفحه‌ی فرود و حلقه‌ی مچ، بدون تبلیغ، تبدیل نشان بدهند. آزمون اول باریک است: تبلیغ اینستاگرام برای بازیگر تئاتر در تهران، بازگشت به کسی که فرصت را دیده و پروفایل را ادعا نکرده، و تبلیغ یک کستینگ واقعی مشخص.</p>
+        <p class="lead" data-en="The north-star measure is meaningful actor-and-project matches per week. Beside it: claim rate, profile completeness, search to profile view, invite or application rate, contact made, match made, and collaboration confirmed. Profile count is inventory.">سنجه‌ی شمال تعداد مچ معنادار بازیگر و پروژه در هر هفته است. کنارش: نرخ ادعا، کامل بودن پروفایل، جستجو تا دیده‌شدن پروفایل، نرخ دعوت یا درخواست، تماس برقرارشده، مچ ساخته‌شده، و همکاری تأییدشده. تعداد پروفایل موجودی است.</p>
+      </div>
+    </section>
+
+    <section class="slide" id="gantt" data-title="گانت" data-en-title="Gantt">
+      <div class="frame">
+        <p class="brand" data-en="09">۰۹</p>
+        <h2 data-en="Gantt · Mehr through Esfand">گانت · مهر تا اسفند</h2>
+        <p class="lead" data-en="Each cell is that month's target. Projects and actors are live inventory. Matches are cumulative, and the north star is meaningful matches per week. An empty cell means it has not started. 100 actors is the Azar cell. Esfand stays 200.">عدد هر خانه هدف همان ماه است. پروژه و بازیگر موجودی زنده‌اند. مچ تجمعی است و سنجه‌ی شمال، تعداد مچ معنادار در هفته. خانه‌ی خالی یعنی هنوز شروع نشده. ۱۰۰ بازیگر خانه‌ی آذر است، نه جایگزین اسفند.</p>
+        <div class="chart">
+          <div class="chart-in">
+            <div class="chart-head">
+              <div class="chart-label"></div>
+              <div class="months">
+                <span data-en="Mehr">مهر</span><span data-en="Aban">آبان</span><span data-en="Azar">آذر</span><span data-en="Dey">دی</span><span data-en="Bahman">بهمن</span><span data-en="Esfand">اسفند</span>
+              </div>
+            </div>
+            <div class="chart-row"><div class="chart-label" data-en="Live projects<small>Open roles this month</small>">پروژه‌ی زنده<small>نقش باز همین ماه</small></div><div class="lane"><div class="seg" style="grid-column:1 / span 6"><b data-en="10">۱۰</b><b data-en="15">۱۵</b><b data-en="20">۲۰</b><b data-en="28">۲۸</b><b data-en="35">۳۵</b><b data-en="40">۴۰</b></div></div></div>
+            <div class="chart-row"><div class="chart-label" data-en="Complete actors<small>Presentable profiles</small>">بازیگر کامل<small>پروفایل قابل ارائه</small></div><div class="lane"><div class="seg" style="grid-column:1 / span 6"><b data-en="40">۴۰</b><b data-en="70">۷۰</b><b data-en="100">۱۰۰</b><b data-en="140">۱۴۰</b><b data-en="170">۱۷۰</b><b data-en="200">۲۰۰</b></div></div></div>
+            <div class="chart-row"><div class="chart-label" data-en="Successful matches<small>Cumulative</small>">مچ موفق<small>تجمعی</small></div><div class="lane"><div class="seg hot" style="grid-column:1 / span 6"><b data-en="3">۳</b><b data-en="8">۸</b><b data-en="15">۱۵</b><b data-en="24">۲۴</b><b data-en="32">۳۲</b><b data-en="40">۴۰</b></div></div></div>
+            <div class="chart-row"><div class="chart-label" data-en="Shortlist<small>Under 48 hours</small>">کوتاه‌فهرست<small>زیر ۴۸ ساعت</small></div><div class="lane"><div class="seg mid" style="grid-column:3 / span 4"><b data-en="Start">شروع</b><b data-en="Weekly">هفتگی</b><b data-en="Weekly">هفتگی</b><b data-en="Fixed">ثابت</b></div></div></div>
+            <div class="chart-row"><div class="chart-label" data-en="Repeat projects<small>Wants actors again</small>">پروژه‌ی تکرار<small>دوباره بازیگر می‌خواهد</small></div><div class="lane"><div class="seg mid" style="grid-column:4 / span 3"><b data-en="2">۲</b><b data-en="4">۴</b><b data-en="8">۸</b></div></div></div>
+            <div class="chart-row"><div class="chart-label" data-en="1406 plan<small>Next art, still Tehran</small>">برنامه‌ی ۱۴۰۶<small>هنر بعدی، هنوز تهران</small></div><div class="lane"><div class="seg" style="grid-column:6 / span 1"><b data-en="To be written">نوشته شود</b></div></div></div>
+          </div>
+        </div>
+        <div class="key"><span data-en="<i class=&quot;k1&quot;></i>Inventory"><i class="k1"></i>موجودی</span><span data-en="<i class=&quot;k2&quot;></i>Match"><i class="k2"></i>مچ</span><span data-en="<i class=&quot;k3&quot;></i>Workflow quality"><i class="k3"></i>کیفیت گردش کار</span></div>
+      </div>
+    </section>
+
+    <section class="slide" id="erd" data-title="مدل" data-en-title="Model">
+      <div class="frame">
+        <p class="brand" data-en="10">۱۰</p>
+        <h2 data-en="Data model · MVP proposal">مدل داده · پیشنهاد MVP</h2>
+        <p class="lead" data-en="The theatre core is arranged so music, film, painting, and later arts can arrive through the same PERSON, PROJECT, and ART_CATEGORY. The first success measure is a MATCH in status connected. It reaches collaboration_confirmed when both sides confirm real work.">هسته‌ی تئاتر طوری چیده شده که بعداً موسیقی، سینما، نقاشی، و هنرهای بعدی با همان PERSON، PROJECT، و ART_CATEGORY بیایند. سنجه‌ی موفقیت اول MATCH در وضعیت connected است، و وقتی هر دو طرف کار واقعی را تأیید کنند به collaboration_confirmed می‌رسد.</p>
+        <p class="band" data-en="Match loop">حلقه‌ی مچ</p>
+        <div class="erd">
+          <div class="chain">
+            <div class="col"><article class="ent"><header>PERSON</header><ul><li>source_type</li><li>claimed | indexed_public</li><li>verification_status</li></ul></article></div>
+            <div class="rel"><span>1</span><i></i><span>N</span></div>
+            <div class="col"><article class="ent match"><header>MATCH</header><ul><li>source</li><li>application | invite | manual</li><li>connected → confirmed</li></ul></article></div>
+            <div class="rel"><span>N</span><i></i><span>1</span></div>
+            <div class="col"><article class="ent"><header>OPPORTUNITY</header><ul><li>role_id · number_needed</li><li>paid_status</li><li>open | paused | filled | closed</li></ul></article></div>
+            <div class="rel"><span>N</span><i></i><span>1</span></div>
+            <div class="col">
+              <article class="ent down"><header>ART_CATEGORY</header><ul><li>Theatre → Music → Film → Painting</li></ul></article>
+              <article class="ent"><header>PROJECT</header><ul><li>art_category_id · city</li><li>owner person | organization</li><li>draft → recruiting → active</li></ul></article>
+            </div>
+          </div>
+          <div class="chain sub">
+            <div class="col has">
+              <article class="ent down"><header>PERSON_ROLE</header><ul><li>is_primary · tags</li></ul></article>
+              <article class="ent"><header>ROLE</header><ul><li>Actor, Director, Producer…</li></ul></article>
+            </div>
+            <div class="rel"></div><div class="col"></div><div class="rel"></div>
+            <div class="col has"><div class="pair fork">
+              <article class="ent"><header>APPLICATION</header><ul><li>supply · status</li></ul></article>
+              <article class="ent"><header>INVITE</header><ul><li>demand · status</li></ul></article>
+            </div></div>
+            <div class="rel"></div>
+            <div class="col has"><div class="fork">
+              <article class="ent"><header>CREDIT</header><ul><li>person × project × role</li></ul></article>
+              <article class="ent"><header>RESOURCE_REQUEST</header><ul><li>project → space</li></ul></article>
+            </div></div>
+          </div>
+          <p class="band note" data-en="Space, and the next layer">فضا، و لایه‌ی بعد</p>
+          <div class="base">
+            <article class="ent"><header>ORGANIZATION</header><ul><li>hall | plateau | company</li></ul></article>
+            <div class="rel" style="padding:0"><span>1</span><i></i><span>N</span></div>
+            <article class="ent"><header>RESOURCE</header><ul><li>hall | plateau | studio</li></ul></article>
+            <article class="later-box"><strong>CONTRACT</strong><span data-en="After MVP">بعد از MVP</span></article>
+          </div>
+        </div>
+        <p class="lead" data-en="PERSON connects to ROLE through PERSON_ROLE. APPLICATION and INVITE both reach OPPORTUNITY, and MATCH is built from one of those two, or from a manual match. CREDIT is the person's real history on a project. ORGANIZATION is a hall, plateau, studio, institute, ticket platform, or production company, and RESOURCE is that space's capacity.">PERSON به ROLE از راه PERSON_ROLE وصل است. APPLICATION و INVITE هر دو به OPPORTUNITY می‌رسند و MATCH از یکی از این دو، یا از مچ دستی، ساخته می‌شود. CREDIT سابقه‌ی واقعی شخص در پروژه است. ORGANIZATION سالن، پلاتو، استودیو، آموزشگاه، پلتفرم بلیت، یا شرکت تولید است و RESOURCE ظرفیت همان فضاست.</p>
+        <p class="lead" data-en="source_type keeps an indexed profile separate from a claimed profile, and the page must show a public profile as collected, with membership only after a claim. verification_status in this proposal has three values: unverified, identity_verified, work_verified. Phone, work credit, and a confirmed collaboration are the next layer of that same status.">source_type پروفایل ایندکس‌شده را از پروفایل ادعا‌شده جدا نگه می‌دارد و ظاهر صفحه نباید عضویت را برای پروفایل عمومی القا کند. verification_status در این پیشنهاد سه مقدار دارد: unverified، identity_verified، work_verified. تلفن، سابقه‌ی کار، و همکاری تأییدشده لایه‌ی بعدی همین وضعیت‌اند.</p>
+      </div>
+    </section>
+
+    <section class="slide" id="open" data-title="هنوز باز" data-en-title="Still open">
+      <div class="frame">
+        <p class="brand" data-en="11">۱۱</p>
+        <h2 data-en="Still open">هنوز باز</h2>
+        <div class="asks">
+          <article><h3 data-en="Film and painting">سینما و نقاشی</h3><p data-en="Who is looking for whom.">کی دنبال کیست.</p></article>
+          <article><h3 data-en="Performer">پرفورمر</h3><p data-en="Who offers the performance or the recording.">چه کسی اجرا یا ضبط را می‌دهد.</p></article>
+          <article><h3 data-en="No example yet">نمونه ندارد</h3><p data-en="Ads, consultant, gallery, and video on demand.">تبلیغات، مشاور، گالری، و ویدیوی درخواستی.</p></article>
+          <article><h3 data-en="Still unwritten">هنوز نوشته نشده</h3><p data-en="The difference between story and project, what the tracker contains, and the steps of a safe contract.">تفاوت داستان و پروژه، محتوای پیگیر، و قدم‌های قرارداد امن.</p></article>
+        </div>
+        <p class="lead" style="margin-top:14px" data-en="Ejranow · Theatre · Music · Film · Painting">اجرانو · تئاتر · موسیقی · سینما · نقاشی</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="dock">
+    <button type="button" id="prev" data-en="Previous">قبلی</button>
+    <div class="dots" id="dots"></div>
+    <button type="button" id="next" data-en="Next">بعدی</button>
+  </footer>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+    const label = document.getElementById("label");
+    const now = document.getElementById("now");
+    const all = document.getElementById("all");
+    const meter = document.getElementById("meter");
+    const dots = document.getElementById("dots");
+    let index = 0;
+
+    slides.forEach((slide, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("aria-label", slide.dataset.title);
+      dot.addEventListener("click", () => show(i));
+      dots.appendChild(dot);
+    });
+
+    let lang = "fa";
+
+    function applyLang() {
+      const en = lang === "en";
+      document.documentElement.lang = en ? "en" : "fa";
+      document.documentElement.dir = en ? "ltr" : "rtl";
+      document.querySelectorAll("[data-en]").forEach((el) => {
+        if (!el.dataset.fa) el.dataset.fa = el.innerHTML;
+        el.innerHTML = en ? el.dataset.en : el.dataset.fa;
+      });
+      document.getElementById("lang").textContent = en ? "فا" : "EN";
+      show(index);
+    }
+
+    function show(n) {
+      index = (n + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("on", i === index);
+        if (i === index) slide.scrollTop = 0;
+      });
+      [...dots.children].forEach((dot, i) => dot.classList.toggle("on", i === index));
+      const slide = slides[index];
+      label.textContent = lang === "en" && slide.dataset.enTitle ? slide.dataset.enTitle : slide.dataset.title;
+      now.textContent = lang === "en" ? String(index + 1) : fa(index + 1);
+      all.textContent = lang === "en" ? String(slides.length) : fa(slides.length);
+      meter.style.width = ((index + 1) / slides.length * 100) + "%";
+      history.replaceState(null, "", "#" + slides[index].id);
+    }
+
+    document.getElementById("next").addEventListener("click", () => show(index + 1));
+    document.getElementById("prev").addEventListener("click", () => show(index - 1));
+    document.getElementById("lang").addEventListener("click", () => {
+      lang = lang === "fa" ? "en" : "fa";
+      applyLang();
+    });
+    document.addEventListener("keydown", (event) => {
+      const forward = document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight";
+      const back = document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft";
+      if (event.key === forward || event.key === "PageDown") {
+        event.preventDefault();
+        show(index + 1);
+      } else if (event.key === back || event.key === "PageUp") {
+        event.preventDefault();
+        show(index - 1);
+      } else if (event.key === "Home") show(0);
+      else if (event.key === "End") show(slides.length - 1);
+    });
+
+    let touchX = 0;
+    document.addEventListener("touchstart", (event) => { touchX = event.changedTouches[0].clientX; }, { passive: true });
+    document.addEventListener("touchend", (event) => {
+      const delta = event.changedTouches[0].clientX - touchX;
+      if (Math.abs(delta) < 50) return;
+      show(index + (delta > 0 ? (document.documentElement.dir === "rtl" ? 1 : -1) : (document.documentElement.dir === "rtl" ? -1 : 1)));
+    }, { passive: true });
+
+    const start = slides.findIndex((slide) => slide.id === location.hash.slice(1));
+    show(start >= 0 ? start : 0);
+  </script>
+</body>
+</html>

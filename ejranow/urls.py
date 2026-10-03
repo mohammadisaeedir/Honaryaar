@@ -17,10 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from ejranow.document_views import superuser_document, superuser_documents
 from ejranow.views import about, home
 
 urlpatterns = [
     path("", home, name="home"),
     path("about-us/", about, name="about"),
+    path("admin/documents/", admin.site.admin_view(superuser_documents), name="admin-documents"),
+    path(
+        "admin/documents/<slug:slug>/",
+        admin.site.admin_view(superuser_document),
+        name="admin-document",
+    ),
     path("admin/", admin.site.urls),
 ]

@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+    <div class="overflow-hidden rounded-default border border-base-200 bg-white dark:border-base-800 dark:bg-base-900">
+        <div class="grid grid-cols-[minmax(0,1fr)_9rem] border-b border-base-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-base-500 dark:border-base-800">
+            <span>Name</span>
+            <span>Date</span>
+        </div>
+        {% for document in documents %}
+            <a href="{{ document.url }}" class="grid grid-cols-[minmax(0,1fr)_9rem] items-center border-b border-base-200 px-4 py-3 text-sm font-medium text-base-900 last:border-b-0 hover:bg-base-50 dark:border-base-800 dark:text-base-100 dark:hover:bg-base-800">
+                <span>{{ document.title }}</span>
+                <span class="font-normal text-base-500">{{ document.added|date:"j M Y" }}</span>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

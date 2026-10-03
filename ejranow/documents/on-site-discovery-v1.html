@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>اجرانو · گزارش دیسکاوری</title>
+  <link rel="icon" href="/static/brand/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --aqua: #00B8C8;
+      --red: #E8453C;
+      --amber: #E8A33C;
+      --green: #2CB87E;
+      --ink: #17131A;
+      --paper: #fff;
+      --line: color-mix(in srgb, #17131A 14%, #fff);
+      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+      --wash-red: color-mix(in srgb, #E8453C 10%, #fff);
+      --wash-amber: color-mix(in srgb, #E8A33C 10%, #fff);
+      --wash-green: color-mix(in srgb, #2CB87E 10%, #fff);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; color: var(--ink); background: var(--paper);
+      font-family: Vazirmatn, Tahoma, sans-serif;
+      font-size: 13.5px; line-height: 1.55; overflow: hidden;
+    }
+    button, input { font-family: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(22px, 2.4vw, 28px); line-height: 1.35; font-weight: 700; }
+    h2 { font-size: 20px; line-height: 1.35; font-weight: 700; }
+    h3 { font-size: 14px; font-weight: 700; }
+    .brand { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 0.14em; }
+
+    .top, .dock { position: fixed; left: 0; right: 0; z-index: 5; background: #fff; }
+    .top {
+      top: 0; height: 56px; gap: 14px;
+      display: flex; align-items: center;
+      padding: 0 20px; border-bottom: 1px solid var(--line);
+    }
+    .lockup { display: flex; align-items: center; }
+    .lockup img { height: 34px; width: auto; display: block; }
+    html[lang="en"] .logo-fa, html[lang="fa"] .logo-en { display: none; }
+    .top .name { flex: 1; text-align: center; font-weight: 600; }
+    .count { font-weight: 700; font-variant-numeric: normal; font-family: Outfit, Vazirmatn, sans-serif; }
+    .meter { position: fixed; top: 56px; left: 0; right: 0; height: 3px; background: var(--line); z-index: 6; }
+    .lang { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .lang:hover { background: var(--wash); border-color: var(--aqua); }
+    .meter span { display: block; height: 100%; width: 0; background: var(--aqua); transition: width .35s ease; }
+    .dock {
+      bottom: 0; height: 56px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 18px; border-top: 1px solid var(--line);
+    }
+    .dock button {
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      border-radius: 999px; padding: 7px 16px; font-weight: 700; cursor: pointer;
+    }
+    .dock button:hover { border-color: var(--aqua); background: var(--wash); }
+    #next { background: var(--ink); color: #fff; border-color: var(--ink); }
+    #next:hover { background: var(--aqua); color: var(--ink); border-color: var(--aqua); }
+    .dots { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
+    .dots button { width: 7px; height: 7px; padding: 0; border-radius: 99px; border: 0; background: var(--line); }
+    .dots button.on { background: var(--aqua); width: 18px; }
+
+    .stage { height: 100dvh; padding: 68px 0 64px; }
+    .slide { display: none; height: 100%; overflow: auto; }
+    .slide.on { display: flex; flex-direction: column; }
+    .frame { width: min(1040px, calc(100% - 48px)); margin-inline: auto; margin-block: auto; padding: 8px 0 4px; }
+    .lead { max-width: 46rem; margin-top: 6px; font-size: 13.5px; }
+    .lead + .lead { margin-top: 8px; }
+
+    .cover { display: grid; gap: 28px; align-content: start; }
+    .hero { display: grid; gap: 14px; }
+    .lockup.big { gap: 16px; align-items: center; }
+    .lockup.big img { height: 84px; }
+    .tag { margin-top: 6px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+    .tag.latin { margin-top: 2px; font-family: Outfit, Vazirmatn, sans-serif; font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+    .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 16px; border-top: 1px solid var(--line); }
+    .facts div { padding: 12px 0 2px; padding-inline-end: 14px; }
+    .facts div + div { border-inline-start: 1px solid var(--line); padding-inline-start: 14px; }
+    .facts span { display: block; font-size: 11px; font-weight: 700; color: var(--aqua); letter-spacing: 0.04em; }
+    .facts strong { font-size: 14px; font-weight: 700; }
+
+    .quote {
+      background: var(--wash); border-inline-start: 3px solid var(--aqua);
+      border-radius: 12px; padding: 12px 14px; margin: 12px 0 4px; font-weight: 700; font-size: 15px;
+    }
+    .quote.pain {
+      background: var(--wash-red); border-inline-start-color: var(--red);
+    }
+    .quote small { display: block; margin-top: 6px; font-weight: 500; font-size: 13px; }
+
+    .nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .nums.c3 { grid-template-columns: repeat(3, 1fr); }
+    .nums article { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
+    .nums article.hi { background: var(--wash); border-color: transparent; }
+    .nums strong { display: block; font-size: 26px; line-height: 1; font-weight: 700; color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; }
+    .nums .red { color: var(--red); }
+    .nums .amber { color: var(--amber); }
+    .nums span { display: block; margin-top: 8px; font-size: 12.5px; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .card { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
+    .card .tag { font-size: 11px; font-weight: 700; color: var(--aqua); letter-spacing: 0.04em; margin-top: 0; }
+    .card p { margin-top: 4px; font-size: 13px; line-height: 1.5; }
+
+    .board { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: auto; }
+    .board table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    .board th, .board td { text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+    .board th { background: var(--ink); color: #fff; font-size: 12px; font-weight: 600; }
+    .board tr:last-child td { border-bottom: 0; }
+    .board td:first-child { font-weight: 700; width: 18%; }
+    html[dir="ltr"] .board th, html[dir="ltr"] .board td { text-align: left; }
+
+    .bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+    .feat { border: 1px solid var(--line); border-radius: 16px; padding: 14px 14px 12px; background: #fff; }
+    .feat.pain-card { border-color: var(--red); border-width: 1.5px; }
+    .feat b { display: block; margin: 0 0 6px; background: none; border-radius: 0; font-family: Outfit, Vazirmatn, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: var(--aqua); }
+    .feat b.rb { color: var(--red); }
+    .feat b.gb { color: var(--green); }
+    .feat strong { display: block; }
+    .feat span { font-size: 13px; line-height: 1.5; }
+
+    .cycle {
+      margin-top: 14px; border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px 20px; background: var(--wash-red); position: relative;
+    }
+    .cycle-title { font-weight: 700; font-size: 14px; color: var(--red); margin-bottom: 12px; }
+    .cycle-ring { display: flex; flex-wrap: wrap; gap: 0; align-items: center; justify-content: center; }
+    .cycle-node {
+      background: #fff; border: 1.5px solid var(--red); border-radius: 12px;
+      padding: 8px 12px; font-size: 12.5px; font-weight: 600; text-align: center;
+      max-width: 160px; flex: none;
+    }
+    .cycle-arrow { font-size: 18px; color: var(--red); padding: 0 6px; font-weight: 700; flex: none; }
+    .cycle-break {
+      background: var(--wash-green); border: 2px solid var(--green); border-radius: 12px;
+      padding: 10px 14px; margin-top: 14px; font-weight: 700; font-size: 13px; color: var(--green);
+      text-align: center;
+    }
+
+    .ref { margin-top: 10px; font-size: 12px; color: color-mix(in srgb, var(--ink) 60%, #fff); }
+    .ref a { color: var(--aqua); text-decoration: none; }
+    .ref a:hover { text-decoration: underline; }
+
+    .personas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .persona { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; }
+    .persona h3 { display: flex; align-items: center; gap: 8px; }
+    .persona .ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--wash); flex: none; }
+    .persona .ico svg { width: 16px; height: 16px; }
+    .persona .pain-list { margin-top: 8px; padding: 0; list-style: none; }
+    .persona .pain-list li { font-size: 13px; padding: 4px 0; border-top: 1px solid var(--line); }
+    .persona .pain-list li:first-child { border-top: 0; }
+    .persona .pain-list li b { color: var(--red); font-family: Outfit, Vazirmatn, sans-serif; font-size: 11px; margin-inline-end: 4px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { border-radius: 999px; padding: 5px 12px; font-weight: 600; font-size: 12.5px; background: var(--wash); color: var(--ink); }
+    .chip.red { background: var(--wash-red); color: var(--red); }
+    .chip.green { background: var(--wash-green); color: var(--green); }
+
+    .path { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .path span {
+      border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-weight: 600; font-size: 12.5px; background: #fff;
+    }
+    .path span.now { background: var(--aqua); border-color: var(--aqua); color: var(--ink); }
+    .path b { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; margin-inline-end: 4px; }
+
+    .tp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+    .tp { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #fff; }
+    .tp .num { font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 11px; color: var(--aqua); letter-spacing: 0.08em; }
+    .tp h3 { margin-top: 2px; }
+    .tp p { margin-top: 4px; font-size: 13px; }
+
+    @media (max-width: 900px) {
+      .lockup img { height: 28px; }
+      .lockup.big { flex-wrap: wrap; }
+      .lockup.big img { height: 64px; }
+      .facts, .bento, .split, .nums, .personas, .tp-grid { grid-template-columns: 1fr; }
+      .nums.c3 { grid-template-columns: 1fr; }
+      .facts div + div { border-inline-start: 0; padding-inline-start: 0; }
+      .cycle-ring { flex-direction: column; }
+      .cycle-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="lockup">
+      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
+      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+    </div>
+    <span class="name" id="label">دیسکاوری</span>
+    <button type="button" id="lang" class="lang">EN</button>
+    <span class="count"><b id="now">۱</b> / <span id="all">۱۲</span></span>
+  </header>
+  <div class="meter" aria-hidden="true"><span id="meter"></span></div>
+
+  <main class="stage">
+
+    <!-- SLIDE 1: COVER -->
+    <section class="slide on" id="cover" data-title="دیسکاوری" data-en-title="Discovery">
+      <div class="frame cover">
+        <div class="hero">
+          <div class="lockup big">
+            <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
+            <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+            <div>
+              <p class="tag" data-en="Discovery Report · Theatre · Tehran">گزارش دیسکاوری · تئاتر · تهران</p>
+              <p class="tag latin" lang="en" dir="ltr">Field Research × Market Data</p>
+            </div>
+          </div>
+          <h1 data-en="What we heard, what the data says, and what we build from it.">چی شنیدیم، دیتا چی میگه، و از اینجا چی می‌سازیم.</h1>
+          <p class="lead" data-en="15 unbiased interviews at Nofel Loshato theatre, crossed with national statistics. No product idea was shared. We only asked about their problems.">۱۵ مصاحبه‌ی بدون سوگیری در سالن نوفل لوشاتو، ترکیب با آمار ملی. ایده‌ی محصول مطرح نشد. فقط از دغدغه‌ها پرسیدیم.</p>
+          <div class="facts">
+            <div><span data-en="Interviews">مصاحبه</span><strong data-en="15 people">۱۵ نفر</strong></div>
+            <div><span data-en="Crew">عوامل اجرا</span><strong data-en="7 from current show">۷ نفر از اجرای جاری</strong></div>
+            <div><span data-en="Artists">هنرمندان</span><strong data-en="8 artists nearby">۸ نفر از اطراف</strong></div>
+            <div><span data-en="Method">روش</span><strong data-en="Open questions, no product pitch">سؤال باز، بدون معرفی محصول</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: THREE PAINS -->
+    <section class="slide" id="pains" data-title="سه درد" data-en-title="Three pains">
+      <div class="frame">
+        <p class="brand" data-en="01">۰۱</p>
+        <h2 data-en="Three pains emerged from the field">سه درد از میدان بیرون آمد</h2>
+        <p class="lead" data-en="Every single interviewee touched at least one of these. They don't know each other. They said the same things.">هر ۱۵ نفر حداقل به یکی از اینها اشاره کردند. همدیگر را نمی‌شناسند. حرف‌هایشان یکی بود.</p>
+        <div class="bento">
+          <article class="feat pain-card">
+            <b class="rb" data-en="PAIN 1">درد ۱</b>
+            <strong data-en="Contract chaos">بی‌قراردادی</strong>
+            <span data-en="Mostly verbal. Written ones unenforceable. Actors don't know when the run ends, can't plan the next job, and payments are hidden.">اکثراً شفاهی. مکتوبش هم قابل استناد نیست. بازیگر نمی‌داند اجرا کی تمام می‌شود، نمی‌تواند کار بعدی را ببندد، و پرداخت‌ها پنهان است.</span>
+          </article>
+          <article class="feat pain-card">
+            <b class="rb" data-en="PAIN 2">درد ۲</b>
+            <strong data-en="Work scarcity & quality spiral">کمبود کار و مارپیچ کیفیت</strong>
+            <span data-en="A known actor gets max 6 shows a year. Unknown ones far fewer. Everyone is forced into low-quality work. The system rewards quantity over art.">بازیگر شناخته‌شده حداکثر سالی ۶ تئاتر. ناشناخته‌ها به‌مراتب کمتر. همه مجبور به کار ضعیف‌اند. سیستم تعداد را پاداش می‌دهد، نه هنر را.</span>
+          </article>
+          <article class="feat pain-card">
+            <b class="rb" data-en="PAIN 3">درد ۳</b>
+            <strong data-en="No system, no tracking">بی‌نظمی و بی‌سیستمی</strong>
+            <span data-en="Schedules, rehearsals, permits, posters, PR, ticketing — all in chat. Nothing is tracked. People with multiple projects drown.">برنامه، تمرین، مجوز، پوستر، روابط عمومی، بلیت‌فروشی — همه در چت. هیچ‌چیز پیگیری نمی‌شود. آدم‌های چندپروژه‌ای غرق می‌شوند.</span>
+          </article>
+        </div>
+        <div class="quote pain" data-en="Those who currently have a show on stage feel less anxious. But the moment the run ends, they say: a month ago I was fine, now I'm back in the swamp.<small>Observation from both groups — crew and independent artists</small>">
+          کسی که همین الان اجرا دارد دغدغه‌ی کمتری حس می‌کند. اما لحظه‌ای که اجرا تمام شود: «یک ماه پیش حالم خوب بود، الان دوباره وارد منجلاب شدم.»
+          <small>مشاهده از هر دو گروه — عوامل اجرا و هنرمندان مستقل</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: PAIN 1 DEEP DIVE — CONTRACT -->
+    <section class="slide" id="contract" data-title="درد ۱: قرارداد" data-en-title="Pain 1: Contract">
+      <div class="frame">
+        <p class="brand" data-en="02">۰۲</p>
+        <h2 data-en="Pain 1 · Contract chaos and payment opacity">درد ۱ · بی‌قراردادی و ناشفافیت پرداخت</h2>
+        <div class="split">
+          <article class="card">
+            <div class="tag" data-en="What they said">چی گفتند</div>
+            <h3 data-en="No contract, or useless contract">قرارداد نیست، یا بی‌فایده است</h3>
+            <p data-en="Almost all agreements are verbal. Even when written, extensions and early cancellations make them meaningless. A show can be extended indefinitely or cut short overnight.">تقریباً تمام توافق‌ها شفاهی‌اند. حتی وقتی مکتوب باشد، تمدید و کنسل زودهنگام آن را بی‌معنا می‌کند. اجرا ممکن است بدون مرز تمدید شود یا یک‌شبه قطع شود.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="The real problem">مسئله‌ی واقعی</div>
+            <h3 data-en="Can't plan the next job">نمی‌تواند کار بعدی را ببندد</h3>
+            <p data-en="An actor with another offer doesn't know when the current run ends. They can't commit to the next project. Both sides lose. The new project can't plan either.">بازیگری که پیشنهاد دیگر دارد نمی‌داند اجرای فعلی کی تمام می‌شود. نه می‌تواند کار بعدی را قول بدهد، نه پروژه‌ی جدید می‌تواند حساب کند.</p>
+          </article>
+        </div>
+        <div class="split" style="margin-top:10px">
+          <article class="card">
+            <div class="tag" data-en="Payment">پرداخت</div>
+            <h3 data-en="Months of free work, then maybe you get paid">ماه‌ها کار رایگان، بعد شاید پول</h3>
+            <p data-en="Rehearsal months plus performance months must all finish before any payment. The producer decides when to pay. No contract protects the timeline.">ماه‌های تمرین به‌علاوه‌ی ماه‌های اجرا باید تمام شود تا پرداخت انجام شود. تهیه‌کننده تصمیم می‌گیرد کی بپردازد. هیچ قراردادی از زمان‌بندی محافظت نمی‌کند.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Hidden share">سهم پنهان</div>
+            <h3 data-en="Famous actors get box office %, but the number is secret">بازیگر معروف سهمش درصد فروش است، اما عدد مخفی</h3>
+            <p data-en="Only the director and producer know the real ticket sales. Revenue share is invisible to the rest of the crew. There is no third-party verification.">فقط کارگردان و تهیه‌کننده فروش واقعی بلیت را می‌دانند. سهم درآمد برای بقیه‌ی عوامل نامرئی است. هیچ تأیید ثالثی وجود ندارد.</p>
+          </article>
+        </div>
+        <div class="chips">
+          <span class="chip red" data-en="No end date">تاریخ پایان نامعلوم</span>
+          <span class="chip red" data-en="Delayed payment">پرداخت معوق</span>
+          <span class="chip red" data-en="Hidden revenue">درآمد مخفی</span>
+          <span class="chip red" data-en="No enforcement">ضمانت اجرا ندارد</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: PAIN 2 DEEP DIVE — SCARCITY -->
+    <section class="slide" id="scarcity" data-title="درد ۲: کمبود" data-en-title="Pain 2: Scarcity">
+      <div class="frame">
+        <p class="brand" data-en="03">۰۳</p>
+        <h2 data-en="Pain 2 · Work scarcity and the quality death spiral">درد ۲ · کمبود کار و مارپیچ مرگ کیفیت</h2>
+        <div class="nums c3">
+          <article class="hi"><strong class="red" data-en="~6">~۶</strong><span data-en="Max shows per year for a known theatre actor. Each ~1.5 months on stage. Rest of the year: unemployed.">حداکثر تئاتر در سال برای بازیگر شناخته‌شده. هرکدام ~۱.۵ ماه. بقیه‌ی سال: بیکاری.</span></article>
+          <article><strong class="red" data-en="< 6">< ۶</strong><span data-en="Unknown actors get far fewer shows. Some get 1–2 per year, or none.">بازیگران ناشناخته به‌مراتب کمتر. برخی سالی ۱–۲ کار، یا هیچ.</span></article>
+          <article><strong class="amber" data-en="0">۰</strong><span data-en="Chance of being discovered if you don't already know someone. Good work goes to known faces.">شانس دیده شدن اگر کسی را نشناسی. کارهای خوب با چهره‌های آشنا پیش می‌رود.</span></article>
+        </div>
+        <div class="quote pain" data-en="Most good projects go forward with people who already know each other. The director and producer prefer known actors — less risk, less onboarding time, and they assume they sell more tickets.<small>Repeated by multiple interviewees</small>">
+          اکثر کارهای خوب با آدم‌های از قبل شناخته‌شده پیش می‌روند. کارگردان و تهیه‌کننده بازیگر آشنا را ترجیح می‌دهند — ریسک کمتر، آنبورد کوتاه‌تر، و فرض بر فروش بیشتر.
+          <small>تکرار شده توسط چند مصاحبه‌شونده</small>
+        </div>
+        <p class="lead" data-en="Where do unknown actors find work today?">بازیگران ناشناخته الان کار را از کجا پیدا می‌کنند؟</p>
+        <div class="split">
+          <article class="card">
+            <h3 data-en="Hanging around plateaus">گشت‌وگذار در پلاتو</h3>
+            <p data-en="They visit rehearsal spaces physically, hoping a director will notice them. This is the primary discovery channel for newcomers.">حضوری به فضاهای تمرین می‌روند، به امید اینکه کارگردانی آنها را ببیند. این کانال اصلی دیسکاوری تازه‌واردهاست.</p>
+          </article>
+          <article class="card">
+            <h3 data-en="Telegram & Instagram of known people">تلگرام و اینستاگرام آدم‌های شناخته‌شده</h3>
+            <p data-en="Casting calls are shared by directors and producers in their personal channels. If you don't follow the right people, you don't see the opportunity.">فراخوان‌ها در کانال‌های شخصی کارگردانان و تهیه‌کنندگان منتشر می‌شود. اگر آدم درست را دنبال نکنی، فرصت را نمی‌بینی.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: QUALITY SPIRAL -->
+    <section class="slide" id="spiral" data-title="مارپیچ کیفیت" data-en-title="Quality spiral">
+      <div class="frame">
+        <p class="brand" data-en="04">۰۴</p>
+        <h2 data-en="The vicious cycle — everyone loses">چرخه‌ی معیوب — همه بازنده‌اند</h2>
+        <p class="lead" data-en="Every link in this chain acts rationally for themselves. But the system produces a race to the bottom. The audience complains about quality, but the structure forces low quality.">هر حلقه‌ی این زنجیر برای خودش عقلانی رفتار می‌کند. اما سیستم یک مسابقه‌ی سقوط تولید می‌کند. تماشاگر از کیفیت شکایت می‌کند، اما ساختار کیفیت پایین را اجبار می‌کند.</p>
+        <div class="cycle">
+          <div class="cycle-title" data-en="The cycle that nobody chose">چرخه‌ای که هیچ‌کس انتخابش نکرد</div>
+          <div class="cycle-ring">
+            <div class="cycle-node" data-en="Venue has empty nights">سالن شب‌های خالی دارد</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Only wants sellable shows">فقط اجرای پرفروش می‌خواهد</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Producer follows low taste">تهیه‌کننده با سلیقه‌ی ضعیف می‌سازد</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Actor forced into weak work">بازیگر مجبور به کار ضعیف</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Quality drops">کیفیت افت می‌کند</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Audience complains">تماشاگر شکایت می‌کند</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Demand doesn't grow">تقاضا رشد نمی‌کند</div>
+            <div class="cycle-arrow">←</div>
+            <div class="cycle-node" data-en="Venue stays empty">سالن خالی می‌ماند</div>
+          </div>
+          <div class="cycle-break" data-en="Ejranow's entry point: break the cycle by connecting quality actors to quality projects faster than personal networks.">نقطه‌ی ورود اجرانو: شکستن چرخه با وصل کردن بازیگر باکیفیت به پروژه‌ی باکیفیت، سریع‌تر از شبکه‌ی شخصی.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: PAIN 3 — NO SYSTEM -->
+    <section class="slide" id="nosystem" data-title="درد ۳: بی‌نظمی" data-en-title="Pain 3: No system">
+      <div class="frame">
+        <p class="brand" data-en="05">۰۵</p>
+        <h2 data-en="Pain 3 · No project system, everything in chat">درد ۳ · بی‌سیستمی، همه‌چیز در چت</h2>
+        <div class="split">
+          <article class="card">
+            <div class="tag" data-en="Coordination">هماهنگی</div>
+            <h3 data-en="All in Telegram group chats">همه در گروه تلگرام</h3>
+            <p data-en="Rehearsal schedules, permit status, poster coordination, ticketing setup, PR plans — all live in Telegram. Nothing is tracked. Nobody knows what was said when or whether it got done.">برنامه‌ی تمرین، وضعیت مجوز، هماهنگی پوستر، راه‌اندازی بلیت‌فروشی، برنامه‌ی روابط عمومی — همه در تلگرام. پیگیری وجود ندارد. کسی نمی‌داند چه زمانی چه گفته شده و آیا انجام شده.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Multi-project people">آدم‌های چندپروژه‌ای</div>
+            <h3 data-en="Directors and assistants drown">کارگردان‌ها و دستیاران غرق می‌شوند</h3>
+            <p data-en="People running multiple productions at once have no way to separate timelines, responsibilities, or deadlines. The chaos produces demotivation and poor-quality output.">کسانی که چند تولید را هم‌زمان پیش می‌برند راهی برای جدا کردن زمان‌بندی، مسئولیت، و ددلاین ندارند. بی‌نظمی بی‌انگیزگی و خروجی بی‌کیفیت تولید می‌کند.</p>
+          </article>
+        </div>
+        <div class="split" style="margin-top:10px">
+          <article class="card">
+            <div class="tag" data-en="Hidden workflows">فلوهای مخفی</div>
+            <h3 data-en="Business flows are opaque">فلوهای بیزنس شفاف نیست</h3>
+            <p data-en="Getting a performance permit, designing a poster, setting up ticketing with Tiwal or Cinematicket, running PR — these are repeating workflows with no template or checklist. Every project reinvents the process.">گرفتن مجوز اجرا، طراحی پوستر، راه‌اندازی بلیت‌فروشی با تیوال یا سینماتیکت، روابط عمومی — فلوهای تکراری‌اند که قالب یا چک‌لیست ندارند. هر پروژه از صفر اختراع می‌کند.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Consequence">پیامد</div>
+            <h3 data-en="Chaos feeds low quality">بی‌نظمی تغذیه‌کننده‌ی بی‌کیفیتی</h3>
+            <p data-en="When nobody tracks tasks, deadlines, and payments, people feel everything is out of control. Motivation drops. The output suffers. The cycle accelerates.">وقتی کسی وظایف، ددلاین، و پرداخت‌ها را پیگیری نمی‌کند، حس بی‌کنترلی غالب می‌شود. انگیزه افت می‌کند. خروجی ضعیف می‌شود. چرخه تسریع می‌شود.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: MARKET DATA -->
+    <section class="slide" id="data" data-title="آمار بازار" data-en-title="Market data">
+      <div class="frame">
+        <p class="brand" data-en="06">۰۶</p>
+        <h2 data-en="Market data · Iran theatre 1398–1402">آمار بازار · تئاتر ایران ۱۳۹۸–۱۴۰۲</h2>
+        <p class="lead" data-en="Official data from Ministry of Culture (Performing Arts Office). Pre-1401 numbers are estimates.">داده‌های رسمی وزارت فرهنگ و ارشاد (اداره‌ی هنرهای نمایشی). ارقام قبل از ۱۴۰۱ برآورد هستند.</p>
+        <div class="board">
+          <table>
+            <thead><tr>
+              <th data-en="Year">سال</th>
+              <th data-en="Shows">عنوان نمایش</th>
+              <th data-en="Performances">نوبت اجرا</th>
+              <th data-en="Viewers">تماشاگر</th>
+              <th data-en="Venues">سالن فعال</th>
+              <th data-en="Tehran venues">سالن تهران</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>۱۳۹۸</td><td data-en="~5,200">~۵,۲۰۰</td><td data-en="N/A">–</td><td data-en="~2.5M">~۲.۵ م</td><td>–</td><td>–</td></tr>
+              <tr><td>۱۳۹۹</td><td data-en="~1,200 (COVID)">~۱,۲۰۰ (کرونا)</td><td data-en="Very low">خیلی کم</td><td data-en="~800K">~۸۰۰ هزار</td><td>–</td><td>–</td></tr>
+              <tr><td>۱۴۰۰</td><td data-en="~3,500">~۳,۵۰۰</td><td>–</td><td data-en="~1.6M">~۱.۶ م</td><td>–</td><td>–</td></tr>
+              <tr><td>۱۴۰۱</td><td data-en="~4,632">~۴,۶۳۲</td><td data-en="~45,138">~۴۵,۱۳۸</td><td data-en="~2.4M">~۲.۴ م</td><td data-en="~480">~۴۸۰</td><td data-en="~71">~۷۱</td></tr>
+              <tr><td style="font-weight:700;color:var(--aqua)">۱۴۰۲</td><td data-en="5,421">۵,۴۲۱</td><td data-en="52,753">۵۲,۷۵۳</td><td data-en="3,103,824">۳,۱۰۳,۸۲۴</td><td data-en="506">۵۰۶</td><td data-en="71">۷۱</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ref" data-en="Source: Ministry of Culture, Performing Arts Office annual report 1402 · honaronline.ir reports"><a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-108/190475" target="_blank">منبع: گزارش سالانه‌ی اداره‌ی هنرهای نمایشی ۱۴۰۲ · هنرآنلاین</a></div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: DATA × DISCOVERY -->
+    <section class="slide" id="cross" data-title="دیتا × دیسکاوری" data-en-title="Data × Discovery">
+      <div class="frame">
+        <p class="brand" data-en="07">۰۷</p>
+        <h2 data-en="Data confirms the field — with numbers">دیتا میدان را تأیید می‌کند — با عدد</h2>
+        <div class="nums">
+          <article class="hi"><strong data-en="9.7">۹.۷</strong><span data-en="Average nights per show. 52,753 performances ÷ 5,421 shows. Confirms: short runs, unpredictable extensions, sudden cancellations.">میانگین شب اجرا به ازای هر نمایش. ÷۵۲,۷۵۳ ÷ ۵,۴۲۱. تأیید: دوره‌ی اجرا کوتاه، تمدید نامعلوم، کنسل ناگهانی.</span></article>
+          <article><strong data-en="59">۵۹</strong><span data-en="Average viewers per performance. 3.1M ÷ 52,753. Most shows play to near-empty halls. Demand exists but isn't matched.">میانگین تماشاگر در هر اجرا. ÷۳.۱م ÷ ۵۲,۷۵۳. اکثر اجراها با سالن نیمه‌خالی اجرا می‌شوند.</span></article>
+          <article><strong data-en="~160">~۱۶۰</strong><span data-en="Nights a Tehran venue is occupied per year. 846 shows × ~10 nights ÷ 71 venues. Over half the year: empty.">شب اشغال هر سالن تهران در سال. ÷۸۴۶ × ÷~۱۰ ÷ ۷۱. بیش از نصف سال: خالی.</span></article>
+          <article><strong data-en="+29%">+۲۹٪</strong><span data-en="Year-over-year growth 1401→1402. The market is expanding. The problems are not from shrinkage — they're structural.">رشد سال‌به‌سال ۱۴۰۱ به ۱۴۰۲. بازار در حال رشد است. مشکلات از کوچکی نیست — ساختاری‌اند.</span></article>
+        </div>
+        <div class="quote" data-en="The market is growing at 29% per year but the structure is broken. More shows, more actors, more venues — but nobody can find each other efficiently, nobody has a contract, and nobody can plan.">بازار سالی ۲۹٪ رشد می‌کند اما ساختار خراب است. نمایش بیشتر، بازیگر بیشتر، سالن بیشتر — اما کسی نمی‌تواند به‌درستی دیگری را پیدا کند، کسی قرارداد ندارد، و کسی نمی‌تواند برنامه بریزد.</div>
+        <div class="split">
+          <article class="card">
+            <div class="tag" data-en="Tehran concentration">تمرکز تهران</div>
+            <p data-en="71 venues with 29,607 seats in Tehran (27% of national capacity). 846 shows in 9 months. Tehran is the starting market — dense enough for an MVP.">۷۱ سالن با ۲۹,۶۰۷ صندلی در تهران (۲۷٪ ظرفیت ملی). ۸۴۶ نمایش در ۹ ماه. تهران بازار شروع — به‌اندازه‌ی کافی متمرکز برای MVP.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Revenue signal">سیگنال درآمد</div>
+            <p data-en="Over 2,680B tomans in ticket sales reported for state venues alone (early 1404 data). Money flows in this market — the problem is structure, not willingness to spend.">بیش از ۲,۶۸۰ میلیارد تومان فروش بلیت فقط سالن‌های دولتی (داده‌ی اوایل ۱۴۰۴). پول در این بازار جریان دارد — مشکل ساختار است، نه تمایل به خرج.</p>
+          </article>
+        </div>
+        <div class="ref" data-en="Sources: honaronline.ir — multiple reports on Teatr-e Shahr and national theatre stats"><a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/188250" target="_blank">منبع: هنرآنلاین — گزارش فروش تئاتر شهر</a> · <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/181483" target="_blank">گزارش سیندرلا</a></div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: CURRENT LANDSCAPE -->
+    <section class="slide" id="landscape" data-title="بازیگران فعلی" data-en-title="Current players">
+      <div class="frame">
+        <p class="brand" data-en="08">۰۸</p>
+        <h2 data-en="Current landscape · what exists, what's broken">فضای فعلی · چی هست، چی خراب است</h2>
+        <div class="personas">
+          <article class="persona">
+            <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg></span><span data-en="Tiwal & Cinematicket">تیوال و سینماتیکت</span></h3>
+            <ul class="pain-list">
+              <li data-en="Ticketing platforms, not matching or career tools">پلتفرم بلیت‌فروشی، نه ابزار مچ یا کارنامه</li>
+              <li><b data-en="PAIN">درد</b> <span data-en="Described by interviewees as 'mafia-like': take money for promotion but choose winners internally">مصاحبه‌شوندگان گفتند «حالت مافیایی» دارند: پول تبلیغ می‌گیرند ولی خودشان تشخیص می‌دهند کدام اجرا بالا برود</span></li>
+              <li><b data-en="PAIN">درد</b> <span data-en="Sometimes use coercion with venue managers to get better terms for themselves">گاهی با سالن‌دارها به‌زور برخورد می‌کنند تا اوضاع به نفع خودشان شود</span></li>
+              <li data-en="They own ticket distribution, not the professional identity of artists">مالک توزیع بلیت‌اند، نه هویت حرفه‌ای هنرمند</li>
+            </ul>
+          </article>
+          <article class="persona">
+            <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-en="Personal networks">شبکه‌ی شخصی</span></h3>
+            <ul class="pain-list">
+              <li data-en="The primary way work is found and distributed today">روش اصلی پیدا کردن و توزیع کار امروز</li>
+              <li data-en="Directors and producers cast from people they already know">کارگردان‌ها و تهیه‌کنندگان از آدم‌های آشنا کست می‌کنند</li>
+              <li><b data-en="PAIN">درد</b> <span data-en="Newcomers have near-zero chance of discovery">تازه‌واردها شانس دیده‌شدن تقریباً صفر دارند</span></li>
+              <li><b data-en="PAIN">درد</b> <span data-en="Quality actors outside the circle never get considered">بازیگران باکیفیت بیرون از حلقه هرگز بررسی نمی‌شوند</span></li>
+            </ul>
+          </article>
+          <article class="persona">
+            <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h3l3-9 4 18 3-9h5"/></svg></span><span data-en="Telegram & Instagram">تلگرام و اینستاگرام</span></h3>
+            <ul class="pain-list">
+              <li data-en="Casting calls posted in personal channels of known directors">فراخوان‌ها در کانال‌های شخصی کارگردانان شناخته‌شده</li>
+              <li data-en="No structure, no search, no filter, no tracking">بدون ساختار، بدون جستجو، بدون فیلتر، بدون پیگیری</li>
+              <li><b data-en="PAIN">درد</b> <span data-en="You only see opportunities from people you follow">فقط فرصت‌های آدم‌هایی که دنبال می‌کنی را می‌بینی</span></li>
+            </ul>
+          </article>
+          <article class="persona">
+            <h3><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></span><span data-en="Nothing">هیچی</span></h3>
+            <ul class="pain-list">
+              <li data-en="No professional identity platform for Iranian artists exists">هیچ پلتفرم هویت حرفه‌ای برای هنرمندان ایرانی وجود ندارد</li>
+              <li data-en="No matching tool between actors and projects">ابزار مچ بین بازیگر و پروژه وجود ندارد</li>
+              <li data-en="No project tracker for productions">ابزار پیگیری پروژه برای تولیدات وجود ندارد</li>
+              <li data-en="No contract infrastructure for theatre">زیرساخت قرارداد برای تئاتر وجود ندارد</li>
+            </ul>
+          </article>
+        </div>
+        <div class="quote" data-en="Like before Snapp existed. People could get from A to B. But they were coping, not thriving. The value isn't replacing the old channel — it's creating a new equilibrium.">مثل قبل از اسنپ. آدم‌ها می‌توانستند از مبدأ به مقصد برسند. اما داشتند تحمل می‌کردند، نه رشد. ارزش جایگزین کردن کانال قدیم نیست — ساختن تعادل جدید است.</div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: PRODUCT STRATEGY -->
+    <section class="slide" id="strategy" data-title="استراتژی" data-en-title="Strategy">
+      <div class="frame">
+        <p class="brand" data-en="09">۰۹</p>
+        <h2 data-en="Product strategy · what the discovery tells us to build">استراتژی محصول · دیسکاوری چه چیزی را فرمان می‌دهد</h2>
+        <div class="bento">
+          <article class="feat"><b class="gb" data-en="FIRST">اول</b><strong data-en="Match, not contract">مچ، نه قرارداد</strong><span data-en="Contract is the loudest pain but the hardest to solve first. Match is the unlock: connect the right actor to the right project. Once trust exists, contract becomes the natural next step.">قرارداد بلندترین درد است اما سخت‌ترین برای حل اول. مچ قفل‌گشاست: بازیگر درست را به پروژه‌ی درست وصل کن. وقتی اعتماد ساخته شد، قرارداد قدم بعدی طبیعی است.</span></article>
+          <article class="feat"><b class="gb" data-en="WEDGE">گوه</b><strong data-en="Visibility for actors, speed for projects">دیده‌شدن برای بازیگر، سرعت برای پروژه</strong><span data-en="Supply comes for visibility: a lasting profile plus real opportunities. Demand comes for speed: find the right actor without relying on personal contacts. Both sides' discovery problem is one problem.">عرضه برای دیده‌شدن می‌آید: پروفایل ماندگار و فرصت واقعی. تقاضا برای سرعت می‌آید: بازیگر درست بدون وابستگی به آشنایی. مشکل دیسکاوری هر دو طرف یک مشکل است.</span></article>
+          <article class="feat"><b class="gb" data-en="RETAIN">نگهداش</b><strong data-en="Tracker is the retention hook">پیگیر، قلاب نگهداشت</strong><span data-en="Project tracker doesn't acquire users — match does. But once they're in, the tracker keeps them: rehearsal schedules, permit checklists, payment tracking. It makes the platform sticky beyond the job search.">پیگیر پروژه کاربر جذب نمی‌کند — مچ جذب می‌کند. اما وقتی آمدند، پیگیر نگهشان می‌دارد: برنامه‌ی تمرین، چک‌لیست مجوز، پیگیری پرداخت. پلتفرم را فراتر از جست‌وجوی کار چسبنده می‌کند.</span></article>
+          <article class="feat"><b data-en="SIGNAL">سیگنال</b><strong data-en="Credit history breaks the circle">سابقه‌ی کار حلقه را می‌شکند</strong><span data-en="The 'only known faces get work' problem breaks when projects can see verified credits, past collaborations, and role fit — not just whether they've heard the name.">مشکل «فقط چهره‌های آشنا کار می‌گیرند» وقتی می‌شکند که پروژه‌ها بتوانند سابقه‌ی تأییدشده، همکاری‌های قبلی، و تناسب نقش را ببینند — نه فقط اینکه آیا اسم را شنیده‌اند.</span></article>
+          <article class="feat"><b data-en="AVOID">پرهیز</b><strong data-en="Don't compete with Tiwal on ticketing">با تیوال در بلیت‌فروشی رقابت نکن</strong><span data-en="Ticketing is Tiwal's moat and Ejranow's distraction. The value is the professional graph, not the ticket. Complement or bypass. Ticket revenue share data is a feature inside the tracker, not a standalone product.">بلیت‌فروشی خندق تیوال و حواس‌پرتی اجرانو است. ارزش، گراف حرفه‌ای است، نه بلیت. مکمل باش یا دور بزن. داده‌ی سهم درآمد بلیت یک فیچر درون پیگیر است، نه محصول مستقل.</span></article>
+          <article class="feat"><b data-en="LATER">بعداً</b><strong data-en="Contract as trust infrastructure">قرارداد به‌عنوان زیرساخت اعتماد</strong><span data-en="Once match and tracker prove value, contract is the monetization and trust layer. Simple, safe, between two parties. But it needs the relationship and the track record first.">وقتی مچ و پیگیر ارزش خود را ثابت کردند، قرارداد لایه‌ی پولی و اعتمادی است. ساده، امن، بین دو طرف. اما اول رابطه و سابقه لازم است.</span></article>
+        </div>
+        <div class="path">
+          <span class="now" data-en="<b>1</b> Match"><b>۱</b> مچ</span>
+          <span data-en="<b>2</b> Profile + Credit"><b>۲</b> پروفایل + سابقه</span>
+          <span data-en="<b>3</b> Project tracker"><b>۳</b> پیگیر پروژه</span>
+          <span data-en="<b>4</b> Payment visibility"><b>۴</b> شفافیت پرداخت</span>
+          <span data-en="<b>5</b> Contract"><b>۵</b> قرارداد</span>
+          <span data-en="<b>6</b> Expand to music"><b>۶</b> گسترش به موسیقی</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: UX TOUCH POINTS -->
+    <section class="slide" id="ux" data-title="UX" data-en-title="UX Touch Points">
+      <div class="frame">
+        <p class="brand" data-en="10">۱۰</p>
+        <h2 data-en="UX touch points · design from the pains">نقاط تماس UX · طراحی از دل دردها</h2>
+        <div class="tp-grid">
+          <article class="tp">
+            <div class="num" data-en="TP-01">TP-01</div>
+            <h3 data-en="Indexed profile first">اول پروفایل ایندکس‌شده</h3>
+            <p data-en="The page must look collected from public sources — not 'they signed up.' Claim button converts indexed to owned. This is critical: actors said they won't join another empty platform.">صفحه باید ظاهر «جمع‌شده از منابع عمومی» داشته باشد — نه «خودش ثبت‌نام کرده.» دکمه‌ی ادعا، ایندکس‌شده را به مالکیتی تبدیل می‌کند. حیاتی: بازیگرها گفتند به یک پلتفرم خالی دیگر نمی‌آیند.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-02">TP-02</div>
+            <h3 data-en="Availability calendar">تقویم دسترسی</h3>
+            <p data-en="Actors need to signal 'available from this date.' Projects need to see who is free this month. This solves the 'I don't know when my run ends' problem from the other side.">بازیگر باید بتواند بگوید «از این تاریخ آزادم.» پروژه باید ببیند چه کسی این ماه آزاد است. این مشکل «نمی‌دانم اجرایم کی تمام می‌شود» را از طرف مقابل حل می‌کند.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-03">TP-03</div>
+            <h3 data-en="Structured opportunity posting">فراخوان ساخت‌یافته</h3>
+            <p data-en="A project posts: role name, type, dates, paid or not, location. Not a paragraph in a Telegram channel. Filterable, searchable, trackable.">پروژه پست می‌کند: نام نقش، نوع، تاریخ، حقوقی یا نه، محل. نه یک پاراگراف در کانال تلگرام. فیلترپذیر، جست‌وجوپذیر، پیگیری‌پذیر.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-04">TP-04</div>
+            <h3 data-en="Credit = verified history">سابقه = تاریخچه‌ی تأییدشده</h3>
+            <p data-en="Every past project both sides confirm becomes a verified credit. This builds the trust graph that replaces personal reputation. Unknown actors with verified credits become discoverable.">هر پروژه‌ی گذشته‌ای که هر دو طرف تأیید کنند، سابقه‌ی تأییدشده می‌شود. این گراف اعتمادی را می‌سازد که جای شهرت شخصی را می‌گیرد.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-05">TP-05</div>
+            <h3 data-en="Match notification">اعلان مچ</h3>
+            <p data-en="'You've been shortlisted for this role.' This is the moment of value. It must feel real and trustworthy — not like a spam notification. Founder-curated matches at first.">«برای این نقش در لیست کوتاه قرار گرفتید.» این لحظه‌ی ارزش است. باید واقعی و قابل‌اعتماد باشد — نه شبیه نوتیفیکیشن اسپم. مچ‌های اول با نظارت مؤسس.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-06">TP-06</div>
+            <h3 data-en="Lightweight tracker">پیگیر سبک</h3>
+            <p data-en="Not Jira. A checklist for productions: permit status, poster done, ticketing set up, rehearsal schedule, cast confirmed. Mobile-first because they're in rehearsal rooms, not at desks.">ژیرا نیست. چک‌لیست برای تولیدات: وضعیت مجوز، پوستر آماده، بلیت‌فروشی راه‌اندازی شده، برنامه‌ی تمرین، کست تأیید شده. اول موبایل چون در سالن تمرین‌اند، نه پشت میز.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-07">TP-07</div>
+            <h3 data-en="Payment visibility (not processing)">شفافیت پرداخت (نه پردازش)</h3>
+            <p data-en="Show 'this is what was agreed and this is the status.' Even without processing payments, just making the agreement visible and trackable is massive. Revenue share for known actors: show the number.">نشان بده «این توافق شده و وضعیتش اینه.» حتی بدون پردازش پرداخت، فقط قابل‌دید و پیگیری کردن توافق عظیم است. سهم درآمد بازیگران معروف: عدد را نشان بده.</p>
+          </article>
+          <article class="tp">
+            <div class="num" data-en="TP-08">TP-08</div>
+            <h3 data-en="Don't look empty">خالی به نظر نرس</h3>
+            <p data-en="The seed solves this: 100 indexed profiles from public sources before anyone is invited. When the first actor claims, they see a populated world, not a ghost town.">بذر این را حل می‌کند: ۱۰۰ پروفایل ایندکس‌شده از منابع عمومی قبل از دعوت هر کسی. وقتی اولین بازیگر ادعا می‌کند، دنیای پر می‌بیند، نه شهر ارواح.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: WHAT WE BUILD -->
+    <section class="slide" id="build" data-title="چی می‌سازیم" data-en-title="What we build">
+      <div class="frame">
+        <p class="brand" data-en="11">۱۱</p>
+        <h2 data-en="What we build · priority from the pains">چی می‌سازیم · اولویت از دل دردها</h2>
+        <p class="lead" data-en="Everything maps back to the three pains. Nothing is built because it's cool. The order is: match first, then tracker, then contract.">همه‌چیز به سه درد برمی‌گردد. هیچ‌چیز چون «جالبه» ساخته نمی‌شود. ترتیب: اول مچ، بعد پیگیر، بعد قرارداد.</p>
+        <div class="board">
+          <table>
+            <thead><tr>
+              <th data-en="Feature">فیچر</th>
+              <th data-en="Solves which pain">کدام درد را حل می‌کند</th>
+              <th data-en="Phase">فاز</th>
+              <th data-en="Why this order">چرا این ترتیب</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td data-en="Indexed profile + Claim">پروفایل ایندکس + ادعا</td>
+                <td data-en="Scarcity, Discovery">کمبود کار، دیده‌شدن</td>
+                <td data-en="MVP">MVP</td>
+                <td data-en="Without profiles, nothing else works. Seed first.">بدون پروفایل هیچ‌چیز کار نمی‌کند. اول بذر.</td>
+              </tr>
+              <tr>
+                <td data-en="Structured opportunity">فرصت ساخت‌یافته</td>
+                <td data-en="Scarcity, Discovery">کمبود کار، دیده‌شدن</td>
+                <td data-en="MVP">MVP</td>
+                <td data-en="The other side of the match. Projects post roles.">طرف دیگر مچ. پروژه نقش‌ها را پست می‌کند.</td>
+              </tr>
+              <tr>
+                <td data-en="Match (manual first)">مچ (اول دستی)</td>
+                <td data-en="Scarcity, Quality spiral">کمبود کار، مارپیچ کیفیت</td>
+                <td data-en="MVP">MVP</td>
+                <td data-en="The core value. First 20–50 matches curated by founder to learn.">ارزش اصلی. ۲۰–۵۰ مچ اول با نظارت مؤسس برای یادگیری.</td>
+              </tr>
+              <tr>
+                <td data-en="Credit history">سابقه‌ی کار</td>
+                <td data-en="Discovery, Quality spiral">دیده‌شدن، مارپیچ کیفیت</td>
+                <td data-en="MVP+">MVP+</td>
+                <td data-en="Breaks the 'only known faces' circle. Builds after first matches.">حلقه‌ی «فقط چهره‌های آشنا» را می‌شکند.</td>
+              </tr>
+              <tr>
+                <td data-en="Availability calendar">تقویم دسترسی</td>
+                <td data-en="Contract chaos">بی‌قراردادی</td>
+                <td data-en="MVP+">MVP+</td>
+                <td data-en="Doesn't fix contracts but makes planning possible.">قرارداد را حل نمی‌کند اما برنامه‌ریزی را ممکن می‌سازد.</td>
+              </tr>
+              <tr>
+                <td data-en="Project tracker">پیگیر پروژه</td>
+                <td data-en="No system">بی‌نظمی</td>
+                <td data-en="Phase 2">فاز ۲</td>
+                <td data-en="Retention hook. After match proves value, this keeps them.">قلاب نگهداشت. بعد از اثبات مچ، این نگهشان می‌دارد.</td>
+              </tr>
+              <tr>
+                <td data-en="Payment visibility">شفافیت پرداخت</td>
+                <td data-en="Contract chaos">بی‌قراردادی</td>
+                <td data-en="Phase 2">فاز ۲</td>
+                <td data-en="Not payment processing. Just 'what was agreed' in one place.">پردازش پرداخت نیست. فقط «چه توافق شده» در یک جا.</td>
+              </tr>
+              <tr>
+                <td data-en="Simple contract">قرارداد ساده</td>
+                <td data-en="Contract chaos">بی‌قراردادی</td>
+                <td data-en="Phase 3">فاز ۳</td>
+                <td data-en="Needs trust, track record, and legal work. Comes last.">اعتماد، سابقه، و کار حقوقی لازم دارد. آخر می‌آید.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 13: NEXT STEPS -->
+    <section class="slide" id="next-steps" data-title="قدم بعدی" data-en-title="Next steps">
+      <div class="frame">
+        <p class="brand" data-en="12">۱۲</p>
+        <h2 data-en="Next steps">قدم بعدی</h2>
+        <div class="split">
+          <article class="card">
+            <div class="tag" data-en="Validate more">بیشتر اعتبارسنجی کن</div>
+            <h3 data-en="10 more interviews, demand side">۱۰ مصاحبه‌ی دیگر، طرف تقاضا</h3>
+            <p data-en="We heard the supply side (actors). Now talk to directors, producers, and casting decision-makers. Do they have the same pains from the other side? Will they post opportunities? What makes them trust a new platform?">طرف عرضه (بازیگر) را شنیدیم. حالا با کارگردان، تهیه‌کننده، و تصمیم‌گیرنده‌ی کست صحبت کن. آیا از طرف دیگر همین دردها را دارند؟ آیا فرصت پست می‌کنند؟ چه چیزی باعث اعتمادشان به پلتفرم جدید می‌شود؟</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Willingness to pay">تمایل به پرداخت</div>
+            <h3 data-en="Test in the next round">در دور بعدی آزمایش کن</h3>
+            <p data-en="We didn't ask about WTP. Next interviews should probe: would you pay for faster casting? For a verified shortlist? For a contract template? How much? Compared to what you spend now?">درباره‌ی تمایل به پرداخت نپرسیدیم. مصاحبه‌های بعدی باید بپرسد: برای کست سریع‌تر پول می‌دهی؟ برای فهرست کوتاه تأییدشده؟ برای قالب قرارداد؟ چقدر؟ نسبت به خرجی که الان می‌کنی؟</p>
+          </article>
+        </div>
+        <div class="split" style="margin-top:10px">
+          <article class="card">
+            <div class="tag" data-en="Build">بساز</div>
+            <h3 data-en="Seed 100 profiles, start manual matching">۱۰۰ پروفایل بذر بزن، مچ دستی شروع کن</h3>
+            <p data-en="Index 100 quality actor profiles from public sources. Find 10–20 real projects with open roles. Start matching manually. Learn which data predicts a useful match.">۱۰۰ پروفایل بازیگر باکیفیت را از منابع عمومی ایندکس کن. ۱۰–۲۰ پروژه‌ی واقعی با نقش باز پیدا کن. مچ دستی شروع کن. یاد بگیر چه داده‌ای مچ مفید را پیش‌بینی می‌کند.</p>
+          </article>
+          <article class="card">
+            <div class="tag" data-en="Measure">اندازه بگیر</div>
+            <h3 data-en="North star: meaningful matches per week">سنجه‌ی شمال: مچ معنادار در هفته</h3>
+            <p data-en="Not profile count. Not page views. Meaningful actor-project matches per week. Beside it: claim rate, profile completeness, application rate, contact made, match made, collaboration confirmed.">نه تعداد پروفایل. نه بازدید صفحه. مچ معنادار بازیگر-پروژه در هفته. کنارش: نرخ ادعا، کامل بودن پروفایل، نرخ درخواست، تماس برقرارشده، مچ ساخته‌شده، همکاری تأییدشده.</p>
+          </article>
+        </div>
+        <div class="quote" data-en="The discovery confirmed: the pains are real, the pains are shared, the pains are structural, and nobody is solving them. This is the green light.">دیسکاوری تأیید کرد: دردها واقعی‌اند، مشترک‌اند، ساختاری‌اند، و کسی حلشان نمی‌کند. این چراغ سبز است.</div>
+        <div class="ref" data-en="Sources: Field research Nofel Loshato, October 2026 · Ministry of Culture data 1402 · honaronline.ir reports">
+          منابع: تحقیق میدانی نوفل لوشاتو، مهر ۱۴۰۵ ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-108/190475" target="_blank">آمار فروش تالارهای دولتی</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/188250" target="_blank">فروش تئاتر شهر</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/181483" target="_blank">سیندرلا</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/184473" target="_blank">بک تو بلک</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/183687" target="_blank">آمار تماشاخانه ایران‌شهر</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%B3%DB%8C%D9%86%D9%85%D8%A7-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-6/186344" target="_blank">تماشاخانه ایران‌شهر ۲</a> ·
+          <a href="https://www.honaronline.ir/%D8%A8%D8%AE%D8%B4-%D8%AA%D8%A6%D8%A7%D8%AA%D8%B1-108/190082" target="_blank">مخاطبان نمایش کودک</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="dock">
+    <button type="button" id="prev" data-en="Previous">قبلی</button>
+    <div class="dots" id="dots"></div>
+    <button type="button" id="next-btn" data-en="Next">بعدی</button>
+  </footer>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+    const label = document.getElementById("label");
+    const now = document.getElementById("now");
+    const all = document.getElementById("all");
+    const meter = document.getElementById("meter");
+    const dots = document.getElementById("dots");
+    let index = 0;
+
+    slides.forEach((slide, i) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.setAttribute("aria-label", slide.dataset.title);
+      dot.addEventListener("click", () => show(i));
+      dots.appendChild(dot);
+    });
+
+    let lang = "fa";
+
+    function applyLang() {
+      const en = lang === "en";
+      document.documentElement.lang = en ? "en" : "fa";
+      document.documentElement.dir = en ? "ltr" : "rtl";
+      document.querySelectorAll("[data-en]").forEach((el) => {
+        if (!el.dataset.fa) el.dataset.fa = el.innerHTML;
+        el.innerHTML = en ? el.dataset.en : el.dataset.fa;
+      });
+      document.getElementById("lang").textContent = en ? "فا" : "EN";
+      show(index);
+    }
+
+    function show(n) {
+      index = (n + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("on", i === index);
+        if (i === index) slide.scrollTop = 0;
+      });
+      [...dots.children].forEach((dot, i) => dot.classList.toggle("on", i === index));
+      const slide = slides[index];
+      label.textContent = lang === "en" && slide.dataset.enTitle ? slide.dataset.enTitle : slide.dataset.title;
+      now.textContent = lang === "en" ? String(index + 1) : fa(index + 1);
+      all.textContent = lang === "en" ? String(slides.length) : fa(slides.length);
+      meter.style.width = ((index + 1) / slides.length * 100) + "%";
+      history.replaceState(null, "", "#" + slides[index].id);
+    }
+
+    document.getElementById("next-btn").addEventListener("click", () => show(index + 1));
+    document.getElementById("prev").addEventListener("click", () => show(index - 1));
+    document.getElementById("lang").addEventListener("click", () => {
+      lang = lang === "fa" ? "en" : "fa";
+      applyLang();
+    });
+    document.addEventListener("keydown", (event) => {
+      const forward = document.documentElement.dir === "rtl" ? "ArrowLeft" : "ArrowRight";
+      const back = document.documentElement.dir === "rtl" ? "ArrowRight" : "ArrowLeft";
+      if (event.key === forward || event.key === "PageDown") { event.preventDefault(); show(index + 1); }
+      else if (event.key === back || event.key === "PageUp") { event.preventDefault(); show(index - 1); }
+      else if (event.key === "Home") show(0);
+      else if (event.key === "End") show(slides.length - 1);
+    });
+
+    let touchX = 0;
+    document.addEventListener("touchstart", (e) => { touchX = e.changedTouches[0].clientX; }, { passive: true });
+    document.addEventListener("touchend", (e) => {
+      const delta = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(delta) < 50) return;
+      show(index + (delta > 0 ? (document.documentElement.dir === "rtl" ? 1 : -1) : (document.documentElement.dir === "rtl" ? -1 : 1)));
+    }, { passive: true });
+
+    const start = slides.findIndex((s) => s.id === location.hash.slice(1));
+    show(start >= 0 ? start : 0);
+  </script>
+</body>
+</html>
