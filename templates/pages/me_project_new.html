@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}ساخت پروژه · اجرانو{% endblock %}
+
+{% block content %}
+    <h1 class="text-[28px] font-semibold leading-9">ساخت پروژه و فرصت</h1>
+    <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">نام پروژه و یک نقش باز کافی است. شهر، توضیح و ددلاین اختیاری‌اند.</p>
+    <form class="mt-8 max-w-lg" method="post" action="{% url 'me-project-new' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ form.non_field_errors.0 }}</p>
+        {% endif %}
+        <label class="mb-4 block">
+            <span class="field-label">نام پروژه</span>
+            <input class="field" type="text" name="title" value="{{ form.title.value|default:'' }}" maxlength="160">
+            {% if form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.title.errors.0 }}</p>{% endif %}
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">شهر</span>
+            <select class="field field-select" name="city">
+                <option value="">انتخاب شهر</option>
+                {% for city in form.fields.city.queryset %}
+                    <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">خلاصه</span>
+            <textarea class="field" style="min-height: 7rem" name="summary" rows="4">{{ form.summary.value|default:'' }}</textarea>
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">نام نقش</span>
+            <input class="field" type="text" name="opportunity_title" value="{{ form.opportunity_title.value|default:'' }}" maxlength="160">
+            {% if form.opportunity_title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.opportunity_title.errors.0 }}</p>{% endif %}
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">نقش</span>
+            <select class="field field-select" name="role">
+                <option value="">انتخاب نقش</option>
+                {% for role in form.fields.role.queryset %}
+                    <option value="{{ role.pk }}" {% if form.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+                {% endfor %}
+            </select>
+            {% if form.role.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.role.errors.0 }}</p>{% endif %}
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">ددلاین</span>
+            <input class="field" style="direction: ltr; text-align: left" type="date" name="deadline" value="{{ form.deadline.value|date:'Y-m-d' }}">
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">درباره نقش</span>
+            <textarea class="field" style="min-height: 7rem" name="description" rows="4">{{ form.description.value|default:'' }}</textarea>
+        </label>
+        <div class="mt-6">
+            {% include "components/button.html" with label="ساختن" button_type="submit" extra="w-full" %}
+        </div>
+    </form>
+{% endblock %}

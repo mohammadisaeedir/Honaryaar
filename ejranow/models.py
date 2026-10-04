@@ -55,7 +55,9 @@ class Profile(models.Model):
         related_name="profile",
     )
     slug = models.SlugField(unique=True)
-    name = models.CharField(max_length=120)
+    first_name = models.CharField(max_length=60, blank=True)
+    last_name = models.CharField(max_length=60, blank=True)
+    name = models.CharField(max_length=120, blank=True)
     city = models.ForeignKey(
         "City",
         null=True,
@@ -76,7 +78,11 @@ class Profile(models.Model):
         ordering = ["name"]
 
     def __str__(self):
-        return self.name
+        if self.name:
+            return self.name
+        if self.user_id:
+            return self.user.username
+        return self.slug
 
 
 class ProfileRole(models.Model):
@@ -133,6 +139,13 @@ class ProjectStatus(models.TextChoices):
 class Project(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=160)
+    owner = models.ForeignKey(
+        "Profile",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="owned_projects",
+    )
     city = models.ForeignKey(
         "City",
         null=True,

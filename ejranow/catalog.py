@@ -545,10 +545,11 @@ def _opportunity_dict(item):
 def _artists():
     from ejranow.models import Profile
 
-    profiles = Profile.objects.select_related("city").prefetch_related(
-        "profile_roles__role",
-        "credits",
-        "media_items",
+    profiles = (
+        Profile.objects.filter(profile_roles__isnull=False)
+        .select_related("city")
+        .prefetch_related("profile_roles__role", "credits", "media_items")
+        .distinct()
     )
     return [_artist_dict(item) for item in profiles]
 

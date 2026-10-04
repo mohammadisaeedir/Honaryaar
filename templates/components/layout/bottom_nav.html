@@ -4,6 +4,6 @@
         <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/search/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'search' %}">جستجو</a></li>
         <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if '/opportunities/' in request.path or request.path == '/opportunities/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فرصت‌ها</a></li>
         <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/matches/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-matches' %}">مچ‌ها</a></li>
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/profile/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-profile' %}">پروفایل</a></li>
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/profile/' or '/me/projects/' in request.path %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-profile' %}">پروفایل</a></li>
     </ul>
 </nav>

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load ejranow_ui %}
+
+{% block title %}{{ project.title }} · پروژه‌های من · اجرانو{% endblock %}
+
+{% block content %}
+    <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'me-projects' %}">پروژه‌های من</a></p>
+    <h1 class="mt-3 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
+    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">درخواست‌های این پروژه را اینجا می‌بینید و وضعیت‌شان را عوض می‌کنید.</p>
+
+    <section class="mt-8 grid gap-4">
+        {% for opportunity in opportunities %}
+            <article class="rounded-card border border-border p-4">
+                <h2 class="text-[18px] font-semibold leading-[26px]">{{ opportunity.title }}</h2>
+                <p class="mt-1 text-sm leading-[22px] text-muted-foreground">{{ opportunity.role.title }}</p>
+                <div class="mt-4 grid gap-3">
+                    {% for application in opportunity.application_rows %}
+                        <div class="border-t border-border py-3">
+                            <p class="text-sm font-semibold leading-[22px]">{{ application.profile.name }}</p>
+                            <p class="mt-1 text-xs leading-[18px] text-muted-foreground">{{ application.status|application_label }}</p>
+                            {% if application.message %}
+                                <p class="mt-2 text-sm leading-[22px]">{{ application.message }}</p>
+                            {% endif %}
+                            <form class="mt-3 flex flex-wrap gap-2" method="post" action="{% url 'application-status' application.pk %}">
+                                {% csrf_token %}
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="shortlisted">فهرست کوتاه</button>
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="conversation">گفتگو</button>
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-3 text-xs font-semibold text-white" type="submit" name="status" value="matched">مچ</button>
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="rejected">رد</button>
+                            </form>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm leading-[22px] text-muted-foreground">هنوز درخواستی نیست.</p>
+                    {% endfor %}
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+
+    <section class="mt-10 max-w-lg">
+        <h2 class="text-[18px] font-semibold leading-[26px]">فرصت جدید</h2>
+        <form class="mt-4" method="post" action="{% url 'me-project' project.slug %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="opportunity">
+            <label class="mb-4 block">
+                <span class="field-label">نام نقش</span>
+                <input class="field" type="text" name="title" value="{{ opportunity_form.title.value|default:'' }}" maxlength="160">
+                {% if opportunity_form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.title.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">نقش</span>
+                <select class="field field-select" name="role">
+                    <option value="">انتخاب نقش</option>
+                    {% for role in opportunity_form.fields.role.queryset %}
+                        <option value="{{ role.pk }}" {% if opportunity_form.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+                    {% endfor %}
+                </select>
+                {% if opportunity_form.role.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.role.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">ددلاین</span>
+                <input class="field" style="direction: ltr; text-align: left" type="date" name="deadline" value="{{ opportunity_form.deadline.value|date:'Y-m-d' }}">
+            </label>
+            <div class="mt-4">
+                {% include "components/button.html" with label="افزودن فرصت" button_type="submit" %}
+            </div>
+        </form>
+    </section>
+
+    <section class="mt-10 max-w-lg">
+        <h2 class="text-[18px] font-semibold leading-[26px]">دعوت</h2>
+        <p class="mt-2 text-sm leading-[22px] text-muted-foreground">یک نفر را برای یکی از فرصت‌های همین پروژه دعوت کنید.</p>
+        <form class="mt-4" method="post" action="{% url 'me-project' project.slug %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="invite">
+            {% if invite_form.non_field_errors %}
+                <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.non_field_errors.0 }}</p>
+            {% endif %}
+            <label class="mb-4 block">
+                <span class="field-label">فرصت</span>
+                <select class="field field-select" name="opportunity">
+                    <option value="">انتخاب فرصت</option>
+                    {% for item in invite_form.fields.opportunity.queryset %}
+                        <option value="{{ item.pk }}" {% if invite_form.opportunity.value|stringformat:"s" == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
+                    {% endfor %}
+                </select>
+                {% if invite_form.opportunity.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.opportunity.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">هنرمند</span>
+                <select class="field field-select" name="profile">
+                    <option value="">انتخاب هنرمند</option>
+                    {% for person in invite_form.fields.profile.queryset %}
+                        <option value="{{ person.pk }}" {% if invite_form.profile.value|stringformat:"s" == person.pk|stringformat:"s" %}selected{% endif %}>{{ person.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if invite_form.profile.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.profile.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">پیام، اختیاری</span>
+                <textarea class="field" style="min-height: 7rem" name="message" rows="3">{{ invite_form.message.value|default:'' }}</textarea>
+            </label>
+            <div class="mt-4">
+                {% include "components/button.html" with label="فرستادن دعوت" button_type="submit" %}
+            </div>
+        </form>
+    </section>
+{% endblock %}

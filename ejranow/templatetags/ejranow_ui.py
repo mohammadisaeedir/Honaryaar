@@ -1,8 +1,24 @@
 from django import template
 
 from ejranow import catalog
+from ejranow.labels import APPLICATION_LABELS, INVITE_LABELS, MATCH_LABELS
 
 register = template.Library()
+
+
+@register.filter
+def application_label(value):
+    return APPLICATION_LABELS.get(value, value)
+
+
+@register.filter
+def invite_label(value):
+    return INVITE_LABELS.get(value, value)
+
+
+@register.filter
+def match_label(value):
+    return MATCH_LABELS.get(value, value)
 
 
 @register.filter

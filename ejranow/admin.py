@@ -76,11 +76,18 @@ class ArtCategoryAdmin(ModelAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(ModelAdmin):
-    list_display = ("name", "city", "status")
+    list_display = ("name", "first_name", "last_name", "mobile", "city", "status")
     list_filter = ("status", "city")
-    search_fields = ("name", "city__title", "slug")
+    search_fields = ("name", "first_name", "last_name", "user__username", "city__title", "slug")
+    list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
     inlines = (ProfileRoleInline, CreditInline, ProfileMediaInline)
+
+    @admin.display(description="Mobile")
+    def mobile(self, profile):
+        if profile.user_id:
+            return profile.user.username
+        return ""
 
 
 @admin.register(ProfileRole)
@@ -107,10 +114,10 @@ class CreditAdmin(ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(ModelAdmin):
-    list_display = ("title", "city", "category", "status")
+    list_display = ("title", "owner", "city", "category", "status")
     list_filter = ("status", "category", "city")
-    search_fields = ("title", "lead_name", "city__title", "slug")
-    autocomplete_fields = ("category", "lead_role", "city")
+    search_fields = ("title", "lead_name", "owner__name", "city__title", "slug")
+    autocomplete_fields = ("owner", "category", "lead_role", "city")
 
 
 @admin.register(Opportunity)

@@ -18,19 +18,28 @@ from django.contrib import admin
 from django.urls import path
 
 from ejranow.document_views import superuser_document, superuser_documents
+from ejranow.auth_views import login_code, login_phone, logout_view, me_profile
+from ejranow.studio_views import (
+    application_status,
+    apply,
+    invite_reply,
+    my_matches,
+    my_projects,
+    project_manage,
+    project_new,
+)
 from ejranow.views import (
     about,
     artist_detail,
     artist_list,
     home,
-    me_matches,
-    me_profile,
     opportunity_detail,
     opportunity_list,
     project_detail,
     project_list,
     search,
     service_worker,
+    web_manifest,
 )
 
 urlpatterns = [
@@ -40,11 +49,21 @@ urlpatterns = [
     path("artists/<slug:slug>/", artist_detail, name="artist"),
     path("opportunities/", opportunity_list, name="opportunities"),
     path("opportunities/<slug:slug>/", opportunity_detail, name="opportunity"),
+    path("opportunities/<slug:slug>/apply/", apply, name="apply"),
     path("projects/", project_list, name="projects"),
     path("projects/<slug:slug>/", project_detail, name="project"),
     path("search/", search, name="search"),
+    path("login/", login_phone, name="login"),
+    path("login/code/", login_code, name="login-code"),
+    path("logout/", logout_view, name="logout"),
     path("me/profile/", me_profile, name="me-profile"),
-    path("me/matches/", me_matches, name="me-matches"),
+    path("me/projects/new/", project_new, name="me-project-new"),
+    path("me/projects/<slug:slug>/", project_manage, name="me-project"),
+    path("me/projects/", my_projects, name="me-projects"),
+    path("me/applications/<int:pk>/status/", application_status, name="application-status"),
+    path("me/invites/<int:pk>/", invite_reply, name="invite-reply"),
+    path("me/matches/", my_matches, name="me-matches"),
+    path("manifest.webmanifest", web_manifest, name="manifest"),
     path("sw.js", service_worker, name="service-worker"),
     path("admin/documents/", admin.site.admin_view(superuser_documents), name="admin-documents"),
     path(

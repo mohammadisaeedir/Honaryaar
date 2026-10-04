@@ -60,10 +60,41 @@
 
     <section class="mt-10 max-w-2xl rounded-box border border-border p-4">
         <h2 class="text-[18px] font-semibold leading-[26px]">ارسال درخواست</h2>
-        <p class="mt-2 text-sm leading-[22px] text-muted-foreground">ورود و ثبت درخواست در گام بعدی باز می‌شود. تا آن موقع پروفایل را ببینید تا سابقه و مدیا آماده باشد.</p>
-        <div class="mt-4">
-            {% url 'me-profile' as profile_url %}
-            {% include "components/button.html" with href=profile_url label="برای درخواست، پروفایل بسازید" %}
-        </div>
+        {% if is_owner %}
+            <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این پروژه برای شماست. درخواست‌ها را در صفحهٔ پروژه ببینید.</p>
+            <div class="mt-4">
+                {% url 'me-project' project.slug as manage_url %}
+                {% include "components/button.html" with href=manage_url label="مدیریت پروژه" %}
+            </div>
+        {% elif application %}
+            <p class="mt-2 text-sm leading-[22px]">درخواست شما ثبت شده: {{ application.status|application_label }}</p>
+            <div class="mt-4">
+                {% url 'me-matches' as matches_url %}
+                {% include "components/button.html" with href=matches_url label="پیگیری درخواست" variant="secondary" %}
+            </div>
+        {% elif not user.is_authenticated %}
+            <p class="mt-2 text-sm leading-[22px] text-muted-foreground">برای ارسال درخواست با شماره موبایل وارد شوید.</p>
+            <div class="mt-4">
+                <a class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" href="{% url 'login' %}?next={{ request.path }}">ورود و ارسال درخواست</a>
+            </div>
+        {% elif not profile_ready %}
+            <p class="mt-2 text-sm leading-[22px] text-muted-foreground">اول نام و نام خانوادگی پروفایل را ذخیره کنید.</p>
+            <div class="mt-4">
+                {% include "components/button.html" with href="/me/profile/?edit=1" label="تکمیل پروفایل" %}
+            </div>
+        {% elif opportunity.status != "open" %}
+            <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این فرصت بسته است.</p>
+        {% else %}
+            <form class="mt-4" method="post" action="{% url 'apply' opportunity.slug %}">
+                {% csrf_token %}
+                <label class="block">
+                    <span class="field-label">پیام، اختیاری</span>
+                    <textarea class="field" style="min-height: 7rem" name="message" rows="4"></textarea>
+                </label>
+                <div class="mt-4">
+                    {% include "components/button.html" with label="ارسال درخواست" button_type="submit" %}
+                </div>
+            </form>
+        {% endif %}
     </section>
 {% endblock %}

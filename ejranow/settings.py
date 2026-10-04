@@ -263,6 +263,9 @@ DATABASES = {"default": _database_from_env()}
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
 
+LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/me/profile/"
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',

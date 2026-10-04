@@ -82,10 +82,26 @@ def opportunity_detail(request, slug):
     if opportunity is None:
         raise Http404
     project = catalog.project_by_slug(opportunity["project"])
+    from ejranow.accounts import current_profile
+    from ejranow.models import Application, Opportunity
+
+    row = Opportunity.objects.select_related("project").filter(slug=slug).first()
+    profile = current_profile(request.user)
+    application = None
+    is_owner = False
+    if profile and row:
+        is_owner = row.project.owner_id == profile.pk
+        application = Application.objects.filter(profile=profile, opportunity=row).first()
     return render(
         request,
         "pages/opportunity.html",
-        {"opportunity": opportunity, "project": project},
+        {
+            "opportunity": opportunity,
+            "project": project,
+            "application": application,
+            "is_owner": is_owner,
+            "profile_ready": bool(profile and profile.first_name and profile.last_name),
+        },
     )
 
 
@@ -117,12 +133,9 @@ def search(request):
     )
 
 
-def me_profile(request):
-    return render(request, "pages/me_profile.html")
-
-
-def me_matches(request):
-    return render(request, "pages/me_matches.html")
+def web_manifest(request):
+    path = settings.BASE_DIR / "ejranow" / "static" / "manifest.webmanifest"
+    return FileResponse(path.open("rb"), content_type="application/manifest+json")
 
 
 def service_worker(request):

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}پروژه‌های من · اجرانو{% endblock %}
+
+{% block content %}
+    <h1 class="text-[28px] font-semibold leading-9">پروژه‌های من</h1>
+    <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">پروژه‌ای که می‌سازید مال پروفایل شماست و فرصت‌هایش زیر همان پروژه می‌مانند.</p>
+    <div class="mt-6">
+        {% url 'me-project-new' as new_url %}
+        {% include "components/button.html" with href=new_url label="ساخت پروژه و فرصت" %}
+    </div>
+    <div class="mt-8 grid gap-3">
+        {% for project in projects %}
+            <a class="rounded-card border border-border p-4" href="{% url 'me-project' project.slug %}">
+                <h2 class="text-[18px] font-semibold leading-[26px]">{{ project.title }}</h2>
+                <p class="mt-1 text-sm leading-[22px] text-muted-foreground">{{ project.opportunities.count }} فرصت{% if project.city %} · {{ project.city }}{% endif %}</p>
+            </a>
+        {% empty %}
+            {% include "components/empty_state.html" with title="هنوز پروژه‌ای نساخته‌اید" body="با یک پروژه و یک فرصت شروع کنید. بعداً می‌توانید فرصت دیگری هم به همان پروژه اضافه کنید." %}
+        {% endfor %}
+    </div>
+{% endblock %}
