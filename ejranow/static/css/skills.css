@@ -1,0 +1,36 @@
+.skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skill-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 1px solid #e4e0d8;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(23, 19, 26, 0.05);
+    color: #252b32;
+    font-size: 13px;
+    line-height: 18px;
+}
+
+.skill-dots {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.skill-dots i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #d9d3ea;
+}
+
+.skill-dots i.is-on {
+    background: #3c3c9a;
+}

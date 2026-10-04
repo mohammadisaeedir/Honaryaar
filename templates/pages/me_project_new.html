@@ -1,8 +1,9 @@
-{% extends "base.html" %}
+{% extends "pages/account/shell.html" %}
 
 {% block title %}ساخت پروژه · اجرانو{% endblock %}
+{% block account_title %}ساخت پروژه{% endblock %}
 
-{% block content %}
+{% block account_main %}
     <h1 class="text-[28px] font-semibold leading-9">ساخت پروژه و فرصت</h1>
     <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">نام پروژه و یک نقش باز کافی است. شهر، توضیح و ددلاین اختیاری‌اند.</p>
     <form class="mt-8 max-w-lg" method="post" action="{% url 'me-project-new' %}">

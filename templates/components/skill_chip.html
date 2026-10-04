@@ -1,0 +1,9 @@
+{% load ejranow_ui %}
+<span class="skill-chip">
+    <span>{{ label }}</span>
+    <span class="skill-dots" aria-label="{{ level|skill_level_label }}">
+        <i class="{% if level >= 1 %}is-on{% endif %}"></i>
+        <i class="{% if level >= 2 %}is-on{% endif %}"></i>
+        <i class="{% if level >= 3 %}is-on{% endif %}"></i>
+    </span>
+</span>

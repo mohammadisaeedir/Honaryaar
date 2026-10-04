@@ -7,7 +7,11 @@
             <p class="text-sm leading-[22px] text-muted-foreground">{{ artist.role|role_title }} · {{ artist.city }}</p>
         </div>
     </div>
-    <p class="mt-4 text-sm leading-[22px]">{{ artist.skills|join:" · " }}</p>
+    <div class="skill-list mt-4">
+        {% for skill in artist.skills %}
+            {% include "components/skill_chip.html" with label=skill.label level=skill.level %}
+        {% endfor %}
+    </div>
     {% if artist.credits %}
         <p class="mt-2 text-xs leading-[18px] text-muted-foreground">{{ artist.credits.0.title }} · {{ artist.credits.0.role }}</p>
     {% endif %}

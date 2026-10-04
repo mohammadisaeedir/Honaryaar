@@ -46,6 +46,42 @@ class ProfileStatus(models.TextChoices):
     CLAIMED = "claimed", "Claimed"
 
 
+class SkillLevel(models.IntegerChoices):
+    BEGINNER = 1, "Beginner"
+    INTERMEDIATE = 2, "Intermediate"
+    ADVANCED = 3, "Advanced"
+
+
+class SkillGroup(models.Model):
+    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=80)
+    priority = models.PositiveSmallIntegerField(default=100)
+
+    class Meta:
+        ordering = ["priority", "title"]
+
+    def __str__(self):
+        return self.title
+
+
+class Skill(models.Model):
+    group = models.ForeignKey(SkillGroup, on_delete=models.PROTECT, related_name="skills")
+    slug = models.SlugField(unique=True)
+    title = models.CharField(max_length=80)
+
+    class Meta:
+        ordering = ["group__priority", "title"]
+
+    def __str__(self):
+        return self.label
+
+    @property
+    def label(self):
+        if self.group_id and self.group.title != self.title:
+            return f"{self.group.title}: {self.title}"
+        return self.title
+
+
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -66,7 +102,6 @@ class Profile(models.Model):
         related_name="profiles",
     )
     about = models.TextField(blank=True)
-    skills = models.JSONField(default=list, blank=True)
     status = models.CharField(
         max_length=20,
         choices=ProfileStatus.choices,
@@ -83,6 +118,21 @@ class Profile(models.Model):
         if self.user_id:
             return self.user.username
         return self.slug
+
+
+class ProfileSkill(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="skill_links")
+    skill = models.ForeignKey(Skill, on_delete=models.PROTECT, related_name="profile_links")
+    level = models.PositiveSmallIntegerField(choices=SkillLevel.choices, default=SkillLevel.INTERMEDIATE)
+
+    class Meta:
+        ordering = ["skill__group__priority", "skill__title"]
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "skill"], name="unique_profile_skill"),
+        ]
+
+    def __str__(self):
+        return f"{self.profile} · {self.skill}"
 
 
 class ProfileRole(models.Model):

@@ -72,6 +72,90 @@ GENDER_FA = {
     "female": "زن",
     "any": "بدون تفاوت",
 }
+SKILL_GROUPS = [
+    {"slug": "acting", "title": "بازیگری", "priority": 1},
+    {"slug": "technique", "title": "تکنیک بازیگری", "priority": 2},
+    {"slug": "singing", "title": "آواز", "priority": 3},
+    {"slug": "dance", "title": "رقص", "priority": 4},
+    {"slug": "comedy", "title": "کمدی", "priority": 5},
+    {"slug": "sports", "title": "ورزش", "priority": 6},
+    {"slug": "language", "title": "زبان و گویش", "priority": 7},
+    {"slug": "production", "title": "تولید", "priority": 8},
+    {"slug": "general", "title": "مهارت‌های عمومی", "priority": 9},
+]
+SKILLS = [
+    {"slug": "camera-acting", "group": "acting", "title": "دوربین"},
+    {"slug": "stage-acting", "group": "acting", "title": "صحنه"},
+    {"slug": "youth-acting", "group": "acting", "title": "نوجوان"},
+    {"slug": "musical-acting", "group": "acting", "title": "موزیکال"},
+    {"slug": "body", "group": "technique", "title": "بدن"},
+    {"slug": "improv", "group": "technique", "title": "بداهه"},
+    {"slug": "movement", "group": "technique", "title": "حرکت"},
+    {"slug": "stage-combat", "group": "technique", "title": "مبارزهٔ صحنه‌ای"},
+    {"slug": "kids", "group": "technique", "title": "کودک و نوجوان"},
+    {"slug": "contemporary-text", "group": "technique", "title": "متن معاصر"},
+    {"slug": "voice", "group": "singing", "title": "آواز"},
+    {"slug": "pop-singing", "group": "singing", "title": "پاپ"},
+    {"slug": "traditional-singing", "group": "singing", "title": "سنتی"},
+    {"slug": "sight-singing", "group": "singing", "title": "سلفژ"},
+    {"slug": "musical-singing", "group": "singing", "title": "موزیکال"},
+    {"slug": "contemporary-dance", "group": "dance", "title": "معاصر"},
+    {"slug": "folk-dance", "group": "dance", "title": "محلی"},
+    {"slug": "hiphop", "group": "dance", "title": "هیپ‌هاپ"},
+    {"slug": "ballet", "group": "dance", "title": "باله"},
+    {"slug": "sketch", "group": "comedy", "title": "اسکچ"},
+    {"slug": "standup", "group": "comedy", "title": "استندآپ"},
+    {"slug": "fitness", "group": "sports", "title": "ورزش"},
+    {"slug": "swimming", "group": "sports", "title": "شنا"},
+    {"slug": "football", "group": "sports", "title": "فوتبال"},
+    {"slug": "gymnastics", "group": "sports", "title": "ژیمناستیک"},
+    {"slug": "horse-riding", "group": "sports", "title": "اسب‌سواری"},
+    {"slug": "cycling", "group": "sports", "title": "دوچرخه‌سواری"},
+    {"slug": "tehran-accent", "group": "language", "title": "لهجهٔ تهرانی"},
+    {"slug": "karaj-accent", "group": "language", "title": "گویش کرجی"},
+    {"slug": "isfahan-accent", "group": "language", "title": "لهجهٔ اصفهانی"},
+    {"slug": "shiraz-accent", "group": "language", "title": "لهجهٔ شیرازی"},
+    {"slug": "mashhad-accent", "group": "language", "title": "لهجهٔ مشهدی"},
+    {"slug": "azari", "group": "language", "title": "ترکی آذری"},
+    {"slug": "english", "group": "language", "title": "انگلیسی مکالمه"},
+    {"slug": "directing", "group": "production", "title": "کارگردانی"},
+    {"slug": "casting", "group": "production", "title": "انتخاب بازیگر"},
+    {"slug": "teaching", "group": "production", "title": "تدریس"},
+    {"slug": "makeup", "group": "production", "title": "گریم"},
+    {"slug": "driving", "group": "general", "title": "رانندگی"},
+    {"slug": "motorcycle", "group": "general", "title": "موتورسواری"},
+]
+LEGACY_SKILL_TITLES = {
+    "بازیگری دوربین": "camera-acting",
+    "بدن": "body",
+    "لهجهٔ تهرانی": "tehran-accent",
+    "بازیگری صحنه": "stage-acting",
+    "آواز": "voice",
+    "تدریس": "teaching",
+    "بداهه": "improv",
+    "انگلیسی مکالمه": "english",
+    "مبارزهٔ صحنه‌ای": "stage-combat",
+    "موتورسواری": "motorcycle",
+    "حرکت": "movement",
+    "کودک و نوجوان": "kids",
+    "گویش کرجی": "karaj-accent",
+    "رانندگی": "driving",
+    "کارگردانی": "directing",
+    "انتخاب بازیگر": "casting",
+    "متن معاصر": "contemporary-text",
+    "بازیگری نوجوان": "youth-acting",
+    "ورزش": "fitness",
+}
+SAMPLE_SKILL_LEVELS = {
+    "sara-mohammadi": {"بازیگری دوربین": 3, "بدن": 2, "لهجهٔ تهرانی": 2},
+    "kian-rezaei": {"بازیگری صحنه": 3, "آواز": 2},
+    "niloufar-ahmadi": {"تدریس": 3, "بداهه": 2, "انگلیسی مکالمه": 2},
+    "armin-kazemi": {"مبارزهٔ صحنه‌ای": 3, "موتورسواری": 1},
+    "hasti-moradi": {"حرکت": 2, "کودک و نوجوان": 2},
+    "pouria-nemati": {"گویش کرجی": 3, "رانندگی": 2},
+    "maryam-soleimani": {"کارگردانی": 3, "انتخاب بازیگر": 2, "متن معاصر": 2},
+    "reza-ghasemi": {"بازیگری نوجوان": 2, "ورزش": 1},
+}
 PRODUCTIONS = ["نمایش صحنه‌ای", "خوانش", "تئاتر دانشجویی"]
 
 ARTISTS = [
@@ -494,7 +578,10 @@ def _artist_dict(profile):
         "role": primary.slug if primary else "",
         "city": profile.city.title if profile.city_id else "",
         "about": profile.about,
-        "skills": profile.skills or [],
+        "skills": [
+            {"label": link.skill.label, "level": link.level}
+            for link in profile.skill_links.all()
+        ],
         "credits": [
             {"title": credit.title, "role": credit.role_name, "year": credit.year}
             for credit in profile.credits.all()
@@ -548,7 +635,7 @@ def _artists():
     profiles = (
         Profile.objects.filter(profile_roles__isnull=False)
         .select_related("city")
-        .prefetch_related("profile_roles__role", "credits", "media_items")
+        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill__group")
         .distinct()
     )
     return [_artist_dict(item) for item in profiles]
@@ -587,7 +674,13 @@ def opportunities_for_project(slug):
 def _artist_text(artist):
     credit = " ".join(item["title"] for item in artist["credits"])
     return " ".join(
-        [artist["name"], artist["city"], role_title(artist["role"]), " ".join(artist["skills"]), credit]
+        [
+            artist["name"],
+            artist["city"],
+            role_title(artist["role"]),
+            " ".join(item["label"] for item in artist["skills"]),
+            credit,
+        ]
     )
 
 
@@ -679,9 +772,25 @@ def seed():
         Profile,
         ProfileMedia,
         ProfileRole,
+        ProfileSkill,
         Project,
         Role,
+        Skill,
+        SkillGroup,
     )
+
+    groups = {}
+    for item in SKILL_GROUPS:
+        groups[item["slug"]], _created = SkillGroup.objects.get_or_create(
+            slug=item["slug"],
+            defaults={"title": item["title"], "priority": item["priority"]},
+        )
+    skills_by_slug = {}
+    for item in SKILLS:
+        skills_by_slug[item["slug"]], _created = Skill.objects.get_or_create(
+            slug=item["slug"],
+            defaults={"title": item["title"], "group": groups[item["group"]]},
+        )
 
     roles_by_slug = {}
     for item in ROLES:
@@ -713,10 +822,16 @@ def seed():
                 "name": item["name"],
                 "city": cities_by_title[item["city"]],
                 "about": item["about"],
-                "skills": item["skills"],
                 "status": item["status"],
             },
         )
+        for title in item["skills"]:
+            slug = LEGACY_SKILL_TITLES[title]
+            ProfileSkill.objects.get_or_create(
+                profile=profile,
+                skill=skills_by_slug[slug],
+                defaults={"level": SAMPLE_SKILL_LEVELS.get(item["slug"], {}).get(title, 2)},
+            )
         ProfileRole.objects.get_or_create(
             profile=profile,
             role=roles_by_slug[item["role"]],

@@ -1,13 +1,24 @@
-{% extends "base.html" %}
+{% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
 
 {% block title %}پروفایل من · اجرانو{% endblock %}
+{% block account_title %}پروفایل{% endblock %}
 
-{% block content %}
+{% block account_hub %}
+    {% if not editing %}
+        {% include "components/account/hub.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block account_main %}
     {% if editing %}
         <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
-        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">نام و نام خانوادگی لازم است. شهر و معرفی را می‌توانید خالی بگذارید.</p>
-        <form class="mt-8 max-w-lg" method="post" action="{% url 'me-profile' %}">
+        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">نام و نام خانوادگی لازم است. بقیه را می‌توانید خالی بگذارید.</p>
+        <form class="mt-8" method="post" action="{% url 'me-profile' %}">
             {% csrf_token %}
+            {{ role_formset.management_form }}
+            {{ credit_formset.management_form }}
+            {{ media_formset.management_form }}
             <label class="mb-4 block">
                 <span class="field-label">نام</span>
                 <input class="field" type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" maxlength="60">
@@ -35,6 +46,250 @@
                 <span class="field-label">درباره</span>
                 <textarea class="field" style="min-height: 7rem" name="about" rows="4">{{ form.about.value|default:'' }}</textarea>
             </label>
+
+            <div class="mb-4 border-y border-border py-3">
+                <p class="text-xs leading-[18px] text-muted-foreground">وضعیت</p>
+                <p class="mt-1 text-sm leading-[22px]">{{ profile.status|status_label }}</p>
+            </div>
+
+            <fieldset class="mb-6">
+                <legend class="field-label">مهارت‌ها</legend>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">مهارت را از فهرست انتخاب کنید. یک نقطه مبتدی، دو نقطه متوسط و سه نقطه پیشرفته است.</p>
+                {% for group in skill_groups %}
+                    <details class="skill-group" {% if group.selected %}open{% endif %}>
+                        <summary>
+                            {{ group.group.title }}
+                            {% if group.selected %}<span class="skill-group__count">{{ group.selected }}</span>{% endif %}
+                        </summary>
+                        {% for row in group.rows %}
+                            <div class="skill-pick">
+                                <span class="skill-pick__name">{{ row.skill.label }}</span>
+                                <span class="skill-pick__levels">
+                                    <label class="skill-level">
+                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="1" {% if row.level == 1 %}checked{% endif %}>
+                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i></i><i></i></span>
+                                        <span class="sr-only">مبتدی</span>
+                                    </label>
+                                    <label class="skill-level">
+                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="2" {% if row.level == 2 %}checked{% endif %}>
+                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i class="is-on"></i><i></i></span>
+                                        <span class="sr-only">متوسط</span>
+                                    </label>
+                                    <label class="skill-level">
+                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="3" {% if row.level == 3 %}checked{% endif %}>
+                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span>
+                                        <span class="sr-only">پیشرفته</span>
+                                    </label>
+                                    <label class="skill-level skill-level--clear">
+                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="" {% if not row.level %}checked{% endif %}>
+                                        <span aria-hidden="true">×</span>
+                                        <span class="sr-only">بدون این مهارت</span>
+                                    </label>
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </details>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="mb-6">
+                <legend class="field-label">نقش‌ها</legend>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هر نقش یک ردیف است. یکی را اصلی بگذارید. با انتخاب نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
+                <div class="repeat-wrap">
+                    <table class="repeat-table">
+                        <thead>
+                            <tr>
+                                <th>نقش</th>
+                                <th>اصلی</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="role-rows">
+                            {% for row in role_formset %}
+                                <tr {% if row.delete.value %}hidden{% endif %}>
+                                    <td>
+                                        <select class="field field-select" name="{{ row.role.html_name }}">
+                                            <option value="">انتخاب نقش</option>
+                                            {% for role in roles %}
+                                                <option value="{{ role.pk }}" {% if row.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% for error in row.role.errors %}
+                                            <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <input type="radio" name="role_primary" value="{{ forloop.counter0 }}" {% if primary_index == forloop.counter0|stringformat:"s" %}checked{% endif %} aria-label="نقش اصلی">
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
+                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="repeat-add" type="button" data-repeat-add="role">افزودن نقش</button>
+                <template id="role-empty">
+                    <tr>
+                        <td>
+                            <select class="field field-select" name="{{ role_formset.empty_form.role.html_name }}">
+                                <option value="">انتخاب نقش</option>
+                                {% for role in roles %}
+                                    <option value="{{ role.pk }}">{{ role.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="radio" name="role_primary" value="__prefix__" aria-label="نقش اصلی">
+                        </td>
+                        <td>
+                            <input type="checkbox" name="{{ role_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
+                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                        </td>
+                    </tr>
+                </template>
+            </fieldset>
+
+            <fieldset class="mb-6">
+                <legend class="field-label">سوابق</legend>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">عنوان کار و نقشتان را بنویسید. سال اختیاری است.</p>
+                <div class="repeat-wrap">
+                    <table class="repeat-table">
+                        <thead>
+                            <tr>
+                                <th>عنوان</th>
+                                <th>نقش</th>
+                                <th>سال</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-rows">
+                            {% for row in credit_formset %}
+                                <tr {% if row.delete.value %}hidden{% endif %}>
+                                    <td>
+                                        <input type="hidden" name="{{ row.credit_id.html_name }}" value="{{ row.credit_id.value|default:'' }}">
+                                        <input class="field" type="text" name="{{ row.title.html_name }}" value="{{ row.title.value|default:'' }}" maxlength="160">
+                                        {% for error in row.non_field_errors %}
+                                            <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <input class="field" type="text" name="{{ row.role_name.html_name }}" value="{{ row.role_name.value|default:'' }}" maxlength="120">
+                                    </td>
+                                    <td>
+                                        <input class="field" type="text" name="{{ row.year.html_name }}" value="{{ row.year.value|default:'' }}" maxlength="20" inputmode="numeric">
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
+                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="repeat-add" type="button" data-repeat-add="credit">افزودن سابقه</button>
+                <template id="credit-empty">
+                    <tr>
+                        <td>
+                            <input type="hidden" name="{{ credit_formset.empty_form.credit_id.html_name }}" value="">
+                            <input class="field" type="text" name="{{ credit_formset.empty_form.title.html_name }}" maxlength="160">
+                        </td>
+                        <td>
+                            <input class="field" type="text" name="{{ credit_formset.empty_form.role_name.html_name }}" maxlength="120">
+                        </td>
+                        <td>
+                            <input class="field" type="text" name="{{ credit_formset.empty_form.year.html_name }}" maxlength="20" inputmode="numeric">
+                        </td>
+                        <td>
+                            <input type="checkbox" name="{{ credit_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
+                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                        </td>
+                    </tr>
+                </template>
+            </fieldset>
+
+            <fieldset class="mb-6">
+                <legend class="field-label">مدیای پروفایل</legend>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">نوع و عنوان را ثبت کنید.</p>
+                <div class="repeat-wrap">
+                    <table class="repeat-table">
+                        <thead>
+                            <tr>
+                                <th>نوع</th>
+                                <th>عنوان</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="media-rows">
+                            {% for row in media_formset %}
+                                <tr {% if row.delete.value %}hidden{% endif %}>
+                                    <td>
+                                        <input type="hidden" name="{{ row.media_id.html_name }}" value="{{ row.media_id.value|default:'' }}">
+                                        <select class="field field-select" name="{{ row.kind.html_name }}">
+                                            {% for value, label in row.fields.kind.choices %}
+                                                <option value="{{ value }}" {% if row.kind.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input class="field" type="text" name="{{ row.label.html_name }}" value="{{ row.label.value|default:'' }}" maxlength="160">
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
+                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <button class="repeat-add" type="button" data-repeat-add="media">افزودن مدیا</button>
+                <template id="media-empty">
+                    <tr>
+                        <td>
+                            <input type="hidden" name="{{ media_formset.empty_form.media_id.html_name }}" value="">
+                            <select class="field field-select" name="{{ media_formset.empty_form.kind.html_name }}">
+                                {% for value, label in media_formset.empty_form.fields.kind.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input class="field" type="text" name="{{ media_formset.empty_form.label.html_name }}" maxlength="160">
+                        </td>
+                        <td>
+                            <input type="checkbox" name="{{ media_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
+                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
+                        </td>
+                    </tr>
+                </template>
+            </fieldset>
+            <script>
+                document.addEventListener("click", function (event) {
+                    var remove = event.target.closest("[data-repeat-remove]");
+                    if (remove) {
+                        var row = remove.closest("tr");
+                        var box = row.querySelector("[data-repeat-delete]");
+                        if (box) box.checked = true;
+                        row.hidden = true;
+                        return;
+                    }
+                    var add = event.target.closest("[data-repeat-add]");
+                    if (!add) return;
+                    var prefix = add.getAttribute("data-repeat-add");
+                    var total = document.getElementById("id_" + prefix + "-TOTAL_FORMS");
+                    var template = document.getElementById(prefix + "-empty");
+                    var body = document.getElementById(prefix + "-rows");
+                    if (!total || !template || !body) return;
+                    var index = total.value;
+                    body.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__prefix__", index));
+                    total.value = String(Number(index) + 1);
+                });
+            </script>
+
             <div class="mt-6">
                 {% include "components/button.html" with label="ذخیره" button_type="submit" extra="w-full" %}
             </div>
@@ -47,25 +302,85 @@
                 <dd class="mt-1 text-sm leading-[22px]" dir="ltr">{{ request.user.username }}</dd>
             </div>
             <div class="border-b border-border py-3">
+                <dt class="text-xs leading-[18px] text-muted-foreground">وضعیت</dt>
+                <dd class="mt-1 text-sm leading-[22px]">{{ profile.status|status_label }}</dd>
+            </div>
+            <div class="border-b border-border py-3">
                 <dt class="text-xs leading-[18px] text-muted-foreground">شهر</dt>
                 <dd class="mt-1 text-sm leading-[22px]">{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
             </div>
-            <div class="py-3">
+            <div class="border-b border-border py-3">
                 <dt class="text-xs leading-[18px] text-muted-foreground">درباره</dt>
                 <dd class="mt-1 text-sm leading-[22px]">{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
             </div>
+            <div class="border-b border-border py-3">
+                <dt class="text-xs leading-[18px] text-muted-foreground">مهارت‌ها</dt>
+                <dd class="mt-2">
+                    {% if skill_links %}
+                        <div class="skill-list">
+                            {% for link in skill_links %}
+                                {% include "components/skill_chip.html" with label=link.skill.label level=link.level %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <span class="text-sm leading-[22px]">ثبت نشده</span>
+                    {% endif %}
+                </dd>
+            </div>
+            <div class="border-b border-border py-3">
+                <dt class="text-xs leading-[18px] text-muted-foreground">نقش‌ها</dt>
+                <dd class="mt-2">
+                    <div class="repeat-wrap">
+                        <table class="repeat-table">
+                            <thead><tr><th>نقش</th><th>اصلی</th></tr></thead>
+                            <tbody>
+                                {% for link in role_links %}
+                                    <tr><td>{{ link.role.title }}</td><td>{% if link.is_primary %}بله{% endif %}</td></tr>
+                                {% empty %}
+                                    <tr><td colspan="2">ثبت نشده</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </dd>
+            </div>
+            <div class="border-b border-border py-3">
+                <dt class="text-xs leading-[18px] text-muted-foreground">سوابق</dt>
+                <dd class="mt-2">
+                    <div class="repeat-wrap">
+                        <table class="repeat-table">
+                            <thead><tr><th>عنوان</th><th>نقش</th><th>سال</th></tr></thead>
+                            <tbody>
+                                {% for credit in profile.credits.all %}
+                                    <tr><td>{{ credit.title }}</td><td>{{ credit.role_name }}</td><td>{{ credit.year }}</td></tr>
+                                {% empty %}
+                                    <tr><td colspan="3">ثبت نشده</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </dd>
+            </div>
+            <div class="py-3">
+                <dt class="text-xs leading-[18px] text-muted-foreground">مدیای پروفایل</dt>
+                <dd class="mt-2">
+                    <div class="repeat-wrap">
+                        <table class="repeat-table">
+                            <thead><tr><th>نوع</th><th>عنوان</th></tr></thead>
+                            <tbody>
+                                {% for item in profile.media_items.all %}
+                                    <tr><td>{{ item.kind|media_label }}</td><td>{{ item.label }}</td></tr>
+                                {% empty %}
+                                    <tr><td colspan="2">ثبت نشده</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </dd>
+            </div>
         </dl>
-        <div class="mt-6 flex flex-wrap gap-3">
-            {% url 'me-profile' as profile_url %}
-            {% include "components/button.html" with href=profile_url|add:"?edit=1" label="ویرایش" variant="secondary" %}
-            {% url 'me-projects' as projects_url %}
-            {% include "components/button.html" with href=projects_url label="پروژه‌های من" variant="secondary" %}
-            {% url 'me-matches' as matches_url %}
-            {% include "components/button.html" with href=matches_url label="درخواست‌ها و دعوت‌ها" variant="secondary" %}
+        <div class="mt-6">
+            {% include "components/button.html" with href="/me/profile/?edit=1" label="ویرایش" variant="secondary" %}
         </div>
     {% endif %}
-    <form class="mt-4" method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        {% include "components/button.html" with label="خروج" button_type="submit" variant="ghost" %}
-    </form>
 {% endblock %}

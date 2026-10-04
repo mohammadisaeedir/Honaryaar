@@ -1,9 +1,26 @@
 from django import template
 
 from ejranow import catalog
-from ejranow.labels import APPLICATION_LABELS, INVITE_LABELS, MATCH_LABELS
+from ejranow.labels import (
+    APPLICATION_LABELS,
+    INVITE_LABELS,
+    MATCH_LABELS,
+    MEDIA_LABELS,
+    SKILL_LEVEL_LABELS,
+    STATUS_LABELS,
+)
 
 register = template.Library()
+
+
+@register.filter
+def phone_fa(value):
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+    if len(digits) == 11:
+        text = f"{digits[:4]} {digits[4:7]} {digits[7:]}"
+    else:
+        text = digits or str(value or "")
+    return text.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
 
 
 @register.filter
@@ -19,6 +36,32 @@ def invite_label(value):
 @register.filter
 def match_label(value):
     return MATCH_LABELS.get(value, value)
+
+
+@register.filter
+def status_label(value):
+    return STATUS_LABELS.get(value, value)
+
+
+@register.filter
+def media_label(value):
+    return MEDIA_LABELS.get(value, value)
+
+
+@register.filter
+def skill_level_label(value):
+    try:
+        return SKILL_LEVEL_LABELS.get(int(value), value)
+    except (TypeError, ValueError):
+        return value
+
+
+@register.filter
+def contains_id(values, item):
+    if not values:
+        return False
+    text = str(item)
+    return text in {str(value) for value in values}
 
 
 @register.filter

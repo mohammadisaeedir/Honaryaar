@@ -27,9 +27,9 @@
     <section class="mt-8 max-w-2xl">
         <h2 class="text-[18px] font-semibold leading-[26px]">نقش‌ها و مهارت‌ها</h2>
         <p class="mt-3 text-sm leading-[22px]">{{ artist.role|role_title }}</p>
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div class="skill-list mt-3">
             {% for skill in artist.skills %}
-                {% include "components/badge.html" with label=skill %}
+                {% include "components/skill_chip.html" with label=skill.label level=skill.level %}
             {% endfor %}
         </div>
     </section>
