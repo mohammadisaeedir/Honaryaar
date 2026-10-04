@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}پروفایل من · اجرانو{% endblock %}
+
+{% block content %}
+    {% include "components/empty_state.html" with title="پروفایل شما هنوز ساخته نشده" body="ساخت حساب و پروفایل شخصی در گام بعدی می‌آید. تا آن موقع نمونه‌ها را در فهرست هنرمندان ببینید." %}
+    <div class="mt-6">
+        {% url 'artists' as artists_url %}
+        {% include "components/button.html" with href=artists_url label="دیدن هنرمندان" variant="secondary" %}
+    </div>
+{% endblock %}

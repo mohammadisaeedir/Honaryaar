@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}مچ‌ها · اجرانو{% endblock %}
+
+{% block content %}
+    {% include "components/empty_state.html" with title="هنوز مچی ندارید" body="مچ وقتی ساخته می‌شود که درخواست یا دعوت به توافق برسد. ورود در گام بعدی فعال می‌شود." %}
+    <div class="mt-6 flex flex-wrap gap-2">
+        {% include "components/casting/match_status.html" with label="درخواست" %}
+        {% include "components/casting/match_status.html" with label="فهرست کوتاه" %}
+        {% include "components/casting/match_status.html" with label="گفتگو" %}
+        {% include "components/casting/match_status.html" with label="مچ" tone="match" %}
+    </div>
+{% endblock %}

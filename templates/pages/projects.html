@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}پروژه‌ها · اجرانو{% endblock %}
+
+{% block content %}
+    <h1 class="text-[28px] font-semibold leading-9">پروژه‌ها</h1>
+    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">هر پروژه می‌تواند چند نقش باز داشته باشد.</p>
+    <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {% for project in projects %}
+            {% include "components/project/project_card.html" %}
+        {% endfor %}
+    </div>
+{% endblock %}

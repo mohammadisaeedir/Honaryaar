@@ -1,0 +1,87 @@
+@import "tailwindcss" source("../templates");
+
+@theme {
+  --color-primary: #fd5956;
+  --color-foreground: #17131a;
+  --color-background: #ffffff;
+  --color-surface: #f7f7f5;
+  --color-muted: #f3f1ef;
+  --color-muted-foreground: #6f6863;
+  --color-border: #e7e4e2;
+  --color-success: #1f7a4d;
+  --color-warning: #8a5a00;
+  --color-danger: #b42318;
+  --font-sans: "Vazirmatn", Tahoma, sans-serif;
+  --font-latin: "Outfit", "Vazirmatn", sans-serif;
+  --font-editorial: "Fraunces", Georgia, serif;
+  --radius-input: 10px;
+  --radius-card: 16px;
+  --radius-box: 20px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  [x-cloak] {
+    display: none !important;
+  }
+}
+
+@layer components {
+  .field {
+    min-height: 44px;
+    width: 100%;
+    border-radius: var(--radius-input);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    padding-inline: 12px;
+    color: var(--color-foreground);
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 22px;
+    outline: none;
+  }
+
+  .field::placeholder {
+    color: var(--color-muted-foreground);
+  }
+
+  .field:hover {
+    border-color: color-mix(in srgb, var(--color-foreground) 28%, var(--color-border));
+  }
+
+  .field:focus {
+    border-color: var(--color-foreground);
+  }
+
+  .field:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  .field-select {
+    cursor: pointer;
+    appearance: none;
+    padding-inline-end: 36px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 16 16'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5' stroke='%2317131A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    background-size: 16px 16px;
+  }
+
+  .field-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--color-muted-foreground);
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+  }
+}

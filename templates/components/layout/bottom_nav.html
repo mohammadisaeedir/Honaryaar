@@ -1,0 +1,9 @@
+<nav class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="موبایل">
+    <ul class="grid grid-cols-5">
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a></li>
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/search/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'search' %}">جستجو</a></li>
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if '/opportunities/' in request.path or request.path == '/opportunities/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فرصت‌ها</a></li>
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/matches/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-matches' %}">مچ‌ها</a></li>
+        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/profile/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-profile' %}">پروفایل</a></li>
+    </ul>
+</nav>

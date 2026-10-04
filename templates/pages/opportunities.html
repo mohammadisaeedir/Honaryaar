@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}فرصت‌ها · اجرانو{% endblock %}
+
+{% block content %}
+    <h1 class="text-[28px] font-semibold leading-9">فرصت‌ها</h1>
+    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">نقش‌های باز تئاتر. هر کارت یک نقش است، نه کل پروژه.</p>
+    <div class="mt-6">
+        {% include "components/casting/filters.html" %}
+    </div>
+    <div class="mt-6" id="results">
+        {% if opportunities %}
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {% for opportunity in opportunities %}
+                    {% include "components/casting/opportunity_card.html" %}
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include "components/empty_state.html" with title="فرصتی با این شرط‌ها نیست" body="فیلتر را بردارید یا شهر دیگری را ببینید." %}
+        {% endif %}
+    </div>
+{% endblock %}

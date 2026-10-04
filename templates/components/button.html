@@ -1,0 +1,5 @@
+{% if href %}
+    <a href="{{ href }}" class="inline-flex min-h-11 items-center justify-center rounded-input px-4 text-sm font-semibold {% if variant == 'secondary' %}border border-border bg-background text-foreground{% elif variant == 'ghost' %}text-foreground{% else %}bg-primary text-white{% endif %} {{ extra }}">{{ label }}</a>
+{% else %}
+    <button type="{{ button_type|default:'button' }}" class="inline-flex min-h-11 items-center justify-center rounded-input px-4 text-sm font-semibold {% if variant == 'secondary' %}border border-border bg-background text-foreground{% elif variant == 'ghost' %}text-foreground{% else %}bg-primary text-white{% endif %} {{ extra }}">{{ label }}</button>
+{% endif %}

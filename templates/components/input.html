@@ -1,0 +1,9 @@
+<input
+    class="field {{ extra }}"
+    type="{{ type|default:'text' }}"
+    name="{{ name }}"
+    value="{{ value|default:'' }}"
+    placeholder="{{ placeholder }}"
+    inputmode="{{ inputmode|default:'text' }}"
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+>

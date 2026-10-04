@@ -1,0 +1,9 @@
+<ul class="grid grid-cols-2 gap-3">
+    {% for item in media %}
+        <li class="flex min-h-24 items-end rounded-card border border-border bg-surface p-3">
+            <p class="text-xs leading-[18px] text-muted-foreground">{{ item.kind }} · {{ item.label }}</p>
+        </li>
+    {% empty %}
+        <li class="col-span-2 text-sm leading-[22px] text-muted-foreground">مدیایی ثبت نشده.</li>
+    {% endfor %}
+</ul>
