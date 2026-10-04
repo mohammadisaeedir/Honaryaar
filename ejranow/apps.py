@@ -7,3 +7,6 @@ class EjranowConfig(AppConfig):
 
     def ready(self):
         from . import admin  # noqa: F401
+        from .admin_dates import install
+
+        install()

@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+
+{% load i18n unfold %}
+
+{% block title %}{{ title }} | {{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col gap-6">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {% for card in reports.cards %}
+                {% component "unfold/components/card.html" with title=card.title href=card.href %}
+                    <p class="text-3xl font-semibold">{{ card.value }}</p>
+                {% endcomponent %}
+            {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+            {% component "unfold/components/card.html" with title="Nearest open deadlines" %}
+                {% component "unfold/components/table.html" with table=reports.deadlines card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+            {% component "unfold/components/card.html" with title="Latest applications" %}
+                {% component "unfold/components/table.html" with table=reports.applications card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+            {% component "unfold/components/card.html" with title="Invites waiting for a reply" %}
+                {% component "unfold/components/table.html" with table=reports.invites card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+            {% component "unfold/components/card.html" with title="Profiles with no role" %}
+                {% component "unfold/components/table.html" with table=reports.missing_roles card_included=1 %}{% endcomponent %}
+            {% endcomponent %}
+        </div>
+    </div>
+{% endblock %}

@@ -129,6 +129,7 @@ def _sidebar(request):
 UNFOLD = {
     "SITE_TITLE": "ejranow",
     "SITE_HEADER": "ejranow",
+    "DASHBOARD_CALLBACK": "ejranow.dashboard.dashboard_callback",
     "STYLES": [
         "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap",
         _static_file("css/admin-font.css"),

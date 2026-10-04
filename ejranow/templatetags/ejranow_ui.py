@@ -1,4 +1,7 @@
+from datetime import date, datetime
+
 from django import template
+from django.utils import timezone
 
 from ejranow import catalog
 from ejranow.labels import (
@@ -11,6 +14,17 @@ from ejranow.labels import (
 )
 
 register = template.Library()
+
+
+@register.filter
+def jalali(value):
+    if isinstance(value, datetime):
+        if timezone.is_aware(value):
+            value = timezone.localtime(value)
+        return catalog.format_datetime(value)
+    if isinstance(value, date):
+        return catalog.format_date(value)
+    return value
 
 
 @register.filter

@@ -516,6 +516,37 @@ def format_date(value):
     return text.translate(_PERSIAN_DIGITS)
 
 
+def format_datetime(value):
+    if not value:
+        return ""
+    clock = value.strftime("%H:%M").translate(_PERSIAN_DIGITS)
+    return f"{format_date(value)}، {clock}"
+
+
+def format_time(value):
+    if not value:
+        return ""
+    return value.strftime("%H:%M").translate(_PERSIAN_DIGITS)
+
+
+def format_jalali_period(start, end=None):
+    if not start:
+        return ""
+    if end is None or (start.year, start.month, start.day) == (end.year, end.month, end.day):
+        return format_date(start)
+    start_year, start_month, _start_day = _to_jalali(start.year, start.month, start.day)
+    end_year, end_month, _end_day = _to_jalali(end.year, end.month, end.day)
+    start_label = _JALALI_MONTHS[start_month - 1]
+    end_label = _JALALI_MONTHS[end_month - 1]
+    if (start_year, start_month) == (end_year, end_month):
+        text = f"{start_label} {start_year}"
+    elif start_year == end_year:
+        text = f"{start_label} – {end_label} {start_year}"
+    else:
+        text = f"{start_label} {start_year} – {end_label} {end_year}"
+    return text.translate(_PERSIAN_DIGITS)
+
+
 def format_date_range(start, end):
     if start and end:
         return f"{format_date(start)} تا {format_date(end)}"
