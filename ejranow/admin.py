@@ -31,7 +31,7 @@ from ejranow.models import (
 admin.site.unregister(User)
 admin.site.unregister(Group)
 
-admin.site.index_title = "ejranow"
+admin.site.index_title = "Honaryaar"
 
 
 def _count_link(url_name, params, count):

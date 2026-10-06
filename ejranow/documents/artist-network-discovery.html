@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>اجرانو · Ejranow</title>
+  <title>هنریار · Honaryaar</title>
   <link rel="icon" href="/static/brand/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --aqua: #00B8C8;
+      --aqua: #c13281;
       --ink: #17131A;
       --paper: #fff;
       --line: color-mix(in srgb, #17131A 14%, #fff);
-      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+      --wash: color-mix(in srgb, #e18caa 28%, #fff);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -63,7 +63,7 @@
     }
     .dock button:hover { border-color: var(--aqua); background: var(--wash); }
     #next { background: var(--ink); color: #fff; border-color: var(--ink); }
-    #next:hover { background: var(--aqua); color: var(--ink); border-color: var(--aqua); }
+    #next:hover { background: var(--aqua); color: #fff; border-color: var(--aqua); }
     .dots { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
     .dots button {
       width: 7px; height: 7px; padding: 0; border-radius: 99px; border: 0; background: var(--line);
@@ -171,7 +171,7 @@
     .rail span, .path span {
       border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-weight: 600; font-size: 12.5px; background: #fff;
     }
-    .rail span:nth-child(5) { background: var(--aqua); border-color: var(--aqua); color: var(--ink); }
+    .rail span:nth-child(5) { background: var(--aqua); border-color: var(--aqua); color: #fff; }
     .path b { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; margin-inline-end: 4px; }
     .split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
 
@@ -203,7 +203,7 @@
     .seg {
       display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
       align-self: center; height: 28px; margin: 7px 6px; border-radius: 8px;
-      background: var(--aqua); color: var(--ink); font-weight: 700; overflow: hidden;
+      background: var(--aqua); color: #fff; font-weight: 700; overflow: hidden;
     }
     .seg b { display: grid; place-items: center; font-size: 12.5px; }
     .seg b + b { border-inline-start: 1px solid rgba(23,19,26,.12); }
@@ -241,7 +241,7 @@
       letter-spacing: .04em; padding: 6px 8px; border-radius: 11px 11px 0 0;
     }
     .ent ul { list-style: none; margin: 0; padding: 7px 8px 8px; font-size: 11px; line-height: 1.45; }
-    .ent.match header { background: var(--aqua); color: var(--ink); }
+    .ent.match header { background: var(--aqua); color: #fff; }
     .ent.down { position: relative; margin-bottom: 14px; }
     .ent.down::after {
       content: ""; position: absolute; left: 50%; bottom: -14px; width: 2px; height: 14px; background: var(--aqua); transform: translateX(-50%);
@@ -279,8 +279,8 @@
 <body>
   <header class="top">
     <div class="lockup">
-      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
-      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="هنریار" width="4132" height="1272" />
+      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Honaryaar" width="4247" height="996" />
     </div>
     <span class="name" id="label">شروع</span>
     <button type="button" id="lang" class="lang">EN</button>
@@ -298,8 +298,8 @@
         </blockquote>
         <div class="hero">
           <div class="hero-logo">
-            <img class="logo-fa" src="/static/brand/logo-fa-tag.svg" alt="اجرانو. خلق کن. اجرا کن. دیده شو." width="4030" height="1692" />
-            <img class="logo-en" src="/static/brand/logo-en-tag.svg" alt="Ejranow. Create. Perform. Be Seen." width="4191" height="1340" />
+            <img class="logo-fa" src="/static/brand/logo-fa-tag.svg" alt="هنریار. خلق کن. وصل کن. دیده شو." width="4030" height="1692" />
+            <img class="logo-en" src="/static/brand/logo-en-tag.svg" alt="Honaryaar. Create. Connect. Be Seen." width="4191" height="1340" />
           </div>
           <h1 data-en="Every art-related thing, here.">هر مورد مرتبط با هنر، همین‌جا.</h1>
           <p class="lead" data-en="A person comes here to find anything related to art. Theatre first, then music, film, and painting. Every person has a profile, and every art item can be tracked. The theatre and music searches are already written down.">کاربر می‌آید تا هر چیز مرتبط با هنر را پیدا کند. اول تئاتر، بعد موسیقی، سینما، و نقاشی. هر شخص پروفایل دارد و هر مورد هنری قابل پیگیری است. جست‌وجوهای تئاتر و موسیقی نوشته شده‌اند.</p>
@@ -419,7 +419,7 @@
             <thead><tr>
               <th data-en="Product">محصول</th>
               <th data-en="What it proves">چه را ثابت می‌کند</th>
-              <th data-en="Lesson for Ejranow">درس برای اجرانو</th>
+              <th data-en="Lesson for Honaryaar">درس برای هنریار</th>
             </tr></thead>
             <tbody>
               <tr>
@@ -450,7 +450,7 @@
               <tr>
                 <td data-en="LinkedIn<br>Professional identity and work">LinkedIn<br>هویت حرفه‌ای و کار</td>
                 <td data-en="A lasting identity accumulates value. A person comes back even when they are not looking for work.">هویت ماندگار ارزش جمع می‌شود. آدم برمی‌گردد حتی وقتی دنبال کار نیست.</td>
-                <td data-en="Ejranow becomes the professional graph of the arts. A classifieds board is only the surface.">اجرانو باید گراف حرفه‌ای هنرها شود، نه فقط تابلوی آگهی.</td>
+                <td data-en="Honaryaar becomes the professional graph of the arts. A classifieds board is only the surface.">هنریار باید گراف حرفه‌ای هنرها شود، نه فقط تابلوی آگهی.</td>
               </tr>
             </tbody>
           </table>
@@ -608,7 +608,7 @@
           <article><h3 data-en="No example yet">نمونه ندارد</h3><p data-en="Ads, consultant, gallery, and video on demand.">تبلیغات، مشاور، گالری، و ویدیوی درخواستی.</p></article>
           <article><h3 data-en="Still unwritten">هنوز نوشته نشده</h3><p data-en="The difference between story and project, what the tracker contains, and the steps of a safe contract.">تفاوت داستان و پروژه، محتوای پیگیر، و قدم‌های قرارداد امن.</p></article>
         </div>
-        <p class="lead" style="margin-top:14px" data-en="Ejranow · Theatre · Music · Film · Painting">اجرانو · تئاتر · موسیقی · سینما · نقاشی</p>
+        <p class="lead" style="margin-top:14px" data-en="Honaryaar · Theatre · Music · Film · Painting">هنریار · تئاتر · موسیقی · سینما · نقاشی</p>
       </div>
     </section>
   </main>

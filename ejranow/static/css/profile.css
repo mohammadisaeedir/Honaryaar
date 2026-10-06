@@ -373,8 +373,8 @@ body.account-page main.account-main {
 }
 
 .skill-level:has(input:checked) {
-    border-color: #3c3c9a;
-    background: #f4f4fb;
+    border-color: #c13281;
+    background: #fbeaf2;
 }
 
 .skill-level--clear {
@@ -546,7 +546,7 @@ body.pf-logout-open { overflow: hidden; }
 
 .repeat-add {
     margin-top: 8px;
-    color: #00b8c8;
+    color: #c13281;
 }
 
 .repeat-remove {

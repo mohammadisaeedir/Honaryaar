@@ -3,7 +3,7 @@
     <section class="pf-mobile-hub__user">
         <a class="pf-mobile-hub__userLink" href="{% url 'me-profile' %}?edit=1">
             <span class="pf-mobile-hub__userText">
-                <p class="pf-mobile-hub__userName">{% if request.user.profile.name %}{{ request.user.profile.name }}{% else %}کاربر اجرانو{% endif %}</p>
+                <p class="pf-mobile-hub__userName">{% if request.user.profile.name %}{{ request.user.profile.name }}{% else %}کاربر هنریار{% endif %}</p>
                 <p class="pf-mobile-hub__userPhone" dir="ltr">{{ request.user.username|phone_fa }}</p>
             </span>
             {% include "components/account/avatar.html" with large=1 %}

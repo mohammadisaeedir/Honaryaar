@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load ejranow_ui %}
 
-{% block title %}{{ opportunity.title }} · {{ project.title }} · اجرانو{% endblock %}
+{% block title %}{{ opportunity.title }} · {{ project.title }} · هنریار{% endblock %}
 
 {% block content %}
     <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'opportunities' %}">فرصت‌ها</a> / <a href="{% url 'project' project.slug %}">{{ project.title }}</a></p>

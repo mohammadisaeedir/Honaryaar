@@ -4,18 +4,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>درباره اجرانو · Ejranow</title>
+  <title>درباره هنریار · Honaryaar</title>
   <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --aqua: #00B8C8;
+      --aqua: #c13281;
       --ink: #17131A;
       --paper: #fff;
       --line: color-mix(in srgb, #17131A 14%, #fff);
-      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+      --wash: color-mix(in srgb, #e18caa 28%, #fff);
     }
     * { box-sizing: border-box; }
     body {
@@ -36,6 +36,13 @@
       padding: 22px;
     }
     .logo { height: 56px; width: auto; }
+    .site-logo-dark { display: none; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #160A12; color: #f7f2f5; }
+      .box { background: #221018; border-color: #3a2433; }
+      .site-logo-light { display: none; }
+      .site-logo-dark { display: block; }
+    }
     .names { display: flex; align-items: baseline; gap: 10px; direction: ltr; margin-top: 14px; }
     .en { font-family: Outfit, Vazirmatn, sans-serif; font-weight: 700; font-size: 32px; letter-spacing: -0.03em; }
     .fa { font-weight: 700; font-size: 28px; }
@@ -69,10 +76,10 @@
 <body>
   <main class="wrap">
     <section class="box">
-      <img class="logo" src="{% static 'brand/logo-en-light.svg' %}" alt="Ejranow">
-      <p class="names"><span class="en">Ejran<span>ow</span></span><span class="fa">اجرا<span>نو</span></span></p>
-      <p class="tag">خلق کن. اجرا کن. دیده شو.</p>
-      <p class="tag latin" lang="en">Create. Perform. Be Seen.</p>
+      <img class="logo site-logo-light" src="{% static 'brand/logo-en-tag.svg' %}" alt="هنریار">
+      <img class="logo site-logo-dark" src="{% static 'brand/logo-en-tag-dark.svg' %}" alt="" aria-hidden="true">
+      <p class="tag">خلق کن. وصل کن. دیده شو.</p>
+      <p class="tag latin" lang="en">Create. Connect. Be Seen.</p>
       <h1>هر مورد مرتبط با هنر، همین‌جا.</h1>
       <p class="lead">کاربر می‌آید تا هر چیز مرتبط با هنر را پیدا کند. اول تئاتر، بعد موسیقی، سینما، و نقاشی. هر شخص پروفایل دارد و هر مورد هنری قابل پیگیری است.</p>
     </section>

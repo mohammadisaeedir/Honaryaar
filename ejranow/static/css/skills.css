@@ -28,9 +28,9 @@
     width: 7px;
     height: 7px;
     border-radius: 999px;
-    background: #d9d3ea;
+    background: #f0d4e2;
 }
 
 .skill-dots i.is-on {
-    background: #3c3c9a;
+    background: #c13281;
 }

@@ -1,15 +1,15 @@
 {
   "id": "/",
-  "name": "EJRANOW",
-  "short_name": "EJRANOW",
+  "name": "هنریار",
+  "short_name": "هنریار",
   "description": "پلتفرم حرفه‌ای هنر و هنرمندان",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "dir": "rtl",
   "lang": "fa",
-  "background_color": "#FFFFFF",
-  "theme_color": "#FD5956",
+  "background_color": "#C13281",
+  "theme_color": "#C13281",
   "icons": [
     {
       "src": "/static/icons/icon-192.png",

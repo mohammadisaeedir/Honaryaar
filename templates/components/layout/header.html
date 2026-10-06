@@ -1,8 +1,9 @@
 {% load static %}
-<header class="sticky top-0 z-30 border-b border-border bg-background">
+<header class="site-header sticky top-0 z-30 border-b border-border bg-background">
     <div class="mx-auto flex h-16 w-full min-w-0 max-w-5xl items-center gap-4 px-4">
         <a class="min-w-0 shrink" href="{% url 'home' %}">
-            <img class="block h-8 w-auto" style="width: 6.5rem" src="{% static 'brand/logo-fa.svg' %}" alt="اجرانو" width="4132" height="1272">
+            <img class="site-logo-light block h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="80" height="32">
+            <img class="site-logo-dark h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa-dark.svg' %}" alt="" aria-hidden="true" width="80" height="32">
         </a>
         <nav class="hidden items-center gap-6 text-sm font-semibold md:flex" aria-label="اصلی">
             <a class="{% if request.path == '/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a>

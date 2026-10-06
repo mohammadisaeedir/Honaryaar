@@ -23,7 +23,7 @@
     --tracking-wide: 0.025em;
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
-    --color-primary: #fd5956;
+    --color-primary: #c13281;
     --color-foreground: #17131a;
     --color-background: #ffffff;
     --color-surface: #f7f7f5;
@@ -727,7 +727,7 @@
     border-color: var(--color-foreground);
   }
   .field:focus-visible {
-    outline: 2px solid color-mix(in srgb, #fd5956 45%, transparent);
+      outline: 2px solid color-mix(in srgb, #c13281 45%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
     }
@@ -750,6 +750,18 @@
     line-height: 18px;
     font-weight: 600;
   }
+}
+.site-logo-dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .site-header {
+    background-color: #160A12;
+    border-color: #3a2433;
+  }
+  .site-header a {
+    color: #fff;
+  }
+  .site-header .site-logo-light { display: none; }
+  .site-header .site-logo-dark { display: block; }
 }
 @property --tw-border-style {
   syntax: "*";

@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>اجرانو · گزارش دیسکاوری</title>
+  <title>هنریار · گزارش دیسکاوری</title>
   <link rel="icon" href="/static/brand/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600;700&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --aqua: #00B8C8;
+      --aqua: #c13281;
       --red: #E8453C;
       --amber: #E8A33C;
       --green: #2CB87E;
       --ink: #17131A;
       --paper: #fff;
       --line: color-mix(in srgb, #17131A 14%, #fff);
-      --wash: color-mix(in srgb, #00B8C8 12%, #fff);
+      --wash: color-mix(in srgb, #e18caa 28%, #fff);
       --wash-red: color-mix(in srgb, #E8453C 10%, #fff);
       --wash-amber: color-mix(in srgb, #E8A33C 10%, #fff);
       --wash-green: color-mix(in srgb, #2CB87E 10%, #fff);
@@ -62,7 +62,7 @@
     }
     .dock button:hover { border-color: var(--aqua); background: var(--wash); }
     #next { background: var(--ink); color: #fff; border-color: var(--ink); }
-    #next:hover { background: var(--aqua); color: var(--ink); border-color: var(--aqua); }
+    #next:hover { background: var(--aqua); color: #fff; border-color: var(--aqua); }
     .dots { display: flex; gap: 6px; flex: 1; justify-content: center; flex-wrap: wrap; }
     .dots button { width: 7px; height: 7px; padding: 0; border-radius: 99px; border: 0; background: var(--line); }
     .dots button.on { background: var(--aqua); width: 18px; }
@@ -167,7 +167,7 @@
     .path span {
       border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-weight: 600; font-size: 12.5px; background: #fff;
     }
-    .path span.now { background: var(--aqua); border-color: var(--aqua); color: var(--ink); }
+    .path span.now { background: var(--aqua); border-color: var(--aqua); color: #fff; }
     .path b { color: var(--aqua); font-family: Outfit, Vazirmatn, sans-serif; margin-inline-end: 4px; }
 
     .tp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
@@ -191,8 +191,8 @@
 <body>
   <header class="top">
     <div class="lockup">
-      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
-      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+      <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="هنریار" width="4132" height="1272" />
+      <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Honaryaar" width="4247" height="996" />
     </div>
     <span class="name" id="label">دیسکاوری</span>
     <button type="button" id="lang" class="lang">EN</button>
@@ -207,8 +207,8 @@
       <div class="frame cover">
         <div class="hero">
           <div class="lockup big">
-            <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="اجرانو" width="4132" height="1272" />
-            <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Ejranow" width="4247" height="996" />
+            <img class="logo-fa" src="/static/brand/logo-fa.svg" alt="هنریار" width="4132" height="1272" />
+            <img class="logo-en" src="/static/brand/logo-en-light.svg" alt="Honaryaar" width="4247" height="996" />
             <div>
               <p class="tag" data-en="Discovery Report · Theatre · Tehran">گزارش دیسکاوری · تئاتر · تهران</p>
               <p class="tag latin" lang="en" dir="ltr">Field Research × Market Data</p>
@@ -347,7 +347,7 @@
             <div class="cycle-arrow">←</div>
             <div class="cycle-node" data-en="Venue stays empty">سالن خالی می‌ماند</div>
           </div>
-          <div class="cycle-break" data-en="Ejranow's entry point: break the cycle by connecting quality actors to quality projects faster than personal networks.">نقطه‌ی ورود اجرانو: شکستن چرخه با وصل کردن بازیگر باکیفیت به پروژه‌ی باکیفیت، سریع‌تر از شبکه‌ی شخصی.</div>
+          <div class="cycle-break" data-en="Honaryaar's entry point: break the cycle by connecting quality actors to quality projects faster than personal networks.">نقطه‌ی ورود هنریار: شکستن چرخه با وصل کردن بازیگر باکیفیت به پروژه‌ی باکیفیت، سریع‌تر از شبکه‌ی شخصی.</div>
         </div>
       </div>
     </section>
@@ -495,7 +495,7 @@
           <article class="feat"><b class="gb" data-en="WEDGE">گوه</b><strong data-en="Visibility for actors, speed for projects">دیده‌شدن برای بازیگر، سرعت برای پروژه</strong><span data-en="Supply comes for visibility: a lasting profile plus real opportunities. Demand comes for speed: find the right actor without relying on personal contacts. Both sides' discovery problem is one problem.">عرضه برای دیده‌شدن می‌آید: پروفایل ماندگار و فرصت واقعی. تقاضا برای سرعت می‌آید: بازیگر درست بدون وابستگی به آشنایی. مشکل دیسکاوری هر دو طرف یک مشکل است.</span></article>
           <article class="feat"><b class="gb" data-en="RETAIN">نگهداش</b><strong data-en="Tracker is the retention hook">پیگیر، قلاب نگهداشت</strong><span data-en="Project tracker doesn't acquire users — match does. But once they're in, the tracker keeps them: rehearsal schedules, permit checklists, payment tracking. It makes the platform sticky beyond the job search.">پیگیر پروژه کاربر جذب نمی‌کند — مچ جذب می‌کند. اما وقتی آمدند، پیگیر نگهشان می‌دارد: برنامه‌ی تمرین، چک‌لیست مجوز، پیگیری پرداخت. پلتفرم را فراتر از جست‌وجوی کار چسبنده می‌کند.</span></article>
           <article class="feat"><b data-en="SIGNAL">سیگنال</b><strong data-en="Credit history breaks the circle">سابقه‌ی کار حلقه را می‌شکند</strong><span data-en="The 'only known faces get work' problem breaks when projects can see verified credits, past collaborations, and role fit — not just whether they've heard the name.">مشکل «فقط چهره‌های آشنا کار می‌گیرند» وقتی می‌شکند که پروژه‌ها بتوانند سابقه‌ی تأییدشده، همکاری‌های قبلی، و تناسب نقش را ببینند — نه فقط اینکه آیا اسم را شنیده‌اند.</span></article>
-          <article class="feat"><b data-en="AVOID">پرهیز</b><strong data-en="Don't compete with Tiwal on ticketing">با تیوال در بلیت‌فروشی رقابت نکن</strong><span data-en="Ticketing is Tiwal's moat and Ejranow's distraction. The value is the professional graph, not the ticket. Complement or bypass. Ticket revenue share data is a feature inside the tracker, not a standalone product.">بلیت‌فروشی خندق تیوال و حواس‌پرتی اجرانو است. ارزش، گراف حرفه‌ای است، نه بلیت. مکمل باش یا دور بزن. داده‌ی سهم درآمد بلیت یک فیچر درون پیگیر است، نه محصول مستقل.</span></article>
+          <article class="feat"><b data-en="AVOID">پرهیز</b><strong data-en="Don't compete with Tiwal on ticketing">با تیوال در بلیت‌فروشی رقابت نکن</strong><span data-en="Ticketing is Tiwal's moat and Honaryaar's distraction. The value is the professional graph, not the ticket. Complement or bypass. Ticket revenue share data is a feature inside the tracker, not a standalone product.">بلیت‌فروشی خندق تیوال و حواس‌پرتی هنریار است. ارزش، گراف حرفه‌ای است، نه بلیت. مکمل باش یا دور بزن. داده‌ی سهم درآمد بلیت یک فیچر درون پیگیر است، نه محصول مستقل.</span></article>
           <article class="feat"><b data-en="LATER">بعداً</b><strong data-en="Contract as trust infrastructure">قرارداد به‌عنوان زیرساخت اعتماد</strong><span data-en="Once match and tracker prove value, contract is the monetization and trust layer. Simple, safe, between two parties. But it needs the relationship and the track record first.">وقتی مچ و پیگیر ارزش خود را ثابت کردند، قرارداد لایه‌ی پولی و اعتمادی است. ساده، امن، بین دو طرف. اما اول رابطه و سابقه لازم است.</span></article>
         </div>
         <div class="path">

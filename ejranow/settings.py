@@ -35,6 +35,9 @@ ALLOWED_HOSTS = [
     ).split(",")
     if host.strip()
 ]
+for _host in (".honaryaar.ir", "honaryaar.ir", "www.honaryaar.ir"):
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -44,6 +47,9 @@ CSRF_TRUSTED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+for _origin in ("https://honaryaar.ir", "https://www.honaryaar.ir"):
+    if _origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_origin)
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
@@ -127,8 +133,8 @@ def _sidebar(request):
 
 
 UNFOLD = {
-    "SITE_TITLE": "ejranow",
-    "SITE_HEADER": "ejranow",
+    "SITE_TITLE": "Honaryaar",
+    "SITE_HEADER": "Honaryaar",
     "DASHBOARD_CALLBACK": "ejranow.dashboard.dashboard_callback",
     "STYLES": [
         "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap",
@@ -150,17 +156,17 @@ UNFOLD = {
     ],
     "COLORS": {
         "primary": {
-            "50": "oklch(97.5% 0.022 205.8)",
-            "100": "oklch(94.5% 0.039 205.8)",
-            "200": "oklch(89.5% 0.064 205.8)",
-            "300": "oklch(83.0% 0.088 205.8)",
-            "400": "oklch(82.0% 0.090 205.8)",
-            "500": "oklch(78.0% 0.110 205.8)",
-            "600": "#00B8C8",
-            "700": "oklch(52.0% 0.110 205.8)",
-            "800": "oklch(44.0% 0.092 205.8)",
-            "900": "oklch(37.0% 0.071 205.8)",
-            "950": "oklch(28.0% 0.051 205.8)",
+            "50": "#fdf2f6",
+            "100": "#f8e4ee",
+            "200": "#f0c9dc",
+            "300": "#e18caa",
+            "400": "#c7488e",
+            "500": "#c7488e",
+            "600": "#c13281",
+            "700": "#851a60",
+            "800": "#851a60",
+            "900": "#580035",
+            "950": "#580035",
         },
         "base": {
             "50": "oklch(98.5% 0.006 310.6)",
