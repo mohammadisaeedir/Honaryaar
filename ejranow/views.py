@@ -10,9 +10,13 @@ def home(request):
         request,
         "pages/home.html",
         {
-            "opportunities": catalog.list_opportunities()[:6],
-            "artists": catalog.list_artists()[:8],
-            "projects": catalog.list_projects()[:6],
+            "opportunities": catalog.featured_opportunities(),
+            "talent_stats": catalog.talent_stats(),
+            "hire_stats": catalog.hire_stats(),
+            "hero_fields": catalog.hero_fields(),
+            "hero_roles": catalog.hero_roles(),
+            "posts": catalog.HOME_POSTS,
+            "testimonials": catalog.featured_testimonials(),
         },
     )
 
@@ -33,8 +37,12 @@ def artist_list(request):
         {
             "artists": catalog.list_artists(**filters),
             "filters": filters,
-            "cities": catalog.cities(),
-            "roles": catalog.roles(),
+            "groups": [
+                catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
+                catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in catalog.roles()], filters["role"]),
+            ],
+            "quick": catalog.filter_chips(request, catalog.ARTIST_QUICK),
+            "clear_href": catalog.clear_filters_href(request),
         },
     )
 
@@ -62,17 +70,24 @@ def opportunity_list(request):
         "role": request.GET.get("role", ""),
         "age": _age(age_raw),
     }
+    facets = catalog.opportunity_facets()
+    groups = [
+        catalog.choice_group("city", "شهر", [(city, city) for city in facets["cities"]], filters["city"]),
+        catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in facets["roles"]], filters["role"]),
+        catalog.choice_group("production", "نوع", [(item, item) for item in facets["productions"]], filters["production"]),
+        catalog.choice_group("gender", "جنسیت", [(item["value"], item["label"]) for item in facets["genders"]], filters["gender"]),
+        catalog.choice_group("paid", "پرداخت", facets["paid"], filters["paid"]),
+        catalog.text_group("age", "سن", age_raw, "مثلاً ۲۸"),
+    ]
     return render(
         request,
         "pages/opportunities.html",
         {
             "opportunities": catalog.list_opportunities(**filters),
             "filters": {**filters, "age": age_raw},
-            "cities": catalog.cities(),
-            "featured_cities": catalog.featured_cities(),
-            "genders": catalog.genders(),
-            "productions": catalog.PRODUCTIONS,
-            "roles": catalog.roles(),
+            "groups": [group for group in groups if group["kind"] == "text" or len(group["options"]) > 1],
+            "quick": catalog.filter_chips(request, catalog.opportunity_quick(facets)),
+            "clear_href": catalog.clear_filters_href(request),
         },
     )
 
@@ -100,13 +115,39 @@ def opportunity_detail(request, slug):
             "project": project,
             "application": application,
             "is_owner": is_owner,
-            "profile_ready": bool(profile and profile.first_name and profile.last_name),
         },
     )
 
 
 def project_list(request):
-    return render(request, "pages/projects.html", {"projects": catalog.list_projects()})
+    filters = {
+        "q": request.GET.get("q", "").strip(),
+        "city": request.GET.get("city", ""),
+        "category": request.GET.get("category", ""),
+    }
+    return render(
+        request,
+        "pages/projects.html",
+        {
+            "projects": catalog.list_projects(**filters),
+            "filters": filters,
+            "groups": [
+                catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
+                catalog.choice_group(
+                    "category",
+                    "موضوع",
+                    [(item["slug"], item["title"]) for item in catalog.categories()],
+                    filters["category"],
+                ),
+            ],
+            "quick": catalog.filter_chips(
+                request,
+                [("تهران", {"city": "تهران"})]
+                + [(item["title"], {"category": item["slug"]}) for item in catalog.categories()],
+            ),
+            "clear_href": catalog.clear_filters_href(request),
+        },
+    )
 
 
 def project_detail(request, slug):
@@ -123,13 +164,74 @@ def project_detail(request, slug):
     )
 
 
+GUIDE_PAGES = {
+    "magazine": {
+        "page_title": "مجله هنری",
+        "paragraphs": [
+            "مجله هنریار جایی برای یادداشت‌های کوتاه درباره تئاتر، بازیگری و پشت صحنه است.",
+            "هر شماره چند متن ساده دارد: یک نقش، یک تمرین، و یک تجربه از سالن.",
+            "شماره‌های بعدی همین‌جا منتشر می‌شوند.",
+        ],
+    },
+    "terms": {
+        "page_title": "قوانین و مقررات",
+        "paragraphs": [
+            "با ساختن حساب در هنریار، همین قانون‌ها را می‌پذیرید.",
+            "حساب با شماره موبایل ساخته می‌شود و مسئولیت ورود با همان شماره با شماست.",
+            "متنی که در پروفایل یا پروژه می‌گذارید باید مال خودتان باشد.",
+            "شماره و اطلاعات تماس دیگران را بدون اجازه آن‌ها منتشر نکنید.",
+            "هنریار می‌تواند محتوایی را که این قانون‌ها را نقض کند بردارد.",
+        ],
+    },
+    "contact": {
+        "page_title": "تماس با ما",
+        "paragraphs": [
+            "برای همکاری، گزارش مشکل، یا هر حرف دیگری بنویسید.",
+            "ایمیل: hello@honaryaar.ir",
+        ],
+    },
+}
+
+
+def guide(request):
+    page = GUIDE_PAGES[request.resolver_match.url_name]
+    return render(request, "pages/plain.html", page)
+
+
+def sitemap_page(request):
+    return render(
+        request,
+        "pages/plain.html",
+        {
+            "page_title": "سایت مپ",
+            "paragraphs": ["صفحه‌های اصلی هنریار:"],
+            "links": [
+                {"href": "/", "label": "خانه"},
+                {"href": "/opportunities/", "label": "فرصت‌ها"},
+                {"href": "/artists/", "label": "هنرمندان"},
+                {"href": "/projects/", "label": "پروژه‌ها"},
+                {"href": "/search/", "label": "جستجو"},
+                {"href": "/magazine/", "label": "مجله هنری"},
+                {"href": "/about-us/", "label": "درباره ما"},
+                {"href": "/terms/", "label": "قوانین و مقررات"},
+                {"href": "/contact/", "label": "تماس با ما"},
+            ],
+        },
+    )
+
+
 def search(request):
     query = request.GET.get("q", "").strip()
-    artists, opportunities = catalog.search(query)
+    artists, opportunities, projects = catalog.search(query)
     return render(
         request,
         "pages/search.html",
-        {"query": query, "artists": artists, "opportunities": opportunities},
+        {
+            "query": query,
+            "artists": artists,
+            "opportunities": opportunities,
+            "projects": projects,
+        },
     )
 
 
@@ -142,4 +244,5 @@ def service_worker(request):
     path = settings.BASE_DIR / "ejranow" / "static" / "sw.js"
     response = FileResponse(path.open("rb"), content_type="application/javascript")
     response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
     return response

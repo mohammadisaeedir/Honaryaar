@@ -13,7 +13,7 @@
 {% block account_main %}
     {% if editing %}
         <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
-        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">نام و نام خانوادگی لازم است. بقیه را می‌توانید خالی بگذارید.</p>
+        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">هر بخشی را که خواستید پر کنید. خالی گذاشتن هم ممکن است.</p>
         <form class="mt-8" method="post" action="{% url 'me-profile' %}">
             {% csrf_token %}
             {{ role_formset.management_form }}
@@ -295,92 +295,29 @@
             </div>
         </form>
     {% else %}
-        <h1 class="text-[28px] font-semibold leading-9">{{ profile.first_name }} {{ profile.last_name }}</h1>
-        <dl class="mt-8 max-w-lg border-y border-border">
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">موبایل</dt>
-                <dd class="mt-1 text-sm leading-[22px]" dir="ltr">{{ request.user.username }}</dd>
+        <div class="pf-plp" dir="rtl">
+            <div class="pf-board__head">
+                <h1>پروفایل</h1>
+                <a class="pf-board__quiet" href="{% url 'me-profile' %}?edit=1">ویرایش</a>
             </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">وضعیت</dt>
-                <dd class="mt-1 text-sm leading-[22px]">{{ profile.status|status_label }}</dd>
-            </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">شهر</dt>
-                <dd class="mt-1 text-sm leading-[22px]">{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
-            </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">درباره</dt>
-                <dd class="mt-1 text-sm leading-[22px]">{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
-            </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">مهارت‌ها</dt>
-                <dd class="mt-2">
-                    {% if skill_links %}
-                        <div class="skill-list">
-                            {% for link in skill_links %}
-                                {% include "components/skill_chip.html" with label=link.skill.label level=link.level %}
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <span class="text-sm leading-[22px]">ثبت نشده</span>
-                    {% endif %}
-                </dd>
-            </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">نقش‌ها</dt>
-                <dd class="mt-2">
-                    <div class="repeat-wrap">
-                        <table class="repeat-table">
-                            <thead><tr><th>نقش</th><th>اصلی</th></tr></thead>
-                            <tbody>
-                                {% for link in role_links %}
-                                    <tr><td>{{ link.role.title }}</td><td>{% if link.is_primary %}بله{% endif %}</td></tr>
-                                {% empty %}
-                                    <tr><td colspan="2">ثبت نشده</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </dd>
-            </div>
-            <div class="border-b border-border py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">سوابق</dt>
-                <dd class="mt-2">
-                    <div class="repeat-wrap">
-                        <table class="repeat-table">
-                            <thead><tr><th>عنوان</th><th>نقش</th><th>سال</th></tr></thead>
-                            <tbody>
-                                {% for credit in profile.credits.all %}
-                                    <tr><td>{{ credit.title }}</td><td>{{ credit.role_name }}</td><td>{{ credit.year }}</td></tr>
-                                {% empty %}
-                                    <tr><td colspan="3">ثبت نشده</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </dd>
-            </div>
-            <div class="py-3">
-                <dt class="text-xs leading-[18px] text-muted-foreground">مدیای پروفایل</dt>
-                <dd class="mt-2">
-                    <div class="repeat-wrap">
-                        <table class="repeat-table">
-                            <thead><tr><th>نوع</th><th>عنوان</th></tr></thead>
-                            <tbody>
-                                {% for item in profile.media_items.all %}
-                                    <tr><td>{{ item.kind|media_label }}</td><td>{{ item.label }}</td></tr>
-                                {% empty %}
-                                    <tr><td colspan="2">ثبت نشده</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </dd>
-            </div>
-        </dl>
-        <div class="mt-6">
-            {% include "components/button.html" with href="/me/profile/?edit=1" label="ویرایش" variant="secondary" %}
+            <dl class="pf-record">
+                <div>
+                    <dt>نام</dt>
+                    <dd>{% if profile.name %}{{ profile.name }}{% else %}ثبت نشده{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>موبایل</dt>
+                    <dd dir="ltr">{{ request.user.username|phone_fa }}</dd>
+                </div>
+                <div>
+                    <dt>شهر</dt>
+                    <dd>{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>درباره</dt>
+                    <dd>{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
+                </div>
+            </dl>
         </div>
     {% endif %}
 {% endblock %}

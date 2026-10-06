@@ -1,23 +1,47 @@
-{% load static %}
+{% load static ejranow_ui %}
+{% profile_first_name user as given_name %}
 <header class="site-header sticky top-0 z-30 border-b border-border bg-background">
-    <div class="mx-auto flex h-16 w-full min-w-0 max-w-5xl items-center gap-4 px-4">
-        <a class="min-w-0 shrink" href="{% url 'home' %}">
+    <div class="site-header__bar mx-auto flex h-16 w-full min-w-0 items-center gap-4 px-4">
+        <a class="site-header__brand" href="{% url 'home' %}">
             <img class="site-logo-light block h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="80" height="32">
             <img class="site-logo-dark h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa-dark.svg' %}" alt="" aria-hidden="true" width="80" height="32">
         </a>
-        <nav class="hidden items-center gap-6 text-sm font-semibold md:flex" aria-label="اصلی">
+        <nav class="site-nav" aria-label="اصلی">
             <a class="{% if request.path == '/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a>
             <a class="{% if '/opportunities/' in request.path or request.path == '/opportunities/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فرصت‌ها</a>
             <a class="{% if '/artists/' in request.path %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'artists' %}">هنرمندان</a>
-            <a class="{% if '/projects/' in request.path %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
+            <a class="{% if request.path == '/projects/' or '/projects/' == request.path|slice:':10' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
         </nav>
-        <div class="ms-auto flex items-center gap-4">
+        <div class="site-header__q">
+            <button class="site-header__q-btn{% if request.resolver_match.url_name == 'search' and request.GET.q %} has-value{% endif %}" type="button" aria-keyshortcuts="Meta+K Control+K" @click="searchOpen = true">
+                <span class="site-header__q-label">
+                    {% include "components/icon.html" with name="search" size="18" %}
+                    {% if request.resolver_match.url_name == 'search' and request.GET.q %}
+                        <span>{{ request.GET.q }}</span>
+                    {% else %}
+                        <span data-search-typewriter>مثلاً: بازیگر</span>
+                    {% endif %}
+                </span>
+                <span class="site-header__kbd" aria-hidden="true">
+                    <kbd class="is-mac">{% include "components/icon.html" with name="command" size="12" %}</kbd>
+                    <kbd class="is-win">Ctrl</kbd>
+                    <kbd>K</kbd>
+                </span>
+            </button>
+            {% include "components/layout/search_modal.html" %}
+        </div>
+        <div class="site-header__end">
             {% if user.is_authenticated %}
-                <a class="inline-flex min-h-11 items-center text-sm font-semibold text-foreground" href="{% url 'me-profile' %}">پروفایل</a>
+                <a class="site-account" href="{% url 'me-profile' %}">
+                    {% include "components/icon.html" with name="user" %}
+                    <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
+                </a>
             {% else %}
-                <a class="inline-flex min-h-11 items-center text-sm font-semibold text-foreground" href="{% url 'login' %}">ورود</a>
+                <a class="site-account" href="{% url 'login' %}">
+                    {% include "components/icon.html" with name="user" %}
+                    <span class="site-account__name">ورود/ثبت نام</span>
+                </a>
             {% endif %}
-            <a class="inline-flex min-h-11 items-center text-sm font-semibold text-foreground" href="{% url 'search' %}">جستجو</a>
         </div>
     </div>
 </header>

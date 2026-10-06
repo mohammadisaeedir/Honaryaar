@@ -35,14 +35,8 @@ class CodeForm(forms.Form):
 
 
 class ProfileForm(forms.Form):
-    first_name = forms.CharField(
-        max_length=60,
-        error_messages={"required": "نام را وارد کنید."},
-    )
-    last_name = forms.CharField(
-        max_length=60,
-        error_messages={"required": "نام خانوادگی را وارد کنید."},
-    )
+    first_name = forms.CharField(max_length=60, required=False)
+    last_name = forms.CharField(max_length=60, required=False)
     city = forms.ModelChoiceField(
         queryset=City.objects.all(),
         required=False,
@@ -51,16 +45,10 @@ class ProfileForm(forms.Form):
     about = forms.CharField(required=False)
 
     def clean_first_name(self):
-        value = self.cleaned_data["first_name"].strip()
-        if not value:
-            raise forms.ValidationError("نام را وارد کنید.")
-        return value
+        return (self.cleaned_data.get("first_name") or "").strip()
 
     def clean_last_name(self):
-        value = self.cleaned_data["last_name"].strip()
-        if not value:
-            raise forms.ValidationError("نام خانوادگی را وارد کنید.")
-        return value
+        return (self.cleaned_data.get("last_name") or "").strip()
 
     def clean_about(self):
         return self.cleaned_data["about"].strip()

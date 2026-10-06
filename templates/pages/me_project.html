@@ -5,9 +5,24 @@
 {% block account_title %}{{ project.title }}{% endblock %}
 
 {% block account_main %}
-    <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'me-projects' %}">پروژه‌های من</a></p>
-    <h1 class="mt-3 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
-    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">درخواست‌های این پروژه را اینجا می‌بینید و وضعیت‌شان را عوض می‌کنید.</p>
+    <div class="pf-plp" dir="rtl">
+    <h1>{{ project.title }}</h1>
+    <dl class="pf-record">
+        <div>
+            <dt>وضعیت</dt>
+            <dd>{{ project.get_status_display }}</dd>
+        </div>
+        <div>
+            <dt>شهر</dt>
+            <dd>{% if project.city %}{{ project.city }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        {% if project.summary %}
+            <div>
+                <dt>خلاصه</dt>
+                <dd>{{ project.summary }}</dd>
+            </div>
+        {% endif %}
+    </dl>
 
     <section class="mt-8 grid gap-4">
         {% for opportunity in opportunities %}
@@ -35,6 +50,8 @@
                     {% endfor %}
                 </div>
             </article>
+        {% empty %}
+            {% include "components/account/empty.html" with icon="projects" text="هنوز فرصتی برای این پروژه ثبت نشده." %}
         {% endfor %}
     </section>
 
@@ -106,4 +123,5 @@
             </div>
         </form>
     </section>
+    </div>
 {% endblock %}

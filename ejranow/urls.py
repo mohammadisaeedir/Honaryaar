@@ -20,9 +20,14 @@ from django.urls import path
 from ejranow.document_views import superuser_document, superuser_documents
 from ejranow.auth_views import login_code, login_phone, logout_view, me_profile
 from ejranow.studio_views import (
+    application_detail,
     application_status,
     apply,
-    invite_reply,
+    collaboration_detail,
+    invite_detail,
+    my_applications,
+    my_collaborations,
+    my_invites,
     my_matches,
     my_projects,
     project_manage,
@@ -31,6 +36,7 @@ from ejranow.studio_views import (
 from ejranow.views import (
     about,
     artist_detail,
+    guide,
     artist_list,
     home,
     opportunity_detail,
@@ -38,6 +44,7 @@ from ejranow.views import (
     project_detail,
     project_list,
     search,
+    sitemap_page,
     service_worker,
     web_manifest,
 )
@@ -45,6 +52,10 @@ from ejranow.views import (
 urlpatterns = [
     path("", home, name="home"),
     path("about-us/", about, name="about"),
+    path("magazine/", guide, name="magazine"),
+    path("terms/", guide, name="terms"),
+    path("sitemap/", sitemap_page, name="sitemap"),
+    path("contact/", guide, name="contact"),
     path("artists/", artist_list, name="artists"),
     path("artists/<slug:slug>/", artist_detail, name="artist"),
     path("opportunities/", opportunity_list, name="opportunities"),
@@ -60,8 +71,13 @@ urlpatterns = [
     path("me/projects/new/", project_new, name="me-project-new"),
     path("me/projects/<slug:slug>/", project_manage, name="me-project"),
     path("me/projects/", my_projects, name="me-projects"),
+    path("me/applications/", my_applications, name="me-applications"),
+    path("me/applications/<int:pk>/", application_detail, name="me-application"),
     path("me/applications/<int:pk>/status/", application_status, name="application-status"),
-    path("me/invites/<int:pk>/", invite_reply, name="invite-reply"),
+    path("me/invites/", my_invites, name="me-invites"),
+    path("me/invites/<int:pk>/", invite_detail, name="me-invite"),
+    path("me/collaborations/", my_collaborations, name="me-collaborations"),
+    path("me/collaborations/<int:pk>/", collaboration_detail, name="me-collaboration"),
     path("me/matches/", my_matches, name="me-matches"),
     path("manifest.webmanifest", web_manifest, name="manifest"),
     path("sw.js", service_worker, name="service-worker"),

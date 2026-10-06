@@ -1,0 +1,27 @@
+{% extends "pages/account/shell.html" %}
+
+{% block title %}{{ page_title }} · هنریار{% endblock %}
+{% block account_title %}{{ page_title }}{% endblock %}
+
+{% block account_main %}
+    <div class="pf-plp" dir="rtl">
+        <div class="pf-board__head">
+            <h1>{{ page_title }}</h1>
+            {% if items and add_url and pin_action %}
+                <a class="pf-board__add" href="{{ add_url }}">{{ add_label }}</a>
+            {% endif %}
+        </div>
+        {% if items %}
+            <div class="pf-board__list">
+                {% for item in items %}
+                    <a class="pf-request pf-request--{{ item.tone }}" href="{{ item.url }}">
+                        <h2>{{ item.title }}</h2>
+                        {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include "components/account/empty.html" with icon=empty_icon text=empty_text action_href=add_url action_label=add_label %}
+        {% endif %}
+    </div>
+{% endblock %}

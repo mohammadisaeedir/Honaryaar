@@ -4,6 +4,7 @@ from django import template
 from django.utils import timezone
 
 from ejranow import catalog
+from ejranow.accounts import current_profile
 from ejranow.labels import (
     APPLICATION_LABELS,
     INVITE_LABELS,
@@ -101,6 +102,14 @@ def age_label(item):
 @register.filter
 def project_of(slug):
     return catalog.project_by_slug(slug)
+
+
+@register.simple_tag
+def profile_first_name(user):
+    profile = current_profile(user)
+    if profile is None:
+        return ""
+    return profile.first_name or ""
 
 
 @register.simple_tag

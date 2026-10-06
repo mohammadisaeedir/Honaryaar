@@ -24,6 +24,7 @@ from ejranow.models import (
     ProfileSkill,
     Project,
     Role,
+    Testimonial,
     Skill,
     SkillGroup,
 )
@@ -214,12 +215,27 @@ class CreditAdmin(ModelAdmin):
     autocomplete_fields = ("profile",)
 
 
+class TestimonialInline(TabularInline):
+    model = Testimonial
+    extra = 0
+    fields = ("quote", "name", "role_label", "featured", "priority")
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(ModelAdmin):
+    list_display = ("name", "role_label", "project", "featured", "priority")
+    list_filter = ("featured",)
+    search_fields = ("name", "quote", "project__title")
+    autocomplete_fields = ("project",)
+
+
 @admin.register(Project)
 class ProjectAdmin(ModelAdmin):
     list_display = ("title", "owner", "city", "category", "status", "opportunity_link")
     list_filter = ("status", "category", "city")
     search_fields = ("title", "lead_name", "owner__name", "city__title", "slug")
     autocomplete_fields = ("owner", "category", "lead_role", "city")
+    inlines = [TestimonialInline]
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(opportunity_count=Count("opportunities", distinct=True))
@@ -243,11 +259,13 @@ class OpportunityAdmin(ModelAdmin):
         "deadline",
         "gender",
         "paid",
+        "featured",
         "status",
         "application_link",
         "invite_link",
     )
-    list_filter = ("status", "paid", "gender", "city", "role")
+    list_filter = ("status", "paid", "featured", "gender", "city", "role")
+    list_editable = ("featured",)
     date_hierarchy = "deadline"
     search_fields = ("title", "project__title", "city__title", "slug")
     autocomplete_fields = ("project", "role", "city")

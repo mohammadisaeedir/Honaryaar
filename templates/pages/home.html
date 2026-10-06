@@ -1,98 +1,132 @@
 {% extends "base.html" %}
+{% load static ejranow_ui %}
 
-{% block title %}هنریار{% endblock %}
+{% block title %}هنریار | فرصت‌های هنری و همکاری{% endblock %}
+
+{% block body_class %}home-page min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
+    <script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js"></script>
+{% endblock %}
 
 {% block content %}
-    <section>
-        <h1 class="max-w-xl text-[28px] font-semibold leading-9">هنرمند، پروژه و فرصت؛ همین‌جا.</h1>
-        <p class="mt-4 max-w-xl text-sm leading-[22px] text-muted-foreground">هنریار جای پیدا کردن نقش و آدمِ مناسب برای تئاتر است. بازیگر فرصت را می‌بیند. صاحب پروژه، بازیگر را.</p>
-        <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-            {% url 'opportunities' as opportunities_url %}
-            {% url 'artists' as artists_url %}
-            {% include "components/button.html" with href=opportunities_url label="مشاهده فرصت‌ها" %}
-            {% include "components/button.html" with href=artists_url label="پیدا کردن هنرمند" variant="secondary" %}
+    <section class="hero" x-data="{ mode: 'talent' }">
+        <div class="hero-switch-wrap">
+            <div class="hero-switch" role="tablist" aria-label="نوع کاربر">
+                <button type="button" role="tab" :class="mode === 'talent' && 'is-on'" :aria-selected="mode === 'talent'" @click="mode = 'talent'">{% include "components/icon.html" with name="megaphone" size="16" %}در جستجوی فرصت هنری</button>
+                <button type="button" role="tab" :class="mode === 'hire' && 'is-on'" :aria-selected="mode === 'hire'" @click="mode = 'hire'">{% include "components/icon.html" with name="users" size="16" %}در جستجوی هنرمندم</button>
+            </div>
+        </div>
+        <div class="hero-grid">
+            <div class="hero-copy">
+                <div class="hero-pane is-on" :class="{ 'is-on': mode === 'talent' }">
+                    <h1 class="hero-title">صحنه‌ی بعدی تو، همین‌جاست</h1>
+                    <p class="hero-rotate" data-words="{{ hero_fields|join:'|' }}" aria-label="{{ hero_fields|join:'، ' }}">
+                        <span class="hero-word">{{ hero_fields.0 }}</span>
+                    </p>
+                    <div class="hero-stats">
+                        {% for stat in talent_stats %}
+                            <div>
+                                <strong dir="ltr">+{{ stat.value }}</strong>
+                                <span>{{ stat.label }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a class="hero-cta" href="{% url 'opportunities' %}">مشاهده فرصت‌های موجود{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
+                    {% else %}
+                        <a class="hero-cta" href="{% url 'login' %}?next={% url 'opportunities' %}">مشاهده فرصت‌های موجود{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
+                    {% endif %}
+                </div>
+                <div class="hero-pane" :class="{ 'is-on': mode === 'hire' }">
+                    <h1 class="hero-title">هنرمندِ نقشت را پیدا کن</h1>
+                    <p class="hero-rotate" data-words="{{ hero_roles|join:'|' }}" aria-label="{{ hero_roles|join:'، ' }}">
+                        <span class="hero-word">{{ hero_roles.0 }}</span>
+                    </p>
+                    <div class="hero-stats">
+                        {% for stat in hire_stats %}
+                            <div>
+                                <strong dir="ltr">+{{ stat.value }}</strong>
+                                <span>{{ stat.label }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if user.is_authenticated %}
+                        <a class="hero-cta" href="{% url 'artists' %}">لیست هنرمندان فعال{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
+                    {% else %}
+                        <a class="hero-cta" href="{% url 'login' %}?next={% url 'artists' %}">لیست هنرمندان فعال{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="hero-photo">
+                <dotlottie-wc class="hero-lottie is-on" :class="{ 'is-on': mode === 'talent' }" src="{% static 'home/honaryaar-job-proposal.lottie' %}" autoplay loop></dotlottie-wc>
+                <dotlottie-wc class="hero-lottie hero-lottie--hire" :class="{ 'is-on': mode === 'hire' }" src="{% static 'home/honaryaar-recruitment.lottie' %}" autoplay loop></dotlottie-wc>
+            </div>
         </div>
     </section>
 
-    <section class="mt-16 grid min-w-0 items-center gap-8 border-y border-border py-12 md:grid-cols-[160px_minmax(0,1fr)]">
-        <div class="flex aspect-[3/4] items-end rounded-box border border-border bg-surface p-4 text-xs leading-[18px] text-muted-foreground">جای تصویر کتاب یا نویسنده</div>
-        <figure class="min-w-0">
-            <blockquote>
-                <p class="text-[22px] font-semibold leading-[30px]">هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد.</p>
-                <p class="mt-4 font-editorial text-[18px] italic leading-[26px]" lang="en" dir="ltr">The artist is always a student, of course; but he is not a student only.</p>
-            </blockquote>
-            <figcaption class="mt-4 text-xs leading-[18px] text-muted-foreground">Daniel Burleigh Parkhurst · <cite class="font-editorial italic" lang="en">The Painter in Oil</cite>, 1898</figcaption>
-        </figure>
-    </section>
-
-    <section class="mt-16">
-        <div class="mb-6 flex items-end justify-between gap-4">
-            <h2 class="text-[22px] font-semibold leading-[30px]">فرصت‌های تازه</h2>
-            <a class="text-sm font-semibold" href="{% url 'opportunities' %}">همه</a>
+    {% if opportunities %}
+    <section class="home-block home-block--featured">
+        <div class="home-head">
+            <h2>فرصت‌های ویژه</h2>
         </div>
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="feature-row">
             {% for opportunity in opportunities %}
-                {% include "components/casting/opportunity_card.html" %}
+                {% with project=opportunity.project|project_of %}
+                    <a class="feature-card role-card" href="{% url 'opportunity' opportunity.slug %}">
+                        {% include "components/casting/role_card.html" %}
+                    </a>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="home-block">
+        <div class="join-card">
+            <div class="join-copy">
+                <h2>دیده شو، انتخاب شو.</h2>
+                <p>بازیگرها از همین‌جا به پروژه می‌رسند. نقش را ببین، نمونه کارت را بگذار، و برای همان نقش درخواست بده.</p>
+                <ul class="join-list">
+                    <li>{% include "components/icon.html" with name="user" size="20" %}چند نقش و مهارت در یک پروفایل.</li>
+                    <li>{% include "components/icon.html" with name="image" size="20" %}عکس، ویدیو و صوت برای نمونه کار.</li>
+                    <li>{% include "components/icon.html" with name="bell" size="20" %}فرصت شهر و نقش، یک‌جا.</li>
+                    <li>{% include "components/icon.html" with name="smartphone" size="20" %}درخواست برای هر نقش، از همین صفحه.</li>
+                </ul>
+                <a class="hero-cta" href="{% url 'opportunities' %}">شروع کنید</a>
+            </div>
+            <dotlottie-wc class="join-lottie" src="{% static 'home/honaryaar-theater.lottie' %}" autoplay loop></dotlottie-wc>
+        </div>
+    </section>
+
+    <section class="home-block">
+        <h2>تازه‌های مجله</h2>
+        <div class="news-row">
+            {% for post in posts %}
+                <a class="news-card" href="{% url 'magazine' %}">
+                    <span class="news-card__thumb">{{ post.kicker }}</span>
+                    <span class="news-card__title">{{ post.title }}</span>
+                </a>
             {% endfor %}
         </div>
     </section>
 
-    <section class="mt-16">
-        <div class="mb-6 flex items-end justify-between gap-4">
-            <h2 class="text-[22px] font-semibold leading-[30px]">هنرمندان</h2>
-            <a class="text-sm font-semibold" href="{% url 'artists' %}">همه</a>
-        </div>
-        <div class="grid gap-4 md:grid-cols-2">
-            {% for artist in artists %}
-                {% include "components/artist/artist_card.html" %}
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="mt-16">
-        <div class="mb-6 flex items-end justify-between gap-4">
-            <h2 class="text-[22px] font-semibold leading-[30px]">پروژه‌های فعال</h2>
-            <a class="text-sm font-semibold" href="{% url 'projects' %}">همه</a>
-        </div>
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {% for project in projects %}
-                {% include "components/project/project_card.html" %}
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="mt-16">
-        <h2 class="text-[22px] font-semibold leading-[30px]">هنریار چطور کار می‌کند</h2>
-        <ol class="mt-6 grid gap-6 md:grid-cols-4">
-            <li>
-                <p class="text-xs leading-[18px] text-muted-foreground">۰۱</p>
-                <h3 class="mt-2 text-[18px] font-semibold leading-[26px]">پروفایل</h3>
-                <p class="mt-2 text-sm leading-[22px] text-muted-foreground">سابقه، مهارت و مدیا در یک جا.</p>
-            </li>
-            <li>
-                <p class="text-xs leading-[18px] text-muted-foreground">۰۲</p>
-                <h3 class="mt-2 text-[18px] font-semibold leading-[26px]">فرصت</h3>
-                <p class="mt-2 text-sm leading-[22px] text-muted-foreground">نقش، شهر، شرایط و ددلاین، روشن.</p>
-            </li>
-            <li>
-                <p class="text-xs leading-[18px] text-muted-foreground">۰۳</p>
-                <h3 class="mt-2 text-[18px] font-semibold leading-[26px]">درخواست یا دعوت</h3>
-                <p class="mt-2 text-sm leading-[22px] text-muted-foreground">بازیگر درخواست می‌دهد یا پروژه دعوت می‌کند.</p>
-            </li>
-            <li>
-                <p class="text-xs leading-[18px] text-muted-foreground">۰۴</p>
-                <h3 class="mt-2 text-[18px] font-semibold leading-[26px]">مچ</h3>
-                <p class="mt-2 text-sm leading-[22px] text-muted-foreground">وقتی هر دو طرف موافق باشند.</p>
-            </li>
-        </ol>
-    </section>
-
-    <section class="mt-16 rounded-box bg-surface px-6 py-10">
-        <h2 class="text-[22px] font-semibold leading-[30px]">نقش بعدی را پیدا کنید.</h2>
-        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">فرصت‌های باز تئاتر اینجاست. اگر پروژه دارید، از همین فهرست شروع کنید.</p>
-        <div class="mt-6">
-            {% url 'opportunities' as opportunities_url %}
-            {% include "components/button.html" with href=opportunities_url label="مشاهده فرصت‌ها" %}
-        </div>
-    </section>
+    {% include "components/testimonial/list.html" with testimonials=testimonials %}
+    <script>
+        document.querySelectorAll(".hero-rotate").forEach(function (root) {
+            var word = root.querySelector(".hero-word");
+            var words = (root.getAttribute("data-words") || "").split("|").filter(Boolean);
+            if (!word || words.length < 2) return;
+            var index = 0;
+            setInterval(function () {
+                word.classList.add("is-changing");
+                setTimeout(function () {
+                    index = (index + 1) % words.length;
+                    word.textContent = words[index];
+                    word.classList.remove("is-changing");
+                }, 450);
+            }, 2400);
+        });
+    </script>
 {% endblock %}

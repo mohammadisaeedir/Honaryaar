@@ -4,10 +4,12 @@ from collections import defaultdict
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from ejranow.accounts import ready_profile
+from ejranow.accounts import ensure_profile
 from ejranow.forms import ApplyForm, InviteForm, OpportunityForm, ProjectOpportunityForm
+from ejranow.labels import APPLICATION_LABELS, INVITE_LABELS, MATCH_LABELS
 from ejranow.models import (
     Application,
     ApplicationStatus,
@@ -24,10 +26,7 @@ from ejranow.models import (
 
 
 def _profile_or_redirect(request):
-    profile = ready_profile(request.user)
-    if profile is None:
-        return None, redirect("/me/profile/?edit=1")
-    return profile, None
+    return ensure_profile(request.user), None
 
 
 def _slug(model, prefix):
@@ -63,13 +62,51 @@ def _ensure_match(profile, opportunity, application=None, invite=None):
     return match
 
 
+def _list(request, page_title, items, empty_icon, empty_text, add_url="", add_label="", pin_action=False):
+    return render(
+        request,
+        "pages/me_list.html",
+        {
+            "page_title": page_title,
+            "items": items,
+            "empty_icon": empty_icon,
+            "empty_text": empty_text,
+            "add_url": add_url,
+            "add_label": add_label,
+            "pin_action": pin_action,
+        },
+    )
+
+
 @login_required
 def my_projects(request):
     profile, bounce = _profile_or_redirect(request)
     if bounce:
         return bounce
-    projects = profile.owned_projects.prefetch_related("opportunities")
-    return render(request, "pages/me_projects.html", {"projects": projects})
+    projects = profile.owned_projects.prefetch_related("opportunities").select_related("city")
+    items = []
+    for project in projects:
+        meta = f"{project.opportunities.count()} فرصت"
+        if project.city_id:
+            meta = f"{meta} · {project.city}"
+        items.append(
+            {
+                "url": reverse("me-project", args=[project.slug]),
+                "title": project.title,
+                "meta": meta,
+                "tone": project.status,
+            }
+        )
+    return _list(
+        request,
+        "پروژه‌ها",
+        items,
+        "projects",
+        "هنوز پروژه‌ای نساخته‌اید.",
+        reverse("me-project-new"),
+        "افزودن پروژه",
+        pin_action=True,
+    )
 
 
 @login_required
@@ -217,40 +254,183 @@ def apply(request, slug):
     return redirect("opportunity", slug=slug)
 
 
+def _record(request, title, rows, subtitle="", body="", public_url="", invite=None):
+    return render(
+        request,
+        "pages/me_record.html",
+        {
+            "title": title,
+            "subtitle": subtitle,
+            "rows": rows,
+            "body": body,
+            "public_url": public_url,
+            "invite": invite,
+        },
+    )
+
+
 @login_required
-def my_matches(request):
+def my_applications(request):
     profile, bounce = _profile_or_redirect(request)
     if bounce:
         return bounce
     applications = profile.applications.select_related("opportunity", "opportunity__project")
-    invites = profile.invites.select_related("opportunity", "opportunity__project")
-    matches = profile.matches.select_related("opportunity", "opportunity__project")
-    return render(
+    items = [
+        {
+            "url": reverse("me-application", args=[item.pk]),
+            "title": item.opportunity.title,
+            "meta": f"{item.opportunity.project.title} · {APPLICATION_LABELS.get(item.status, item.status)}",
+            "tone": item.status,
+        }
+        for item in applications
+    ]
+    return _list(
         request,
-        "pages/me_matches.html",
-        {"applications": applications, "invites": invites, "matches": matches},
+        "درخواست‌های من",
+        items,
+        "applications",
+        "هنوز درخواستی نفرستاده‌اید.",
+        reverse("opportunities"),
+        "مشاهده فرصت‌ها",
     )
 
 
 @login_required
-@require_POST
-def invite_reply(request, pk):
+def application_detail(request, pk):
     profile, bounce = _profile_or_redirect(request)
     if bounce:
         return bounce
-    invite = get_object_or_404(
-        Invite.objects.select_related("opportunity"),
+    application = get_object_or_404(
+        Application.objects.select_related("opportunity", "opportunity__project", "opportunity__role"),
         pk=pk,
         profile=profile,
-        status=InviteStatus.SENT,
     )
-    decision = request.POST.get("decision")
-    if decision == "accept":
-        invite.status = InviteStatus.ACCEPTED
-        invite.save(update_fields=["status"])
-        _ensure_match(profile, invite.opportunity, invite=invite)
-    elif decision == "decline":
-        invite.status = InviteStatus.DECLINED
-        invite.save(update_fields=["status"])
-        Match.objects.filter(invite=invite, status=MatchStatus.ACTIVE).update(status=MatchStatus.CLOSED)
-    return redirect("me-matches")
+    opportunity = application.opportunity
+    return _record(
+        request,
+        opportunity.title,
+        [
+            {"label": "پروژه", "value": opportunity.project.title},
+            {"label": "نقش", "value": opportunity.role.title},
+            {"label": "وضعیت", "value": APPLICATION_LABELS.get(application.status, application.status)},
+        ],
+        subtitle="درخواست شما",
+        body=application.message,
+        public_url=reverse("opportunity", args=[opportunity.slug]),
+    )
+
+
+@login_required
+def my_invites(request):
+    profile, bounce = _profile_or_redirect(request)
+    if bounce:
+        return bounce
+    invites = profile.invites.select_related("opportunity", "opportunity__project")
+    items = [
+        {
+            "url": reverse("me-invite", args=[item.pk]),
+            "title": item.opportunity.title,
+            "meta": f"{item.opportunity.project.title} · {INVITE_LABELS.get(item.status, item.status)}",
+            "tone": item.status,
+        }
+        for item in invites
+    ]
+    return _list(request, "دعوت‌ها", items, "invites", "دعوتی برای شما نیست.")
+
+
+@login_required
+def invite_detail(request, pk):
+    profile, bounce = _profile_or_redirect(request)
+    if bounce:
+        return bounce
+    if request.method == "POST":
+        invite = get_object_or_404(
+            Invite.objects.select_related("opportunity"),
+            pk=pk,
+            profile=profile,
+            status=InviteStatus.SENT,
+        )
+        decision = request.POST.get("decision")
+        if decision == "accept":
+            invite.status = InviteStatus.ACCEPTED
+            invite.save(update_fields=["status"])
+            _ensure_match(profile, invite.opportunity, invite=invite)
+        elif decision == "decline":
+            invite.status = InviteStatus.DECLINED
+            invite.save(update_fields=["status"])
+            Match.objects.filter(invite=invite, status=MatchStatus.ACTIVE).update(status=MatchStatus.CLOSED)
+        return redirect("me-invite", pk=invite.pk)
+    invite = get_object_or_404(
+        Invite.objects.select_related("opportunity", "opportunity__project", "opportunity__role"),
+        pk=pk,
+        profile=profile,
+    )
+    opportunity = invite.opportunity
+    return _record(
+        request,
+        opportunity.title,
+        [
+            {"label": "پروژه", "value": opportunity.project.title},
+            {"label": "نقش", "value": opportunity.role.title},
+            {"label": "وضعیت", "value": INVITE_LABELS.get(invite.status, invite.status)},
+        ],
+        subtitle="دعوت برای شما",
+        body=invite.message,
+        public_url=reverse("opportunity", args=[opportunity.slug]),
+        invite=invite,
+    )
+
+
+@login_required
+def my_collaborations(request):
+    profile, bounce = _profile_or_redirect(request)
+    if bounce:
+        return bounce
+    matches = profile.matches.select_related("opportunity", "opportunity__project")
+    items = [
+        {
+            "url": reverse("me-collaboration", args=[item.pk]),
+            "title": item.opportunity.title,
+            "meta": f"{item.opportunity.project.title} · {MATCH_LABELS.get(item.status, item.status)}",
+            "tone": item.status,
+        }
+        for item in matches
+    ]
+    return _list(
+        request,
+        "همکاری‌ها",
+        items,
+        "collaborations",
+        "همکاری وقتی ساخته می‌شود که درخواستی به نتیجه برسد یا دعوتی را قبول کنید.",
+    )
+
+
+@login_required
+def collaboration_detail(request, pk):
+    profile, bounce = _profile_or_redirect(request)
+    if bounce:
+        return bounce
+    match = get_object_or_404(
+        Match.objects.select_related("opportunity", "opportunity__project", "opportunity__role"),
+        pk=pk,
+        profile=profile,
+    )
+    opportunity = match.opportunity
+    return _record(
+        request,
+        opportunity.title,
+        [
+            {"label": "پروژه", "value": opportunity.project.title},
+            {"label": "نقش", "value": opportunity.role.title},
+            {"label": "وضعیت", "value": MATCH_LABELS.get(match.status, match.status)},
+        ],
+        subtitle="همکاری",
+        public_url=reverse("opportunity", args=[opportunity.slug]),
+    )
+
+
+@login_required
+def my_matches(request):
+    return redirect("me-collaborations")
+
+

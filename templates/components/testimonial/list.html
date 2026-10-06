@@ -1,0 +1,52 @@
+{% if testimonials %}
+    <section class="home-block quote-carousel" data-quote-carousel>
+        <div class="quote-carousel__head">
+            <h2>تجربه کاربران ما</h2>
+            {% if testimonials|length > 1 %}
+                <div class="quote-carousel__nav">
+                    <button type="button" data-dir="-1" aria-label="قبلی">{% include "components/icon.html" with name="chevron-right" size="18" %}</button>
+                    <button type="button" data-dir="1" aria-label="بعدی">{% include "components/icon.html" with name="chevron-right" size="18" %}</button>
+                </div>
+            {% endif %}
+        </div>
+        <div class="quote-carousel__view">
+            <div class="quote-carousel__track">
+                {% for item in testimonials %}
+                    {% include "components/testimonial/card.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <script>
+        document.querySelectorAll("[data-quote-carousel]").forEach(function (root) {
+            if (root.dataset.ready) return;
+            root.dataset.ready = "1";
+            var track = root.querySelector(".quote-carousel__track");
+            var cards = track.children;
+            var prev = root.querySelector("[data-dir='-1']");
+            var next = root.querySelector("[data-dir='1']");
+            if (!prev || !next) return;
+            var index = 0;
+            function perView() { return window.innerWidth < 800 ? 1 : 2; }
+            function step() {
+                if (!cards.length) return 0;
+                var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+                return cards[0].getBoundingClientRect().width + gap;
+            }
+            function go(value) {
+                var max = Math.max(0, cards.length - perView());
+                index = Math.max(0, Math.min(max, value));
+                track.style.transform = "translateX(" + (index * step()) + "px)";
+                prev.disabled = index === 0;
+                next.disabled = index === max;
+            }
+            root.querySelectorAll("[data-dir]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    go(index + Number(button.getAttribute("data-dir")));
+                });
+            });
+            window.addEventListener("resize", function () { go(index); });
+            go(0);
+        });
+    </script>
+{% endif %}

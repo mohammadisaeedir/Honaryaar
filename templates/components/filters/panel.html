@@ -1,0 +1,51 @@
+{% load ejranow_ui %}
+<button class="filter-open" type="button" @click="open = true">
+    {% include "components/icon.html" with name="sliders" size="18" %}
+    فیلتر
+</button>
+<div class="filter-chips">
+    {% for chip in quick %}
+        <a class="filter-box{% if chip.active %} is-on{% endif %}" href="{{ chip.href }}">{{ chip.label }}</a>
+    {% endfor %}
+</div>
+<div class="filter-backdrop" x-cloak x-show="open" x-transition.opacity @click="open = false"></div>
+<aside class="filter-drawer" x-cloak x-show="open" x-transition:enter="filter-drawer-motion" x-transition:enter-start="filter-drawer-start" x-transition:enter-end="filter-drawer-end" x-transition:leave="filter-drawer-motion" x-transition:leave-start="filter-drawer-end" x-transition:leave-end="filter-drawer-start" role="dialog" aria-modal="true" aria-label="فیلترها">
+    <form method="get" action="{{ action }}" @submit="open = false">
+        <div class="filter-drawer__head">
+            <h2>فیلترها</h2>
+            <button type="button" @click="open = false" aria-label="بستن">{% include "components/icon.html" with name="x" size="20" %}</button>
+        </div>
+        <div class="filter-drawer__body">
+            <input type="hidden" name="q" value="{{ filters.q }}">
+            {% for group in groups %}
+                <div class="filter-acc" x-data="{ open: {{ group.open|yesno:'true,false' }}, more: {{ group.more|yesno:'true,false' }} }">
+                    <button class="filter-acc__head" type="button" @click="open = !open">
+                        <span>{{ group.label }}</span>
+                        <span class="filter-acc__chev" :class="open && 'is-open'"></span>
+                    </button>
+                    <div class="filter-acc__body" x-cloak x-show="open">
+                        {% if group.kind == "text" %}
+                            <input class="field" type="text" inputmode="numeric" name="{{ group.name }}" value="{{ group.value }}" placeholder="{{ group.placeholder }}">
+                        {% else %}
+                            <div class="filter-boxes">
+                                {% for option in group.options %}
+                                    <label class="filter-box{% if option.selected %} is-on{% endif %}{% if forloop.counter > 6 %} is-extra{% endif %}" {% if forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
+                                        <input type="radio" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                        {{ option.label }}
+                                    </label>
+                                {% endfor %}
+                                {% if group.options|length > 6 %}
+                                    <button class="filter-box" type="button" x-cloak x-show="!more" @click="more = true">موارد بیشتر</button>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="filter-drawer__foot">
+            <a href="{{ clear_href }}">پاک کردن</a>
+            <button type="submit">اعمال فیلتر</button>
+        </div>
+    </form>
+</aside>

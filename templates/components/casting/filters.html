@@ -1,17 +1,6 @@
 {% load ejranow_ui %}
 <div x-data="{ open: false }">
-    <form class="flex gap-2" method="get" action="{% url 'opportunities' %}" hx-get="{% url 'opportunities' %}" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">
-        {% include "components/input.html" with name="q" value=filters.q placeholder="جستجو در فرصت‌ها" extra="min-w-0 flex-1" %}
-        <input type="hidden" name="city" value="{{ filters.city }}">
-        <input type="hidden" name="paid" value="{{ filters.paid }}">
-        <input type="hidden" name="role" value="{{ filters.role }}">
-        <input type="hidden" name="production" value="{{ filters.production }}">
-        <input type="hidden" name="gender" value="{{ filters.gender }}">
-        <input type="hidden" name="age" value="{{ filters.age }}">
-        <button class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-input bg-foreground px-4 text-sm font-semibold text-white" type="submit">جستجو</button>
-    </form>
-
-    <div class="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1">
+    <div class="flex max-w-full gap-2 overflow-x-auto pb-1">
         <a class="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs {% if not filters.city and not filters.paid %}border-foreground text-foreground{% else %}border-border text-muted-foreground{% endif %}" href="{% url 'opportunities' %}" hx-get="{% url 'opportunities' %}" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">همه</a>
         {% for city in featured_cities %}
             <a class="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs {% if filters.city == city %}border-foreground text-foreground{% else %}border-border text-muted-foreground{% endif %}" href="{% query_string request city=city %}" hx-get="{% query_string request city=city %}" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">{{ city }}</a>

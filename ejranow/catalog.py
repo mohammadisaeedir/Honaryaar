@@ -158,6 +158,20 @@ SAMPLE_SKILL_LEVELS = {
 }
 PRODUCTIONS = ["نمایش صحنه‌ای", "خوانش", "تئاتر دانشجویی"]
 
+HOME_POSTS = [
+    {"kicker": "انتخاب بازیگر", "title": "چطور برای یک نقش کوتاه آماده شویم"},
+    {"kicker": "پشت صحنه", "title": "از متن تا اولین تمرین چه می‌گذرد"},
+    {"kicker": "فراخوان", "title": "خوانش وقتی گروه هنوز کامل نیست"},
+    {"kicker": "راهنما", "title": "نقش نوجوان و حضور خانواده در جلسه"},
+    {"kicker": "قرارداد", "title": "دستمزد نمایش صحنه‌ای را شفاف بنویسید"},
+]
+
+SOCIALS = [
+    {"label": "تلگرام", "href": "https://t.me/honaryaar", "icon": "telegram"},
+    {"label": "اینستاگرام", "href": "https://instagram.com/honaryaar", "icon": "instagram"},
+    {"label": "بله", "href": "https://ble.ir/honaryaar", "icon": "bale"},
+]
+
 ARTISTS = [
     {
         "slug": "sara-mohammadi",
@@ -350,6 +364,7 @@ OPPORTUNITIES = [
         "gender": "female",
         "count": 1,
         "paid": True,
+        "featured": True,
         "pay_note": "دستمزد توافقی، پرداخت بعد از شروع اجرا.",
         "start_date": date(2026, 11, 22),
         "end_date": date(2027, 2, 19),
@@ -370,6 +385,7 @@ OPPORTUNITIES = [
         "gender": "male",
         "count": 1,
         "paid": True,
+        "featured": True,
         "pay_note": "مبلغ بعد از انتخاب نهایی اعلام می‌شود.",
         "start_date": date(2027, 3, 21),
         "end_date": date(2027, 4, 20),
@@ -390,6 +406,7 @@ OPPORTUNITIES = [
         "gender": "any",
         "count": 2,
         "paid": False,
+        "featured": True,
         "pay_note": "این پروژه دستمزد ندارد. گواهی کارگاه داده می‌شود.",
         "start_date": date(2026, 12, 22),
         "end_date": date(2027, 1, 20),
@@ -410,6 +427,7 @@ OPPORTUNITIES = [
         "gender": "female",
         "count": 1,
         "paid": True,
+        "featured": True,
         "pay_note": "قرارداد کوتاه تمرین و اجرا.",
         "start_date": date(2026, 12, 22),
         "end_date": date(2027, 3, 20),
@@ -430,6 +448,7 @@ OPPORTUNITIES = [
         "gender": "any",
         "count": 3,
         "paid": False,
+        "featured": True,
         "pay_note": "خوانش بدون دستمزد. اگر به اجرا برسد، شرایط دوباره گفته می‌شود.",
         "start_date": date(2026, 11, 22),
         "end_date": date(2026, 12, 21),
@@ -450,6 +469,7 @@ OPPORTUNITIES = [
         "gender": "male",
         "count": 1,
         "paid": True,
+        "featured": True,
         "pay_note": "دستمزد متناسب با نقش نوجوان، با هماهنگی خانواده.",
         "start_date": date(2027, 3, 21),
         "end_date": date(2027, 4, 2),
@@ -633,8 +653,19 @@ def _project_dict(project):
         "lead": project.lead_name,
         "lead_role": project.lead_role.slug if project.lead_role_id else "",
         "category": project.category.slug,
+        "category_title": project.category.title if project.category_id else "",
         "summary": project.summary,
         "status": project.get_status_display(),
+        "testimonials": [
+            {
+                "quote": item.quote,
+                "name": item.name,
+                "role": item.role_label,
+                "project_slug": project.slug,
+                "project_title": project.title,
+            }
+            for item in project.testimonials.all()
+        ],
     }
 
 
@@ -651,6 +682,7 @@ def _opportunity_dict(item):
         "gender": item.gender,
         "count": item.count,
         "paid": item.paid,
+        "featured": item.featured,
         "pay_note": item.pay_note,
         "dates": format_date_range(item.start_date, item.end_date),
         "deadline": format_date(item.deadline),
@@ -675,7 +707,7 @@ def _artists():
 def _projects():
     from ejranow.models import Project
 
-    projects = Project.objects.select_related("category", "lead_role", "city")
+    projects = Project.objects.select_related("category", "lead_role", "city").prefetch_related("testimonials")
     return [_project_dict(item) for item in projects]
 
 
@@ -757,6 +789,7 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age)
                 gender_label(item["gender"]),
                 role_title(item["role"]),
                 item["description"],
+                project["category_title"] if project else "",
             ]
         )
         if not _contains(text, query):
@@ -772,8 +805,175 @@ def list_opportunities(q="", city="", paid="", gender="", production="", role=""
     ]
 
 
-def list_projects():
-    return _projects()
+def opportunity_facets():
+    items = _opportunities()
+    cities = list(dict.fromkeys(item["city"] for item in items if item["city"]))
+    from ejranow.models import City
+
+    order = {
+        title: index
+        for index, title in enumerate(City.objects.order_by("priority", "title").values_list("title", flat=True))
+    }
+    cities.sort(key=lambda title: (order.get(title, 10_000), title))
+
+    role_slugs = list(dict.fromkeys(item["role"] for item in items if item["role"]))
+    roles = sorted(
+        ({"slug": slug, "title": role_title(slug)} for slug in role_slugs),
+        key=lambda item: item["title"],
+    )
+    productions = list(dict.fromkeys(item["production"] for item in items if item["production"]))
+    present_genders = {item["gender"] for item in items if item["gender"]}
+    genders = [
+        {"value": value, "label": gender_label(value)}
+        for value in ("male", "female", "any")
+        if value in present_genders
+    ]
+    paid = []
+    if any(item["paid"] for item in items):
+        paid.append(("paid", "پرداختی"))
+    if any(not item["paid"] for item in items):
+        paid.append(("unpaid", "غیرپرداختی"))
+    return {
+        "cities": cities,
+        "roles": roles,
+        "productions": productions,
+        "genders": genders,
+        "paid": paid,
+    }
+
+
+def opportunity_quick(facets):
+    cities = set(facets["cities"])
+    roles = {item["slug"] for item in facets["roles"]}
+    productions = set(facets["productions"])
+    genders = {item["value"] for item in facets["genders"]}
+    paid = {value for value, _label in facets["paid"]}
+    allowed = {"city": cities, "role": roles, "production": productions, "gender": genders, "paid": paid}
+    chips = []
+    for label, params in OPPORTUNITY_QUICK:
+        if all(str(value) in allowed.get(key, ()) for key, value in params.items()):
+            chips.append((label, params))
+    return chips
+
+
+def _project_text(project):
+    return " ".join(
+        [
+            project["title"],
+            project["city"],
+            project["lead"],
+            project["summary"],
+            project["status"],
+        ]
+    )
+
+
+def list_projects(q="", city="", category=""):
+    items = _projects()
+    if city:
+        items = [item for item in items if item["city"] == city]
+    if category:
+        items = [item for item in items if item["category"] == category]
+    if q:
+        items = [item for item in items if _contains(_project_text(item), q)]
+    return items
+
+
+OPPORTUNITY_QUICK = [
+    ("تهران", {"city": "تهران"}),
+    ("مرد", {"gender": "male"}),
+    ("زن", {"gender": "female"}),
+    ("پرداختی", {"paid": "paid"}),
+    ("بازیگر", {"role": "actor"}),
+    ("دستیار کارگردان", {"role": "assistant-director"}),
+    ("هنرجو", {"role": "student"}),
+    ("آهنگساز", {"role": "composer"}),
+    ("نمایش صحنه‌ای", {"production": "نمایش صحنه‌ای"}),
+]
+
+ARTIST_QUICK = [
+    ("تهران", {"city": "تهران"}),
+    ("بازیگر", {"role": "actor"}),
+    ("دستیار کارگردان", {"role": "assistant-director"}),
+    ("هنرجو", {"role": "student"}),
+    ("آهنگساز", {"role": "composer"}),
+]
+
+
+def categories():
+    from ejranow.models import ArtCategory
+
+    titles = {item.slug: item.title for item in ArtCategory.objects.all()}
+    return [
+        {"slug": item["slug"], "title": titles[item["slug"]]}
+        for item in ART_CATEGORIES
+        if item["slug"] in titles
+    ]
+
+
+def choice_group(name, label, pairs, selected):
+    selected = "" if selected is None else str(selected)
+    options = [{"value": "", "label": "همه", "selected": selected == ""}]
+    selected_index = None
+    for value, text in pairs:
+        value = str(value)
+        is_selected = bool(selected) and value == selected
+        options.append({"value": value, "label": text, "selected": is_selected})
+        if is_selected:
+            selected_index = len(options) - 1
+    return {
+        "name": name,
+        "label": label,
+        "kind": "choice",
+        "options": options,
+        "open": selected_index is not None,
+        "more": selected_index is not None and selected_index >= 6,
+    }
+
+
+def text_group(name, label, value, placeholder):
+    value = "" if value is None else str(value)
+    return {
+        "name": name,
+        "label": label,
+        "kind": "text",
+        "value": value,
+        "placeholder": placeholder,
+        "open": bool(value),
+        "more": False,
+        "options": [],
+    }
+
+
+def filter_chips(request, specs):
+    chips = []
+    for label, params in specs:
+        query = request.GET.copy()
+        active = all(query.get(key, "") == str(value) for key, value in params.items())
+        if active:
+            for key in params:
+                query.pop(key, None)
+        else:
+            for key, value in params.items():
+                query[key] = str(value)
+        encoded = query.urlencode()
+        chips.append(
+            {
+                "label": label,
+                "active": active,
+                "href": f"?{encoded}" if encoded else request.path,
+            }
+        )
+    return chips
+
+
+def clear_filters_href(request, keep=("q",)):
+    query = request.GET.copy()
+    for key in list(query.keys()):
+        if key not in keep:
+            query.pop(key, None)
+    encoded = query.urlencode()
+    return f"?{encoded}" if encoded else request.path
 
 
 def cities():
@@ -782,16 +982,151 @@ def cities():
     return list(City.objects.values_list("title", flat=True))
 
 
+def persian_number(value):
+    return str(value).translate(_PERSIAN_DIGITS)
+
+
+def round_up_five(value):
+    if value <= 0:
+        return 0
+    return ((value + 4) // 5) * 5
+
+
+def hero_roles():
+    from ejranow.models import Role
+
+    titles = {
+        item.slug: item.title
+        for item in Role.objects.filter(profile_roles__isnull=False).distinct()
+    }
+    ordered = [titles[item["slug"]] for item in ROLES if item["slug"] in titles]
+    return ordered or list(titles.values())
+
+
+def hire_stats():
+    from ejranow.models import Profile, ProfileRole, ProfileSkill
+
+    artists = Profile.objects.count()
+    roles = ProfileRole.objects.values("role_id").distinct().count()
+    cities = Profile.objects.exclude(city=None).values("city_id").distinct().count()
+    skills = ProfileSkill.objects.values("skill_id").distinct().count()
+    return [
+        {"value": persian_number(round_up_five(artists)), "label": "هنرمند فعال"},
+        {"value": persian_number(round_up_five(roles)), "label": "نقش تخصصی"},
+        {"value": persian_number(round_up_five(cities)), "label": "شهر"},
+        {"value": persian_number(round_up_five(skills)), "label": "مهارت"},
+    ]
+
+
+def hero_fields():
+    from ejranow.models import ArtCategory
+
+    titles = {item.slug: item.title for item in ArtCategory.objects.all()}
+    return [titles[item["slug"]] for item in ART_CATEGORIES if item["slug"] in titles]
+
+
+def talent_stats():
+    from django.db.models import Q
+
+    from ejranow.models import City, Opportunity, OpportunityStatus, Project, ProjectStatus, Role
+
+    live = [ProjectStatus.CASTING, ProjectStatus.OPEN_CALL]
+    calls = Opportunity.objects.filter(status=OpportunityStatus.OPEN).count()
+    projects = Project.objects.filter(status__in=live).count()
+    roles = (
+        Role.objects.filter(
+            Q(opportunities__status=OpportunityStatus.OPEN)
+            | Q(profile_roles__isnull=False)
+            | Q(led_projects__status__in=live)
+        )
+        .distinct()
+        .count()
+    )
+    cities = (
+        City.objects.filter(
+            Q(opportunities__status=OpportunityStatus.OPEN) | Q(projects__status__in=live)
+        )
+        .distinct()
+        .count()
+    )
+    return [
+        {"value": persian_number(round_up_five(calls)), "label": "فراخوان همکاری"},
+        {"value": persian_number(round_up_five(projects)), "label": "پروژه در حال جذب"},
+        {"value": persian_number(round_up_five(roles)), "label": "نقش تخصصی"},
+        {"value": persian_number(round_up_five(cities)), "label": "شهر"},
+    ]
+
+
+def featured_opportunities():
+    return [item for item in _opportunities() if item["featured"]]
+
+
+def featured_testimonials():
+    from ejranow.models import Testimonial
+
+    items = Testimonial.objects.filter(featured=True).select_related("project")
+    return [
+        {
+            "quote": item.quote,
+            "name": item.name,
+            "role": item.role_label,
+            "project_slug": item.project.slug,
+            "project_title": item.project.title,
+        }
+        for item in items
+    ]
+
+
 def featured_cities():
     from ejranow.models import City
 
     return list(City.objects.filter(featured=True).values_list("title", flat=True))
 
 
+def search_shortcuts():
+    from ejranow.models import ArtCategory, Role
+
+    arts = {item.slug: item.title for item in ArtCategory.objects.all()}
+    roles = {item.slug: item.title for item in Role.objects.all()}
+    return {
+        "search_arts": [
+            {"slug": item["slug"], "title": arts.get(item["slug"], item["title"])}
+            for item in ART_CATEGORIES
+        ],
+        "search_roles": [
+            {"slug": item["slug"], "title": roles[item["slug"]]}
+            for item in ROLES
+            if item["slug"] in roles
+        ],
+    }
+
+
+def footer_shortcuts():
+    from ejranow.models import City, Role, Skill
+
+    cities = list(City.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
+    by_slug = {item.slug: item for item in Role.objects.all()}
+    roles = [
+        {"slug": item["slug"], "title": by_slug[item["slug"]].title}
+        for item in ROLES
+        if item["slug"] in by_slug
+    ]
+    skills = list(
+        Skill.objects.order_by("group__priority", "title").values_list("title", flat=True)
+    )
+    return {
+        "footer_cities": cities,
+        "footer_roles": roles,
+        "footer_skills": skills,
+        "footer_productions": PRODUCTIONS[:3],
+        "footer_socials": SOCIALS,
+    }
+
+
 def search(query):
     if not query:
-        return [], []
-    return list_artists(q=query), list_opportunities(q=query)
+        return [], [], []
+    return list_artists(q=query), list_opportunities(q=query), list_projects(q=query)
 
 
 def seed():
@@ -909,6 +1244,7 @@ def seed():
                 "gender": item["gender"],
                 "count": item["count"],
                 "paid": item["paid"],
+                "featured": item.get("featured", False),
                 "pay_note": item["pay_note"],
                 "start_date": item["start_date"],
                 "end_date": item["end_date"],

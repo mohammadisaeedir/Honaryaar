@@ -17,7 +17,7 @@ def _safe_next(value):
 def login_phone(request):
     nxt = _safe_next(request.POST.get("next") or request.GET.get("next"))
     if request.user.is_authenticated:
-        return redirect(nxt or "me-profile")
+        return redirect(nxt or "home")
     form = PhoneForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         request.session["login_phone"] = form.cleaned_data["phone"]
@@ -29,7 +29,7 @@ def login_phone(request):
 def login_code(request):
     nxt = request.session.get("login_next") or ""
     if request.user.is_authenticated:
-        return redirect(nxt or "me-profile")
+        return redirect(nxt or "home")
     phone = request.session.get("login_phone")
     if not phone:
         return redirect("login")
@@ -39,7 +39,7 @@ def login_code(request):
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         request.session.pop("login_phone", None)
         request.session.pop("login_next", None)
-        return redirect(nxt or "me-profile")
+        return redirect(nxt or "home")
     return render(request, "pages/login_code.html", {"form": form, "phone": phone})
 
 
@@ -184,8 +184,7 @@ def _save_roles(profile, roles, primary):
 @login_required
 def me_profile(request):
     profile = ensure_profile(request.user)
-    complete = bool(profile.first_name and profile.last_name)
-    editing = request.GET.get("edit") == "1" or not complete
+    editing = request.GET.get("edit") == "1"
     role_links = list(profile.profile_roles.select_related("role"))
     skill_links = list(profile.skill_links.select_related("skill__group"))
     if request.method == "POST":
@@ -234,7 +233,7 @@ def me_profile(request):
         ):
             profile.first_name = form.cleaned_data["first_name"]
             profile.last_name = form.cleaned_data["last_name"]
-            profile.name = f"{profile.first_name} {profile.last_name}"
+            profile.name = f"{profile.first_name} {profile.last_name}".strip()
             profile.city = form.cleaned_data["city"]
             profile.about = form.cleaned_data["about"]
             profile.save()

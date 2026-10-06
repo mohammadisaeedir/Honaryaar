@@ -2,7 +2,7 @@
 {% load static ejranow_ui %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block body_class %}account-page min-h-dvh overflow-x-clip text-sm leading-[22px] antialiased{% endblock %}
@@ -30,7 +30,7 @@
         <div class="pf-main">
             <header class="pf-topbar">
                 <a class="pf-topbar__back" href="{% url 'me-profile' %}" aria-label="بازگشت به حساب">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    {% include "components/icon.html" with name="chevron-right" %}
                 </a>
                 <h1 class="pf-topbar__title">{% block account_title %}حساب{% endblock %}</h1>
                 <span style="width: 40px"></span>

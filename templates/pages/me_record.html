@@ -1,0 +1,43 @@
+{% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
+
+{% block title %}{{ title }} · هنریار{% endblock %}
+{% block account_title %}{{ title }}{% endblock %}
+
+{% block account_main %}
+    <div class="pf-plp" dir="rtl">
+        <h1>{{ title }}</h1>
+        {% if subtitle %}<p class="pf-record__lead">{{ subtitle }}</p>{% endif %}
+        <dl class="pf-record">
+            {% for row in rows %}
+                <div>
+                    <dt>{{ row.label }}</dt>
+                    <dd>{{ row.value }}</dd>
+                </div>
+            {% endfor %}
+        </dl>
+        {% if body %}
+            <section class="pf-record__note">
+                <h2>پیام</h2>
+                <p>{{ body }}</p>
+            </section>
+        {% endif %}
+        {% if invite and invite.status == "sent" %}
+            <div class="pf-board__actions">
+                <form method="post" action="{% url 'me-invite' invite.pk %}">
+                    {% csrf_token %}
+                    <button class="pf-board__add" type="submit" name="decision" value="accept">قبول</button>
+                </form>
+                <form method="post" action="{% url 'me-invite' invite.pk %}">
+                    {% csrf_token %}
+                    <button class="pf-board__quiet" type="submit" name="decision" value="decline">رد</button>
+                </form>
+            </div>
+        {% endif %}
+        {% if public_url %}
+            <div class="pf-record__link">
+                {% include "components/button.html" with href=public_url label="مشاهده فرصت" variant="secondary" %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

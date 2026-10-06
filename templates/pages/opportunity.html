@@ -5,51 +5,19 @@
 
 {% block content %}
     <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'opportunities' %}">فرصت‌ها</a> / <a href="{% url 'project' project.slug %}">{{ project.title }}</a></p>
+    <div class="opp-layout">
+    <div>
     <h1 class="mt-3 text-[28px] font-semibold leading-9">{{ opportunity.title }}</h1>
     <p class="mt-2 text-sm leading-[22px]">{{ project.title }} · {{ opportunity.role|role_title }}</p>
 
-    <dl class="mt-8 grid gap-4 border-y border-border py-6 sm:grid-cols-2">
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">نوع</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{{ opportunity.production }}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">شهر</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{{ opportunity.city }}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">سن</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{% if opportunity|age_label %}{{ opportunity|age_label }}{% else %}محدودیت سنی ندارد{% endif %}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">جنسیت</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{{ opportunity.gender|gender_label }}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">تعداد</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{{ opportunity.count }} نفر</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">پرداخت</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{% if opportunity.paid %}پرداختی{% else %}غیرپرداختی{% endif %}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">تاریخ</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{% if opportunity.dates %}{{ opportunity.dates }}{% else %}تاریخ مشخص نشده{% endif %}</dd>
-        </div>
-        <div>
-            <dt class="text-xs leading-[18px] text-muted-foreground">ددلاین درخواست</dt>
-            <dd class="mt-1 text-sm leading-[22px]">{{ opportunity.deadline }}</dd>
-        </div>
-    </dl>
+    {% include "components/casting/fact_chips.html" with gender_name=1 %}
 
-    <section class="mt-8 max-w-2xl">
+    <section class="mt-8">
         <h2 class="text-[18px] font-semibold leading-[26px]">درباره نقش</h2>
         <p class="mt-3 text-sm leading-[22px]">{{ opportunity.description }}</p>
-        <p class="mt-3 text-sm leading-[22px] text-muted-foreground">{{ opportunity.pay_note }}</p>
     </section>
 
-    <section class="mt-8 max-w-2xl">
+    <section class="mt-8">
         <h2 class="text-[18px] font-semibold leading-[26px]">شرایط</h2>
         <ul class="mt-3 grid gap-2">
             {% for item in opportunity.requirements %}
@@ -58,7 +26,8 @@
         </ul>
     </section>
 
-    <section class="mt-10 max-w-2xl rounded-box border border-border p-4">
+    </div>
+    <aside class="opp-apply rounded-box border border-border p-4">
         <h2 class="text-[18px] font-semibold leading-[26px]">ارسال درخواست</h2>
         {% if is_owner %}
             <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این پروژه برای شماست. درخواست‌ها را در صفحهٔ پروژه ببینید.</p>
@@ -69,18 +38,13 @@
         {% elif application %}
             <p class="mt-2 text-sm leading-[22px]">درخواست شما ثبت شده: {{ application.status|application_label }}</p>
             <div class="mt-4">
-                {% url 'me-matches' as matches_url %}
-                {% include "components/button.html" with href=matches_url label="پیگیری درخواست" variant="secondary" %}
+                {% url 'me-application' application.pk as application_url %}
+                {% include "components/button.html" with href=application_url label="پیگیری درخواست" variant="secondary" %}
             </div>
         {% elif not user.is_authenticated %}
             <p class="mt-2 text-sm leading-[22px] text-muted-foreground">برای ارسال درخواست با شماره موبایل وارد شوید.</p>
             <div class="mt-4">
                 <a class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" href="{% url 'login' %}?next={{ request.path }}">ورود و ارسال درخواست</a>
-            </div>
-        {% elif not profile_ready %}
-            <p class="mt-2 text-sm leading-[22px] text-muted-foreground">اول نام و نام خانوادگی پروفایل را ذخیره کنید.</p>
-            <div class="mt-4">
-                {% include "components/button.html" with href="/me/profile/?edit=1" label="تکمیل پروفایل" %}
             </div>
         {% elif opportunity.status != "open" %}
             <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این فرصت بسته است.</p>
@@ -96,5 +60,6 @@
                 </div>
             </form>
         {% endif %}
-    </section>
+    </aside>
+    </div>
 {% endblock %}

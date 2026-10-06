@@ -1,0 +1,32 @@
+{% load ejranow_ui %}
+<div class="fact-chips">
+    <span class="fact-chip {% if opportunity.paid %}fact-chip--pay{% endif %}">
+        {% include "components/icon.html" with name="circle-dollar" size="16" %}
+        {% if opportunity.pay_note %}{{ opportunity.pay_note }}{% endif %}
+    </span>
+    <span class="fact-chip fact-chip--gender">
+        {% if opportunity.gender == "female" %}
+            {% include "components/icon.html" with name="woman" size="16" %}
+        {% elif opportunity.gender == "male" %}
+            {% include "components/icon.html" with name="man" size="16" %}
+        {% else %}
+            {% include "components/icon.html" with name="woman" size="16" %}
+            {% include "components/icon.html" with name="man" size="16" %}
+        {% endif %}
+        {{ opportunity.gender|gender_label }}
+    </span>
+    {% if opportunity.city %}
+        <span class="fact-chip">{% include "components/icon.html" with name="map-pin" size="16" %}{{ opportunity.city }}</span>
+    {% endif %}
+    <span class="fact-chip">{% include "components/icon.html" with name="cake" size="16" %}{% if opportunity|age_label %}{{ opportunity|age_label }}{% else %}محدودیت سنی ندارد{% endif %}</span>
+    {% if not card %}
+        <span class="fact-chip">{% include "components/icon.html" with name="clapperboard" size="16" %}{{ opportunity.production }}</span>
+        <span class="fact-chip">{% include "components/icon.html" with name="users" size="16" %}{{ opportunity.count }} نفر</span>
+        {% if opportunity.dates %}
+            <span class="fact-chip">{% include "components/icon.html" with name="calendar" size="16" %}{{ opportunity.dates }}</span>
+        {% endif %}
+        {% if opportunity.deadline %}
+            <span class="fact-chip">{% include "components/icon.html" with name="clock" size="16" %}{{ opportunity.deadline }}</span>
+        {% endif %}
+    {% endif %}
+</div>

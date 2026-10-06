@@ -1,9 +1,23 @@
-<nav class="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden" aria-label="موبایل">
-    <ul class="grid grid-cols-5">
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a></li>
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/search/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'search' %}">جستجو</a></li>
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if '/opportunities/' in request.path or request.path == '/opportunities/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فرصت‌ها</a></li>
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/matches/' %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-matches' %}">مچ‌ها</a></li>
-        <li><a class="flex min-h-14 flex-col items-center justify-center text-xs {% if request.path == '/me/profile/' or '/me/projects/' in request.path %}font-semibold text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'me-profile' %}">پروفایل</a></li>
-    </ul>
+<nav class="tabbar" aria-label="موبایل">
+    <button class="tabbar__search {% if request.path == '/search/' %}is-active{% endif %}" type="button" aria-label="جستجو" @click="searchOpen = true">
+        {% include "components/icon.html" with name="search" %}
+    </button>
+    <div class="tabbar__pill">
+        <a class="{% if request.path == '/' %}is-active{% endif %}" href="{% url 'home' %}">
+            {% include "components/icon.html" with name="house" %}
+            <span>خانه</span>
+        </a>
+        <a class="{% if '/opportunities/' in request.path %}is-active{% endif %}" href="{% url 'opportunities' %}">
+            {% include "components/icon.html" with name="megaphone" %}
+            <span>فرصت‌ها</span>
+        </a>
+        <a class="{% if '/artists/' in request.path %}is-active{% endif %}" href="{% url 'artists' %}">
+            {% include "components/icon.html" with name="users" %}
+            <span>هنرمندان</span>
+        </a>
+        <a class="{% if request.path == '/projects/' or '/projects/' == request.path|slice:':10' %}is-active{% endif %}" href="{% url 'projects' %}">
+            {% include "components/icon.html" with name="clapperboard" %}
+            <span>پروژه‌ها</span>
+        </a>
+    </div>
 </nav>

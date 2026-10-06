@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ project.title }} · هنریار{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
+{% endblock %}
 
 {% block content %}
     <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'projects' %}">پروژه‌ها</a></p>
@@ -21,4 +26,5 @@
             </div>
         {% endif %}
     </section>
+    {% include "components/testimonial/list.html" with testimonials=project.testimonials %}
 {% endblock %}

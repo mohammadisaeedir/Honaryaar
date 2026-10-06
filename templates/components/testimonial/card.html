@@ -1,0 +1,16 @@
+<figure class="t-card">
+    <div class="t-card__quote">
+        <span class="t-card__mark" aria-hidden="true">”</span>
+        <blockquote>{{ item.quote }}</blockquote>
+    </div>
+    <figcaption>
+        <span class="t-card__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
+        <span>
+            <strong>{{ item.name }}</strong>
+            <span class="t-card__meta">
+                {% if item.role %}<b>{{ item.role }}</b>{% endif %}
+                {% if item.project_slug %}<a href="{% url 'project' item.project_slug %}">{{ item.project_title }}</a>{% endif %}
+            </span>
+        </span>
+    </figcaption>
+</figure>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} · هنریار{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4 text-[28px] font-semibold leading-[36px]">{{ page_title }}</h1>
+    {% for paragraph in paragraphs %}
+        <p class="plain-copy">{{ paragraph }}</p>
+    {% endfor %}
+    {% if links %}
+        <ul class="site-footer__list">
+            {% for link in links %}
+                <li><a href="{{ link.href }}">{{ link.label }}</a></li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if request.resolver_match.url_name == "contact" %}
+        <ul class="site-footer__list">
+            {% for item in footer_socials %}
+                <li><a href="{{ item.href }}" target="_blank" rel="noopener">{{ item.label }}</a></li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

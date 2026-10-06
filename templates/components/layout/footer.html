@@ -1,10 +1,88 @@
-<footer class="border-t border-border">
-    <div class="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-8 text-sm leading-[22px] text-muted-foreground md:flex-row md:items-center md:justify-between">
-        <p>هنریار <span class="font-latin" lang="en" dir="ltr">Honaryaar</span></p>
-        <nav class="flex flex-wrap gap-4" aria-label="پاورقی">
-            <a class="text-foreground" href="{% url 'opportunities' %}">فرصت‌ها</a>
-            <a class="text-foreground" href="{% url 'artists' %}">هنرمندان</a>
-            <a class="text-foreground" href="{% url 'about' %}">درباره ما</a>
-        </nav>
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__top">
+            <blockquote class="site-footer__quote">
+                <p>هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد.</p>
+                <p lang="en" dir="ltr">The artist is always a student, of course; but he is not a student only.</p>
+                <footer>Daniel Burleigh Parkhurst · The Painter in Oil, 1898</footer>
+            </blockquote>
+            <section>
+                <h2 class="site-footer__title">راهنمای هنریار</h2>
+                <ul class="site-footer__list">
+                    <li><a href="{% url 'magazine' %}">مجله هنری</a></li>
+                    <li><a href="{% url 'terms' %}">قوانین و مقررات</a></li>
+                    <li><a href="{% url 'sitemap' %}">سایت مپ</a></li>
+                </ul>
+            </section>
+            <section>
+                <h2 class="site-footer__title">ارتباط با ما</h2>
+                <ul class="site-footer__list">
+                    <li><a href="{% url 'about' %}">درباره ما</a></li>
+                    <li><a href="{% url 'contact' %}">تماس با ما</a></li>
+                </ul>
+                <div class="site-footer__socials">
+                    {% for item in footer_socials %}
+                        <a href="{{ item.href }}" target="_blank" rel="noopener" aria-label="{{ item.label }}">
+                            {% include "components/icon.html" with name=item.icon size="20" %}
+                        </a>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+
+        <div class="site-footer__dirs">
+            <div class="site-footer__pair">
+                <h2 class="site-footer__title">{% include "components/icon.html" with name="megaphone" size="18" %}فرصت‌های هنری</h2>
+                <div class="site-footer__pair-cols">
+                    <section>
+                        <ul class="site-footer__list">
+                            <li><a href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
+                            <li><a href="{% url 'opportunities' %}">سایر شهرها</a></li>
+                        </ul>
+                        <h3 class="site-footer__label">انواع فرصت هنری</h3>
+                        <ul class="site-footer__list">
+                            {% for item in footer_productions %}
+                                <li><a href="{% url 'opportunities' %}?production={{ item|urlencode }}">{{ item }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                    <section>
+                        <ul class="site-footer__list">
+                            {% for role in footer_roles|slice:":7" %}
+                                <li><a href="{% url 'opportunities' %}?role={{ role.slug }}">{{ role.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                </div>
+            </div>
+            <div class="site-footer__pair">
+                <h2 class="site-footer__title">{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h2>
+                <div class="site-footer__pair-cols">
+                    <section>
+                        <ul class="site-footer__list">
+                            <li><a href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
+                            <li><a href="{% url 'artists' %}">سایر شهرها</a></li>
+                        </ul>
+                        <h3 class="site-footer__label">مهارت‌ها</h3>
+                        <ul class="site-footer__list">
+                            {% for skill in footer_skills|slice:":3" %}
+                                <li><a href="{% url 'artists' %}?q={{ skill|urlencode }}">{{ skill }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                    <section>
+                        <ul class="site-footer__list">
+                            {% for role in footer_roles|slice:":7" %}
+                                <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div class="site-footer__base">
+            <p>تمامی حقوق برای وب‌سایت هنریار محفوظ است. ۱۴۰۵ ® | ساخته شده با عشق 💓</p>
+        </div>
     </div>
 </footer>

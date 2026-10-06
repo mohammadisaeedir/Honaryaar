@@ -1,0 +1,53 @@
+<div class="search-modal" x-show="searchOpen" x-cloak x-effect="searchOpen && window.matchMedia('(max-width: 767.98px)').matches && $nextTick(() => $refs.searchQ && $refs.searchQ.focus())">
+    <div class="search-modal__backdrop" @click="searchOpen = false"></div>
+    <div class="search-modal__panel" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
+        <div class="search-modal__top">
+            <h2 id="search-modal-title">جستجو</h2>
+            <button class="search-modal__close" type="button" @click="searchOpen = false" aria-label="بستن">
+                {% include "components/icon.html" with name="x" size="20" %}
+            </button>
+        </div>
+        <form method="get" action="{% url 'search' %}" role="search">
+            <label class="sr-only" for="modal-q">جستجو</label>
+            <div class="search-modal__field">
+                {% include "components/icon.html" with name="search" size="18" %}
+                <input class="field" id="modal-q" type="search" name="q" value="{% if request.resolver_match.url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="مثلاً: بازیگر" data-search-typewriter enterkeyhint="search" x-ref="searchQ">
+            </div>
+        </form>
+
+        <div class="search-modal__arts" aria-label="جستجوهای محبوب">
+            {% for art in search_arts %}
+                <a class="search-modal__art art-{{ art.slug }}" href="{% url 'opportunities' %}?q={{ art.title|urlencode }}">
+                    {% if art.slug == "theatre" %}
+                        {% include "components/icon.html" with name="drama" size="18" %}
+                    {% elif art.slug == "music" %}
+                        {% include "components/icon.html" with name="music" size="18" %}
+                    {% elif art.slug == "film" %}
+                        {% include "components/icon.html" with name="clapperboard" size="18" %}
+                    {% elif art.slug == "painting" %}
+                        {% include "components/icon.html" with name="palette" size="18" %}
+                    {% endif %}
+                    <span>{{ art.title }}</span>
+                </a>
+            {% endfor %}
+        </div>
+
+        <section class="search-modal__section" aria-label="فرصت‌های محبوب">
+            <h3>{% include "components/icon.html" with name="megaphone" size="18" %}فرصت‌های محبوب</h3>
+            <div class="search-modal__chips">
+                {% for role in search_roles|slice:":5" %}
+                    <a href="{% url 'opportunities' %}?role={{ role.slug }}">{{ role.title }}</a>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="search-modal__section" aria-label="هنرمندان فعال">
+            <h3>{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h3>
+            <div class="search-modal__chips">
+                {% for role in search_roles|slice:":5" %}
+                    <a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>

@@ -7,24 +7,25 @@
     <meta name="theme-color" content="#C13281">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="هنریار">
-    <meta name="application-name" content="هنریار">
-    <title>{% block title %}هنریار{% endblock %}</title>
+    <meta name="apple-mobile-web-app-title" content="Honaryaar">
+    <meta name="application-name" content="Honaryaar">
+    <title>{% block title %}هنریار | فرصت‌های هنری و همکاری{% endblock %}</title>
     <meta name="description" content="هنریار، جای پیدا کردن هنرمند، پروژه و فرصت در تئاتر.">
     <link rel="manifest" href="{% url 'manifest' %}">
     <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
     <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}">
     <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
+    <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
-    <link rel="stylesheet" href="{% static 'css/skills.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{% static 'css/skills.css' %}?v={{ asset_v }}">
     {% block extra_css %}{% endblock %}
     <script src="{% static 'js/htmx.min.js' %}" defer></script>
     <script src="{% static 'js/alpine.min.js' %}" defer></script>
 </head>
-<body class="{% block body_class %}min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}">
+<body class="{% block body_class %}min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}" x-data="{ searchOpen: false }" @keydown.escape.window="searchOpen = false" @keydown.window="if (!$event.repeat && !$event.altKey && !$event.shiftKey && $event.key.toLowerCase() === 'k' && (document.documentElement.dataset.os === 'mac' ? $event.metaKey && !$event.ctrlKey : $event.ctrlKey && !$event.metaKey)) { $event.preventDefault(); searchOpen = true }" :class="{ 'is-search-open': searchOpen }">
     {% include "components/layout/header.html" %}
     <main class="{% block main_class %}mx-auto w-full min-w-0 max-w-5xl px-4 pb-24 pt-8 md:pb-16{% endblock %}">
         {% block content %}{% endblock %}
@@ -35,6 +36,46 @@
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("{% url 'service-worker' %}");
         }
+        (function () {
+            var examples = ["مثلاً: بازیگر", "مثلاً: تهران", "مثلاً: گیتار", "مثلاً: طراح صحنه", "مثلاً: تئاتر"];
+            var index = 0;
+            var count = 0;
+            var mode = "type";
+            function chars(word) { return Array.from(word); }
+            function nodes() {
+                return Array.prototype.filter.call(document.querySelectorAll("[data-search-typewriter]"), function (el) {
+                    return (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") || !el.value;
+                });
+            }
+            function paint(value) {
+                nodes().forEach(function (el) {
+                    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.placeholder = value;
+                    else el.textContent = value;
+                });
+            }
+            function tick() {
+                var word = chars(examples[index]);
+                var wait = 85;
+                if (mode === "type") {
+                    count = Math.min(word.length, count + 1);
+                    if (count >= word.length) {
+                        mode = "hold";
+                        wait = 2100;
+                    }
+                } else if (mode === "hold") {
+                    mode = "delete";
+                } else {
+                    count = Math.max(0, count - 2);
+                    if (count === 0) {
+                        index = (index + 1) % examples.length;
+                        mode = "type";
+                    }
+                }
+                paint(word.slice(0, count).join(""));
+                window.setTimeout(tick, wait);
+            }
+            tick();
+        })();
     </script>
 </body>
 </html>

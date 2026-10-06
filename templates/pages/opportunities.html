@@ -4,9 +4,18 @@
 
 {% block content %}
     <h1 class="text-[28px] font-semibold leading-9">فرصت‌ها</h1>
-    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">نقش‌های باز تئاتر. هر کارت یک نقش است، نه کل پروژه.</p>
-    <div class="mt-6">
-        {% include "components/casting/filters.html" %}
+    <div class="list-tools" x-data="{ open: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
+        <form class="page-search" method="get" action="{% url 'opportunities' %}" role="search">
+            <input type="hidden" name="city" value="{{ filters.city }}">
+            <input type="hidden" name="paid" value="{{ filters.paid }}">
+            <input type="hidden" name="role" value="{{ filters.role }}">
+            <input type="hidden" name="production" value="{{ filters.production }}">
+            <input type="hidden" name="gender" value="{{ filters.gender }}">
+            <input type="hidden" name="age" value="{{ filters.age }}">
+            <label class="sr-only" for="opportunities-q">جستجو در فرصت‌ها</label>
+            <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search">
+        </form>
+        {% include "components/filters/panel.html" with action=request.path %}
     </div>
     <div class="mt-6" id="results">
         {% if opportunities %}

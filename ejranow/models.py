@@ -226,6 +226,21 @@ class Project(models.Model):
         return self.title
 
 
+class Testimonial(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="testimonials")
+    quote = models.TextField()
+    name = models.CharField(max_length=120)
+    role_label = models.CharField(max_length=80, blank=True)
+    featured = models.BooleanField(default=False)
+    priority = models.PositiveSmallIntegerField(default=100)
+
+    class Meta:
+        ordering = ["priority", "id"]
+
+    def __str__(self):
+        return f"{self.name} · {self.project}"
+
+
 class OpportunityStatus(models.TextChoices):
     OPEN = "open", "Open"
     CLOSED = "closed", "Closed"
@@ -255,6 +270,7 @@ class Opportunity(models.Model):
     gender = models.CharField(max_length=20, choices=Gender.choices, default=Gender.ANY)
     count = models.PositiveSmallIntegerField(default=1)
     paid = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
     pay_note = models.CharField(max_length=240, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)

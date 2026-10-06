@@ -1,0 +1,13 @@
+{% load ejranow_ui %}
+<div class="role-card__top">
+    <span class="role-card__type">{% include "components/icon.html" with name="clapperboard" size="18" %}{{ opportunity.production }}</span>
+    {% if opportunity.featured %}
+        <span class="role-card__badge">{% include "components/icon.html" with name="star" size="14" %}ویژه</span>
+    {% endif %}
+</div>
+<p class="role-card__project">{{ project.title }}</p>
+<p class="role-card__part">{{ opportunity.title }}</p>
+{% include "components/casting/fact_chips.html" with card=1 %}
+{% if opportunity.deadline %}
+    <p class="role-card__deadline">{% include "components/icon.html" with name="clock" size="16" %}مهلت {{ opportunity.deadline }}</p>
+{% endif %}
