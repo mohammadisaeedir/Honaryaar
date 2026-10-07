@@ -17,8 +17,8 @@
             {% if form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.title.errors.0 }}</p>{% endif %}
         </label>
         <label class="mb-4 block">
-            <span class="field-label">شهر</span>
-            <select class="field field-select" name="city">
+            <span class="field-label">شهر پروژه</span>
+            <select class="field field-select" name="city" id="project-city">
                 <option value="">انتخاب شهر</option>
                 {% for city in form.fields.city.queryset %}
                     <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
@@ -45,6 +45,16 @@
             {% if form.role.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.role.errors.0 }}</p>{% endif %}
         </label>
         <label class="mb-4 block">
+            <span class="field-label">شهر فراخوان</span>
+            <select class="field field-select" name="opportunity_city" id="opportunity-city">
+                <option value="">همان شهر پروژه</option>
+                {% for city in form.fields.opportunity_city.queryset %}
+                    <option value="{{ city.pk }}" {% if form.opportunity_city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                {% endfor %}
+            </select>
+            <p class="mt-2 text-xs leading-[18px] text-muted-foreground">پیش‌فرض، شهر پروژه است. می‌توانید شهر دیگری بگذارید.</p>
+        </label>
+        <label class="mb-4 block">
             <span class="field-label">ددلاین</span>
             <input class="field" style="direction: ltr; text-align: left" type="date" name="deadline" value="{{ form.deadline.value|date:'Y-m-d' }}">
         </label>
@@ -56,4 +66,16 @@
             {% include "components/button.html" with label="ساختن" button_type="submit" extra="w-full" %}
         </div>
     </form>
+    <script>
+        (function () {
+            var projectCity = document.getElementById("project-city");
+            var callCity = document.getElementById("opportunity-city");
+            if (!projectCity || !callCity) return;
+            var touched = Boolean(callCity.value);
+            callCity.addEventListener("change", function () { touched = true; });
+            projectCity.addEventListener("change", function () {
+                if (!touched) callCity.value = projectCity.value;
+            });
+        })();
+    </script>
 {% endblock %}

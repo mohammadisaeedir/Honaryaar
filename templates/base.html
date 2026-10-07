@@ -9,13 +9,24 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Honaryaar">
     <meta name="application-name" content="Honaryaar">
-    <title>{% block title %}هنریار | فرصت‌های هنری و همکاری{% endblock %}</title>
-    <meta name="description" content="هنریار، جای پیدا کردن هنرمند، پروژه و فرصت در تئاتر.">
+    <title>{% block title %}هنریار | فراخوان‌های هنری و همکاری{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}هنریار، جای پیدا کردن هنرمند، پروژه و فراخوان در تئاتر.{% endblock %}">
+    <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+    <meta property="og:locale" content="fa_IR">
+    <meta property="og:site_name" content="هنریار">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}هنریار | فراخوان‌های هنری و همکاری{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}هنریار، جای پیدا کردن هنرمند، پروژه و فراخوان در تئاتر.{% endblock %}">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'icons/apple-touch-icon.png' %}">
+    <meta name="twitter:card" content="summary">
+    {% block structured_data %}{% endblock %}
     <link rel="manifest" href="{% url 'manifest' %}">
     <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
     <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}">
     <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
-    <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";</script>
+    <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";document.documentElement.classList.add("is-booting");</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@1,9..144,560&family=Outfit:wght@600&family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -32,7 +43,45 @@
     </main>
     {% block site_footer %}{% include "components/layout/footer.html" %}{% endblock %}
     {% include "components/layout/bottom_nav.html" %}
+    <template id="skel-src-opportunities">{% include "components/skeleton/list.html" with kind="opportunities" %}</template>
+    <template id="skel-src-artists">{% include "components/skeleton/list.html" with kind="artists" %}</template>
+    <template id="skel-src-projects">{% include "components/skeleton/list.html" with kind="projects" %}</template>
+    <template id="skel-src-opportunity">{% include "components/skeleton/opportunity_page.html" %}</template>
+    <template id="skel-src-artist">{% include "components/skeleton/artist_page.html" %}</template>
+    <template id="skel-src-project">{% include "components/skeleton/project_page.html" %}</template>
     <script>
+        function revealPage() { document.documentElement.classList.remove("is-booting"); }
+        if (document.readyState === "complete") revealPage();
+        else window.addEventListener("load", revealPage);
+        document.addEventListener("click", function (event) {
+            var link = event.target.closest && event.target.closest("a");
+            if (!link || link.target === "_blank" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            var url;
+            try { url = new URL(link.href); } catch (error) { return; }
+            if (url.origin !== location.origin) return;
+            var parts = url.pathname.split("/").filter(Boolean);
+            if (!parts.length || !/^(opportunities|artists|projects)$/.test(parts[0])) return;
+            if (url.pathname === location.pathname && url.search === location.search) return;
+            document.documentElement.classList.add("is-booting");
+            var main = document.querySelector("main");
+            if (!main || url.pathname === location.pathname) return;
+            var id = parts.length > 1
+                ? "skel-src-" + (parts[0] === "opportunities" ? "opportunity" : parts[0] === "artists" ? "artist" : "project")
+                : "skel-src-" + parts[0];
+            var source = document.getElementById(id);
+            if (!source) return;
+            main.querySelectorAll(":scope > .skel-pane").forEach(function (node) { node.remove(); });
+            main.classList.add("is-skel-cover");
+            main.appendChild(source.content.cloneNode(true));
+        }, true);
+        document.addEventListener("submit", function (event) {
+            var form = event.target;
+            if (!form || !form.getAttribute) return;
+            var action = form.getAttribute("action") || location.pathname;
+            var path = "";
+            try { path = new URL(action, location.href).pathname; } catch (error) { return; }
+            if (/^\/(opportunities|artists|projects)(\/|$)/.test(path)) document.documentElement.classList.add("is-booting");
+        }, true);
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("{% url 'service-worker' %}");
         }

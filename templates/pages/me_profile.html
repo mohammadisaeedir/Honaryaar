@@ -46,6 +46,18 @@
                 <span class="field-label">درباره</span>
                 <textarea class="field" style="min-height: 7rem" name="about" rows="4">{{ form.about.value|default:'' }}</textarea>
             </label>
+            <fieldset class="mb-4">
+                <legend class="field-label">هنرها</legend>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هنرهایی که در آن‌ها کار می‌کنید یا به آن‌ها علاقه دارید. چند مورد می‌تواند باشد.</p>
+                <div class="grid gap-2">
+                    {% for value, label in form.fields.arts.choices %}
+                        <label class="flex items-center gap-2 text-sm leading-[22px]">
+                            <input type="checkbox" name="arts" value="{{ value }}" {% if value in form.arts.value %}checked{% endif %}>
+                            {{ label }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
 
             <div class="mb-4 border-y border-border py-3">
                 <p class="text-xs leading-[18px] text-muted-foreground">وضعیت</p>
@@ -154,13 +166,14 @@
 
             <fieldset class="mb-6">
                 <legend class="field-label">سوابق</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">عنوان کار و نقشتان را بنویسید. سال اختیاری است.</p>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">عنوان کار، نقش از فهرست، و نام نقش در همان کار را بنویسید. سال اختیاری است.</p>
                 <div class="repeat-wrap">
                     <table class="repeat-table">
                         <thead>
                             <tr>
                                 <th>عنوان</th>
                                 <th>نقش</th>
+                                <th>نام نقش</th>
                                 <th>سال</th>
                                 <th></th>
                             </tr>
@@ -174,6 +187,14 @@
                                         {% for error in row.non_field_errors %}
                                             <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
                                         {% endfor %}
+                                    </td>
+                                    <td>
+                                        <select class="field field-select" name="{{ row.role.html_name }}">
+                                            <option value="">انتخاب نقش</option>
+                                            {% for role in roles %}
+                                                <option value="{{ role.pk }}" {% if row.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </td>
                                     <td>
                                         <input class="field" type="text" name="{{ row.role_name.html_name }}" value="{{ row.role_name.value|default:'' }}" maxlength="120">
@@ -196,6 +217,14 @@
                         <td>
                             <input type="hidden" name="{{ credit_formset.empty_form.credit_id.html_name }}" value="">
                             <input class="field" type="text" name="{{ credit_formset.empty_form.title.html_name }}" maxlength="160">
+                        </td>
+                        <td>
+                            <select class="field field-select" name="{{ credit_formset.empty_form.role.html_name }}">
+                                <option value="">انتخاب نقش</option>
+                                {% for role in roles %}
+                                    <option value="{{ role.pk }}">{{ role.title }}</option>
+                                {% endfor %}
+                            </select>
                         </td>
                         <td>
                             <input class="field" type="text" name="{{ credit_formset.empty_form.role_name.html_name }}" maxlength="120">
@@ -316,6 +345,10 @@
                 <div>
                     <dt>درباره</dt>
                     <dd>{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
+                </div>
+                <div>
+                    <dt>هنرها</dt>
+                    <dd>{% if profile.arts %}{% for slug in profile.arts %}{{ slug|art_title }}{% if not forloop.last %}، {% endif %}{% endfor %}{% else %}ثبت نشده{% endif %}</dd>
                 </div>
             </dl>
         </div>

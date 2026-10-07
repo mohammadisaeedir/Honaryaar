@@ -3,7 +3,7 @@ from django.forms import BaseFormSet, formset_factory
 
 from ejranow.accounts import code_matches, normalize_phone
 from ejranow.labels import MEDIA_LABELS
-from ejranow.models import City, Opportunity, Profile, Role
+from ejranow.models import Art, City, Opportunity, Profile, Role
 
 
 class PhoneForm(forms.Form):
@@ -43,6 +43,7 @@ class ProfileForm(forms.Form):
         empty_label="انتخاب شهر",
     )
     about = forms.CharField(required=False)
+    arts = forms.MultipleChoiceField(choices=Art.choices, required=False)
 
     def clean_first_name(self):
         return (self.cleaned_data.get("first_name") or "").strip()
@@ -80,6 +81,7 @@ RoleFormSet = formset_factory(RoleRowForm, formset=BaseRoleFormSet, extra=0)
 class CreditRowForm(forms.Form):
     credit_id = forms.IntegerField(required=False)
     title = forms.CharField(required=False, max_length=160)
+    role = forms.ModelChoiceField(queryset=Role.objects.all(), required=False, empty_label="انتخاب نقش")
     role_name = forms.CharField(required=False, max_length=120)
     year = forms.CharField(required=False, max_length=20)
     delete = forms.BooleanField(required=False)
@@ -92,10 +94,10 @@ class CreditRowForm(forms.Form):
         cleaned["title"] = title
         cleaned["role_name"] = role_name
         cleaned["year"] = year
-        if cleaned.get("delete") or not any((title, role_name, year)):
+        if cleaned.get("delete") or not any((title, role_name, year, cleaned.get("role"))):
             return cleaned
         if not title or not role_name:
-            raise forms.ValidationError("عنوان و نقش سابقه را با هم وارد کنید.")
+            raise forms.ValidationError("عنوان و نام نقش سابقه را با هم وارد کنید.")
         return cleaned
 
 
@@ -137,6 +139,7 @@ class ProjectOpportunityForm(forms.Form):
     )
     deadline = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
     description = forms.CharField(required=False)
+    opportunity_city = forms.ModelChoiceField(queryset=City.objects.all(), required=False)
 
     def clean_title(self):
         value = self.cleaned_data["title"].strip()
@@ -168,6 +171,7 @@ class OpportunityForm(forms.Form):
     )
     deadline = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
     description = forms.CharField(required=False)
+    city = forms.ModelChoiceField(queryset=City.objects.all(), required=False)
 
     def clean_title(self):
         value = self.cleaned_data["title"].strip()

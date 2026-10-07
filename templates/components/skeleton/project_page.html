@@ -1,0 +1,14 @@
+<div class="skel-pane" aria-hidden="true">
+    <span class="bone bone-xs"></span>
+    <div class="mt-4">
+        <span class="bone bone-sm"></span>
+        <span class="bone bone-lg"></span>
+        <span class="bone bone-line"></span>
+        <span class="bone bone-line bone-short"></span>
+    </div>
+    <div class="skel-grid skel-grid--2 mt-10">
+        {% for _ in "1234" %}
+            {% include "components/skeleton/role_card.html" %}
+        {% endfor %}
+    </div>
+</div>

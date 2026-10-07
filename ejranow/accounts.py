@@ -67,6 +67,13 @@ def ready_profile(user):
     return None
 
 
+def professional_profile_ready(user):
+    profile = ready_profile(user)
+    if profile is None:
+        return False
+    return profile.profile_roles.exists()
+
+
 def ensure_profile(user):
     try:
         return user.profile

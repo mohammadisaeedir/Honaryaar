@@ -2,12 +2,17 @@
 {% load static %}
 
 {% block title %}{{ project.title }} · هنریار{% endblock %}
+{% block meta_description %}{{ project.title }} در {{ project.city }}. پروژهٔ هنریار.{% endblock %}
+{% block og_title %}{{ project.title }} · هنریار{% endblock %}
+{% block og_description %}{{ project.title }} در {{ project.city }}. پروژهٔ هنریار.{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
+    {% include "components/skeleton/project_page.html" %}
+    <div class="live-pane">
     <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'projects' %}">پروژه‌ها</a></p>
     <div class="mt-4">
         {% include "components/project/project_header.html" %}
@@ -27,4 +32,5 @@
         {% endif %}
     </section>
     {% include "components/testimonial/list.html" with testimonials=project.testimonials %}
+    </div>
 {% endblock %}

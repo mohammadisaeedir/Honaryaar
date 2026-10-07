@@ -54,7 +54,7 @@ body.account-page main.account-main {
     margin: 0;
     flex: 1;
     text-align: center;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 28px;
 }
@@ -73,7 +73,7 @@ body.account-page main.account-main {
 .pf-request h2,
 .pf-request h3 {
     margin: 0;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 24px;
 }
@@ -81,7 +81,7 @@ body.account-page main.account-main {
 .pf-request p {
     margin: 4px 0 0;
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
@@ -135,7 +135,7 @@ body.account-page main.account-main {
 
 .pf-mobile-hub__userName {
     margin: 0;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 28px;
     overflow: hidden;
@@ -145,7 +145,7 @@ body.account-page main.account-main {
 
 .pf-mobile-hub__userPhone {
     margin: 0;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 24px;
     color: #778aa2;
     direction: ltr;
@@ -221,7 +221,7 @@ body.account-page main.account-main {
 .pf-mobile-menu__label,
 .pf-sidebar__label {
     flex: 1;
-    font-size: 16px;
+    font-size: 12px;
     line-height: 28px;
     color: #485462;
     text-align: right;
@@ -231,7 +231,7 @@ body.account-page main.account-main {
 
 .pf-mobile-menu__row--sub .pf-mobile-menu__label,
 .pf-sidebar__subrow .pf-sidebar__label {
-    font-size: 13px;
+    font-size: 11px;
 }
 
 .pf-mobile-menu__row--sub {
@@ -290,7 +290,7 @@ body.account-page main.account-main {
 
 .pf-board h2 {
     margin: 0;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 28px;
     color: #17131a;
@@ -304,7 +304,7 @@ body.account-page main.account-main {
     min-height: 40px;
     padding: 0 16px;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 22px;
     text-decoration: none;
@@ -333,7 +333,7 @@ body.account-page main.account-main {
 .pf-board__empty {
     margin: 12px 0 0;
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
@@ -369,7 +369,7 @@ body.account-page main.account-main {
 
 .pf-plp h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 600;
     line-height: 32px;
     color: #17131a;
@@ -391,13 +391,13 @@ body.account-page main.account-main {
 
 .pf-record dt {
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
 .pf-record dd {
     margin: 0;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
     text-align: left;
 }
@@ -406,7 +406,7 @@ body.account-page main.account-main {
 .pf-record__note p {
     margin: 8px 0 0;
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
@@ -416,7 +416,7 @@ body.account-page main.account-main {
 
 .pf-record__note h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 26px;
 }
@@ -428,7 +428,7 @@ body.account-page main.account-main {
 .pf-empty p {
     margin: 0;
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
@@ -447,7 +447,7 @@ body.account-page main.account-main {
     background: transparent;
     color: #ef3b2e;
     font: inherit;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     line-height: 28px;
     text-align: right;
@@ -464,7 +464,7 @@ body.account-page main.account-main {
 
 .pf-board-user__name {
     margin: 0;
-    font-size: 22px;
+    font-size: 16px;
     font-weight: 600;
     line-height: 30px;
     color: #17131a;
@@ -473,7 +473,7 @@ body.account-page main.account-main {
 .pf-board-user__phone {
     margin: 4px 0 0;
     color: #6f6863;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
     text-align: right;
 }
@@ -525,7 +525,7 @@ body.account-page main.account-main {
     }
     .pf-sidebar__name {
         margin: 0;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 600;
         line-height: 24px;
         overflow: hidden;
@@ -595,7 +595,7 @@ body.account-page main.account-main {
 
 .skill-pick__name {
     min-width: 0;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 22px;
 }
 
@@ -632,7 +632,7 @@ body.account-page main.account-main {
 .skill-level--clear {
     min-width: 32px;
     color: #778aa2;
-    font-size: 16px;
+    font-size: 12px;
     line-height: 1;
 }
 
@@ -683,7 +683,7 @@ body.pf-logout-open { overflow: hidden; }
 
 .pf-logoutDialog__title {
     margin: 0;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 32px;
     color: #37404b;
@@ -692,7 +692,7 @@ body.pf-logout-open { overflow: hidden; }
 .pf-logoutDialog__text {
     margin: 8px auto 0;
     max-width: 327px;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 24px;
     color: #485462;
 }
@@ -709,7 +709,7 @@ body.pf-logout-open { overflow: hidden; }
     min-height: 44px;
     border-radius: 8px;
     font: inherit;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 28px;
     cursor: pointer;
@@ -791,7 +791,7 @@ body.pf-logout-open { overflow: hidden; }
     background: transparent;
     color: #252b32;
     font: inherit;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 20px;
     cursor: pointer;

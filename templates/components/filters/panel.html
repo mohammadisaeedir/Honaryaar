@@ -1,13 +1,11 @@
 {% load ejranow_ui %}
+{% applied_filters groups as selected %}
 <button class="filter-open" type="button" @click="open = true">
     {% include "components/icon.html" with name="sliders" size="18" %}
     فیلتر
+    {% if selected %}<span class="filter-open__count">{{ selected|length }}</span>{% endif %}
 </button>
-<div class="filter-chips">
-    {% for chip in quick %}
-        <a class="filter-box{% if chip.active %} is-on{% endif %}" href="{{ chip.href }}">{{ chip.label }}</a>
-    {% endfor %}
-</div>
+{% include "components/filters/selected.html" %}
 <div class="filter-backdrop" x-cloak x-show="open" x-transition.opacity @click="open = false"></div>
 <aside class="filter-drawer" x-cloak x-show="open" x-transition:enter="filter-drawer-motion" x-transition:enter-start="filter-drawer-start" x-transition:enter-end="filter-drawer-end" x-transition:leave="filter-drawer-motion" x-transition:leave-start="filter-drawer-end" x-transition:leave-end="filter-drawer-start" role="dialog" aria-modal="true" aria-label="فیلترها">
     <form method="get" action="{{ action }}" @submit="open = false">
@@ -20,7 +18,10 @@
             {% for group in groups %}
                 <div class="filter-acc" x-data="{ open: {{ group.open|yesno:'true,false' }}, more: {{ group.more|yesno:'true,false' }} }">
                     <button class="filter-acc__head" type="button" @click="open = !open">
-                        <span>{{ group.label }}</span>
+                        <span class="filter-acc__label">
+                            {{ group.label }}
+                            {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
+                        </span>
                         <span class="filter-acc__chev" :class="open && 'is-open'"></span>
                     </button>
                     <div class="filter-acc__body" x-cloak x-show="open">

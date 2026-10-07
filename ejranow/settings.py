@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "ejranow",
 ]
 
@@ -102,15 +103,17 @@ def _sidebar(request):
                 "title": "Casting",
                 "items": [
                     {"title": "Cities", "icon": "location_city", "link": reverse("admin:ejranow_city_changelist")},
-                    {"title": "Profiles", "icon": "person", "link": reverse("admin:ejranow_profile_changelist")},
+                    {"title": "Art categories", "icon": "category", "link": reverse("admin:ejranow_artcategory_changelist")},
                     {"title": "Roles", "icon": "badge", "link": reverse("admin:ejranow_role_changelist")},
                     {"title": "Skills", "icon": "star", "link": reverse("admin:ejranow_skill_changelist")},
+                    {"title": "Profiles", "icon": "person", "link": reverse("admin:ejranow_profile_changelist")},
+                    {"title": "Profile roles", "icon": "badge", "link": reverse("admin:ejranow_profilerole_changelist")},
+                    {"title": "Profile skills", "icon": "star", "link": reverse("admin:ejranow_profileskill_changelist")},
                     {"title": "Credits", "icon": "history_edu", "link": reverse("admin:ejranow_credit_changelist")},
                     {"title": "Media", "icon": "perm_media", "link": reverse("admin:ejranow_profilemedia_changelist")},
-                    {"title": "Art categories", "icon": "category", "link": reverse("admin:ejranow_artcategory_changelist")},
                     {"title": "Projects", "icon": "theater_comedy", "link": reverse("admin:ejranow_project_changelist")},
-                    {"title": "Testimonials", "icon": "format_quote", "link": reverse("admin:ejranow_testimonial_changelist")},
                     {"title": "Opportunities", "icon": "campaign", "link": reverse("admin:ejranow_opportunity_changelist")},
+                    {"title": "Testimonials", "icon": "format_quote", "link": reverse("admin:ejranow_testimonial_changelist")},
                     {"title": "Applications", "icon": "assignment", "link": reverse("admin:ejranow_application_changelist")},
                     {"title": "Invites", "icon": "forward_to_inbox", "link": reverse("admin:ejranow_invite_changelist")},
                     {"title": "Matches", "icon": "handshake", "link": reverse("admin:ejranow_match_changelist")},

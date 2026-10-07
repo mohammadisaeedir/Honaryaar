@@ -24,6 +24,7 @@ ROLES = [
     {"slug": "performer", "title": "پرفورمر"},
 ]
 
+# Migration 0002 still reads this list. Live arts are Art on ArtCategory.art.
 ART_CATEGORIES = [
     {"slug": "theatre", "title": "تئاتر", "active": True},
     {"slug": "music", "title": "موسیقی", "active": False},
@@ -32,46 +33,47 @@ ART_CATEGORIES = [
 ]
 
 CITIES = [
-    {"slug": "tehran", "title": "تهران", "province": "تهران", "priority": 1, "featured": True},
-    {"slug": "karaj", "title": "کرج", "province": "البرز", "priority": 2, "featured": True},
-    {"slug": "mashhad", "title": "مشهد", "province": "خراسان رضوی", "priority": 3, "featured": True},
-    {"slug": "isfahan", "title": "اصفهان", "province": "اصفهان", "priority": 4, "featured": True},
-    {"slug": "shiraz", "title": "شیراز", "province": "فارس", "priority": 5, "featured": True},
-    {"slug": "tabriz", "title": "تبریز", "province": "آذربایجان شرقی", "priority": 6, "featured": True},
-    {"slug": "ahvaz", "title": "اهواز", "province": "خوزستان", "priority": 7, "featured": True},
-    {"slug": "qom", "title": "قم", "province": "قم", "priority": 8, "featured": False},
-    {"slug": "kermanshah", "title": "کرمانشاه", "province": "کرمانشاه", "priority": 9, "featured": False},
-    {"slug": "rasht", "title": "رشت", "province": "گیلان", "priority": 10, "featured": True},
-    {"slug": "kerman", "title": "کرمان", "province": "کرمان", "priority": 11, "featured": False},
-    {"slug": "urmia", "title": "ارومیه", "province": "آذربایجان غربی", "priority": 12, "featured": False},
-    {"slug": "zahedan", "title": "زاهدان", "province": "سیستان و بلوچستان", "priority": 13, "featured": False},
-    {"slug": "hamadan", "title": "همدان", "province": "همدان", "priority": 14, "featured": False},
-    {"slug": "yazd", "title": "یزد", "province": "یزد", "priority": 15, "featured": True},
-    {"slug": "arak", "title": "اراک", "province": "مرکزی", "priority": 16, "featured": False},
-    {"slug": "ardabil", "title": "اردبیل", "province": "اردبیل", "priority": 17, "featured": False},
-    {"slug": "bandar-abbas", "title": "بندرعباس", "province": "هرمزگان", "priority": 18, "featured": False},
-    {"slug": "zanjan", "title": "زنجان", "province": "زنجان", "priority": 19, "featured": False},
-    {"slug": "sanandaj", "title": "سنندج", "province": "کردستان", "priority": 20, "featured": False},
-    {"slug": "qazvin", "title": "قزوین", "province": "قزوین", "priority": 21, "featured": False},
-    {"slug": "khorramabad", "title": "خرم‌آباد", "province": "لرستان", "priority": 22, "featured": False},
-    {"slug": "gorgan", "title": "گرگان", "province": "گلستان", "priority": 23, "featured": False},
-    {"slug": "sari", "title": "ساری", "province": "مازندران", "priority": 24, "featured": False},
-    {"slug": "bushehr", "title": "بوشهر", "province": "بوشهر", "priority": 25, "featured": False},
-    {"slug": "birjand", "title": "بیرجند", "province": "خراسان جنوبی", "priority": 26, "featured": False},
-    {"slug": "shahrekord", "title": "شهرکرد", "province": "چهارمحال و بختیاری", "priority": 27, "featured": False},
-    {"slug": "yasuj", "title": "یاسوج", "province": "کهگیلویه و بویراحمد", "priority": 28, "featured": False},
-    {"slug": "semnan", "title": "سمنان", "province": "سمنان", "priority": 29, "featured": False},
-    {"slug": "ilam", "title": "ایلام", "province": "ایلام", "priority": 30, "featured": False},
-    {"slug": "bojnord", "title": "بجنورد", "province": "خراسان شمالی", "priority": 31, "featured": False},
-    {"slug": "kashan", "title": "کاشان", "province": "اصفهان", "priority": 32, "featured": False},
-    {"slug": "abadan", "title": "آبادان", "province": "خوزستان", "priority": 33, "featured": False},
-    {"slug": "neyshabur", "title": "نیشابور", "province": "خراسان رضوی", "priority": 34, "featured": False},
+    {"slug": "tehran", "title": "تهران", "province": "tehran", "priority": 1, "featured": True},
+    {"slug": "karaj", "title": "کرج", "province": "alborz", "priority": 2, "featured": True},
+    {"slug": "mashhad", "title": "مشهد", "province": "razavi-khorasan", "priority": 3, "featured": True},
+    {"slug": "isfahan", "title": "اصفهان", "province": "isfahan", "priority": 4, "featured": True},
+    {"slug": "shiraz", "title": "شیراز", "province": "fars", "priority": 5, "featured": True},
+    {"slug": "tabriz", "title": "تبریز", "province": "east-azerbaijan", "priority": 6, "featured": True},
+    {"slug": "ahvaz", "title": "اهواز", "province": "khuzestan", "priority": 7, "featured": True},
+    {"slug": "qom", "title": "قم", "province": "qom", "priority": 8, "featured": False},
+    {"slug": "kermanshah", "title": "کرمانشاه", "province": "kermanshah", "priority": 9, "featured": False},
+    {"slug": "rasht", "title": "رشت", "province": "gilan", "priority": 10, "featured": True},
+    {"slug": "kerman", "title": "کرمان", "province": "kerman", "priority": 11, "featured": False},
+    {"slug": "urmia", "title": "ارومیه", "province": "west-azerbaijan", "priority": 12, "featured": False},
+    {"slug": "zahedan", "title": "زاهدان", "province": "sistan-baluchestan", "priority": 13, "featured": False},
+    {"slug": "hamadan", "title": "همدان", "province": "hamadan", "priority": 14, "featured": False},
+    {"slug": "yazd", "title": "یزد", "province": "yazd", "priority": 15, "featured": True},
+    {"slug": "arak", "title": "اراک", "province": "markazi", "priority": 16, "featured": False},
+    {"slug": "ardabil", "title": "اردبیل", "province": "ardabil", "priority": 17, "featured": False},
+    {"slug": "bandar-abbas", "title": "بندرعباس", "province": "hormozgan", "priority": 18, "featured": False},
+    {"slug": "zanjan", "title": "زنجان", "province": "zanjan", "priority": 19, "featured": False},
+    {"slug": "sanandaj", "title": "سنندج", "province": "kurdistan", "priority": 20, "featured": False},
+    {"slug": "qazvin", "title": "قزوین", "province": "qazvin", "priority": 21, "featured": False},
+    {"slug": "khorramabad", "title": "خرم‌آباد", "province": "lorestan", "priority": 22, "featured": False},
+    {"slug": "gorgan", "title": "گرگان", "province": "golestan", "priority": 23, "featured": False},
+    {"slug": "sari", "title": "ساری", "province": "mazandaran", "priority": 24, "featured": False},
+    {"slug": "bushehr", "title": "بوشهر", "province": "bushehr", "priority": 25, "featured": False},
+    {"slug": "birjand", "title": "بیرجند", "province": "south-khorasan", "priority": 26, "featured": False},
+    {"slug": "shahrekord", "title": "شهرکرد", "province": "chaharmahal-bakhtiari", "priority": 27, "featured": False},
+    {"slug": "yasuj", "title": "یاسوج", "province": "kohgiluyeh-boyer-ahmad", "priority": 28, "featured": False},
+    {"slug": "semnan", "title": "سمنان", "province": "semnan", "priority": 29, "featured": False},
+    {"slug": "ilam", "title": "ایلام", "province": "ilam", "priority": 30, "featured": False},
+    {"slug": "bojnord", "title": "بجنورد", "province": "north-khorasan", "priority": 31, "featured": False},
+    {"slug": "kashan", "title": "کاشان", "province": "isfahan", "priority": 32, "featured": False},
+    {"slug": "abadan", "title": "آبادان", "province": "khuzestan", "priority": 33, "featured": False},
+    {"slug": "neyshabur", "title": "نیشابور", "province": "razavi-khorasan", "priority": 34, "featured": False},
 ]
 GENDER_FA = {
     "male": "مرد",
     "female": "زن",
     "any": "بدون تفاوت",
 }
+# Migration 0008 still reads this list. New skills use SkillArea on Skill.group.
 SKILL_GROUPS = [
     {"slug": "acting", "title": "بازیگری", "priority": 1},
     {"slug": "technique", "title": "تکنیک بازیگری", "priority": 2},
@@ -156,7 +158,17 @@ SAMPLE_SKILL_LEVELS = {
     "maryam-soleimani": {"کارگردانی": 3, "انتخاب بازیگر": 2, "متن معاصر": 2},
     "reza-ghasemi": {"بازیگری نوجوان": 2, "ورزش": 1},
 }
-PRODUCTIONS = ["نمایش صحنه‌ای", "خوانش", "تئاتر دانشجویی"]
+PRODUCTIONS = [
+    {"slug": "short-film", "title": "فیلم کوتاه", "art": "film", "priority": 1},
+    {"slug": "feature-film", "title": "فیلم سینمایی", "art": "film", "priority": 2},
+    {"slug": "series", "title": "سریال", "art": "film", "priority": 3},
+    {"slug": "commercial", "title": "تبلیغات", "art": "film", "priority": 4},
+    {"slug": "content", "title": "تولید محتوا", "art": "film", "priority": 5},
+    {"slug": "industrial", "title": "صنعتی", "art": "film", "priority": 6},
+    {"slug": "stage-play", "title": "نمایش صحنه‌ای", "art": "theatre", "priority": 7},
+    {"slug": "reading", "title": "خوانش", "art": "theatre", "priority": 8},
+    {"slug": "student-theatre", "title": "تئاتر دانشجویی", "art": "theatre", "priority": 9},
+]
 
 HOME_POSTS = [
     {"kicker": "انتخاب بازیگر", "title": "چطور برای یک نقش کوتاه آماده شویم"},
@@ -293,9 +305,9 @@ PROJECTS = [
         "slug": "room-six",
         "title": "اتاق شماره شش",
         "city": "تهران",
-        "lead": "مریم سلیمانی",
         "lead_role": "director",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "نمایش صحنه‌ای",
         "summary": "نمایش صحنه‌ای معاصر. تمرین‌ها از آذر شروع می‌شود و اجرا برای بهمن در یک سالن کوچک تهران برنامه‌ریزی شده.",
         "status": "در حال جذب بازیگر",
     },
@@ -303,9 +315,9 @@ PROJECTS = [
         "slug": "passengers",
         "title": "مسافران",
         "city": "تهران",
-        "lead": "گروه مستقل مسافر",
         "lead_role": "producer",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "نمایش صحنه‌ای",
         "summary": "نمایشی دربارهٔ انتظار و سفر. یک نقش مرد جوان هنوز باز است.",
         "status": "در حال جذب بازیگر",
     },
@@ -313,9 +325,9 @@ PROJECTS = [
         "slug": "shadows",
         "title": "سایه‌ها",
         "city": "اصفهان",
-        "lead": "کارگاه دانشگاه",
         "lead_role": "teacher",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "تئاتر دانشجویی",
         "summary": "خوانش و اجرای دانشجویی. دستمزد ندارد و تمرکز روی تمرین بازیگری است.",
         "status": "فراخوان باز",
     },
@@ -323,9 +335,9 @@ PROJECTS = [
         "slug": "last-rehearsal",
         "title": "آخرین تمرین",
         "city": "تهران",
-        "lead": "آتلیهٔ صحنه",
         "lead_role": "producer",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "نمایش صحنه‌ای",
         "summary": "نمایش خانوادگی با دو نقش نسل قبل. به دنبال بازیگر زن ۴۰ تا ۵۵ سال.",
         "status": "در حال جذب بازیگر",
     },
@@ -333,9 +345,9 @@ PROJECTS = [
         "slug": "white-line",
         "title": "خط سفید",
         "city": "کرج",
-        "lead": "گروه خط",
         "lead_role": "director",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "خوانش",
         "summary": "خوانش یک متن کوتاه در کرج. اگر گروه جور شود، دربارهٔ اجرای کامل جداگانه حرف می‌زنند.",
         "status": "فراخوان باز",
     },
@@ -343,9 +355,9 @@ PROJECTS = [
         "slug": "long-winter",
         "title": "زمستان طولانی",
         "city": "مشهد",
-        "lead": "خانهٔ تئاتر مشهد",
         "lead_role": "producer",
-        "category": "theatre",
+        "art": "theatre",
+        "production": "نمایش صحنه‌ای",
         "summary": "نمایش نوروزی با یک نقش اصلی نوجوان. انتخاب بازیگر هنوز باز است.",
         "status": "در حال جذب بازیگر",
     },
@@ -590,11 +602,23 @@ def role_title(slug):
     return match.title if match else slug
 
 
-def category_title(slug):
-    from ejranow.models import ArtCategory
+def art_title(slug):
+    from ejranow.models import Art
 
-    match = ArtCategory.objects.filter(slug=slug).first()
-    return match.title if match else slug
+    return dict(Art.choices).get(slug, slug)
+
+
+def _art_order():
+    from ejranow.models import Art
+
+    return [value for value, _label in Art.choices]
+
+
+def arts_in_use():
+    from ejranow.models import Art, ArtCategory
+
+    present = set(ArtCategory.objects.values_list("art", flat=True).distinct())
+    return [{"slug": value, "title": label} for value, label in Art.choices if value in present]
 
 
 def roles():
@@ -629,6 +653,8 @@ def _artist_dict(profile):
         "role": primary.slug if primary else "",
         "city": profile.city.title if profile.city_id else "",
         "about": profile.about,
+        "arts": list(profile.arts or []),
+        "art_titles": [art_title(slug) for slug in _art_order() if slug in set(profile.arts or [])],
         "skills": [
             {"label": link.skill.label, "level": link.level}
             for link in profile.skill_links.all()
@@ -645,27 +671,43 @@ def _artist_dict(profile):
     }
 
 
+def _testimonial_dict(item):
+    if item.profile_id and (item.profile.name or item.profile.first_name):
+        name = item.profile.name or f"{item.profile.first_name} {item.profile.last_name}".strip()
+    else:
+        name = item.name
+    role = item.role.title if item.role_id else item.role_label
+    project = item.project if item.project_id else None
+    return {
+        "quote": item.quote,
+        "name": name,
+        "role": role,
+        "project_slug": project.slug if project else "",
+        "project_title": project.title if project else "",
+    }
+
+
+def _profile_name(profile):
+    if profile is None:
+        return ""
+    full = f"{profile.first_name} {profile.last_name}".strip()
+    return full or profile.name
+
+
 def _project_dict(project):
+    art = project.art_category.art if project.art_category_id else ""
     return {
         "slug": project.slug,
         "title": project.title,
         "city": project.city.title if project.city_id else "",
-        "lead": project.lead_name,
+        "lead": _profile_name(project.owner),
         "lead_role": project.lead_role.slug if project.lead_role_id else "",
-        "category": project.category.slug,
-        "category_title": project.category.title if project.category_id else "",
+        "art": art,
+        "art_title": project.art_category.get_art_display() if project.art_category_id else "",
+        "production": project.art_category.title if project.art_category_id else "",
         "summary": project.summary,
         "status": project.get_status_display(),
-        "testimonials": [
-            {
-                "quote": item.quote,
-                "name": item.name,
-                "role": item.role_label,
-                "project_slug": project.slug,
-                "project_title": project.title,
-            }
-            for item in project.testimonials.all()
-        ],
+        "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
     }
 
 
@@ -675,7 +717,9 @@ def _opportunity_dict(item):
         "title": item.title,
         "project": item.project.slug,
         "role": item.role.slug,
-        "production": item.production,
+        "art": item.art_category.art if item.art_category_id else "",
+        "art_title": item.art_category.get_art_display() if item.art_category_id else "",
+        "production": item.art_category.title if item.art_category_id else "",
         "city": item.city.title if item.city_id else "",
         "age_min": item.age_min,
         "age_max": item.age_max,
@@ -698,23 +742,28 @@ def _artists():
     profiles = (
         Profile.objects.filter(profile_roles__isnull=False)
         .select_related("city")
-        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill__group")
+        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill")
         .distinct()
     )
     return [_artist_dict(item) for item in profiles]
 
 
 def _projects():
-    from ejranow.models import Project
+    from django.db.models import Prefetch
 
-    projects = Project.objects.select_related("category", "lead_role", "city").prefetch_related("testimonials")
+    from ejranow.models import Project, Testimonial
+
+    quotes = Testimonial.objects.select_related("profile", "role", "project")
+    projects = Project.objects.select_related("owner", "art_category", "lead_role", "city").prefetch_related(
+        Prefetch("testimonials", queryset=quotes)
+    )
     return [_project_dict(item) for item in projects]
 
 
 def _opportunities():
     from ejranow.models import Opportunity
 
-    items = Opportunity.objects.select_related("project", "role", "city")
+    items = Opportunity.objects.select_related("project", "project__art_category", "role", "city", "art_category")
     return [_opportunity_dict(item) for item in items]
 
 
@@ -741,26 +790,38 @@ def _artist_text(artist):
             artist["name"],
             artist["city"],
             role_title(artist["role"]),
+            " ".join(artist["art_titles"]),
             " ".join(item["label"] for item in artist["skills"]),
             credit,
         ]
     )
 
 
-def list_artists(q="", city="", role=""):
+def artist_arts():
+    present = set()
+    for artist in _artists():
+        present.update(artist["arts"])
+    return [{"slug": slug, "title": art_title(slug)} for slug in _art_order() if slug in present]
+
+
+def list_artists(q="", city="", role="", art=""):
     items = _artists()
     if city:
         items = [item for item in items if item["city"] == city]
     if role:
         items = [item for item in items if item["role"] == role]
+    if art:
+        items = [item for item in items if art in item["arts"]]
     if q:
         items = [item for item in items if _contains(_artist_text(item), q)]
     return items
 
 
-def _opportunity_matches(item, query, city, paid, gender, production, role, age):
+def _opportunity_matches(item, query, city, paid, gender, production, role, age, art):
     project = project_by_slug(item["project"])
     if city and item["city"] != city:
+        return False
+    if art and item["art"] != art:
         return False
     if paid == "paid" and not item["paid"]:
         return False
@@ -789,7 +850,7 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age)
                 gender_label(item["gender"]),
                 role_title(item["role"]),
                 item["description"],
-                project["category_title"] if project else "",
+                project["art_title"] if project else "",
             ]
         )
         if not _contains(text, query):
@@ -797,11 +858,11 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age)
     return True
 
 
-def list_opportunities(q="", city="", paid="", gender="", production="", role="", age=None):
+def list_opportunities(q="", city="", paid="", gender="", production="", role="", age=None, art=""):
     return [
         item
         for item in _opportunities()
-        if _opportunity_matches(item, q, city, paid, gender, production, role, age)
+        if _opportunity_matches(item, q, city, paid, gender, production, role, age, art)
     ]
 
 
@@ -821,6 +882,10 @@ def opportunity_facets():
         ({"slug": slug, "title": role_title(slug)} for slug in role_slugs),
         key=lambda item: item["title"],
     )
+    from ejranow.models import Art
+
+    present_arts = {item["art"] for item in items if item["art"]}
+    arts = [{"slug": value, "title": label} for value, label in Art.choices if value in present_arts]
     productions = list(dict.fromkeys(item["production"] for item in items if item["production"]))
     present_genders = {item["gender"] for item in items if item["gender"]}
     genders = [
@@ -836,6 +901,7 @@ def opportunity_facets():
     return {
         "cities": cities,
         "roles": roles,
+        "arts": arts,
         "productions": productions,
         "genders": genders,
         "paid": paid,
@@ -849,10 +915,17 @@ def opportunity_quick(facets):
     genders = {item["value"] for item in facets["genders"]}
     paid = {value for value, _label in facets["paid"]}
     allowed = {"city": cities, "role": roles, "production": productions, "gender": genders, "paid": paid}
+    art_chips = [(item["title"], {"art": item["slug"]}) for item in facets["arts"]]
     chips = []
+    placed_arts = False
     for label, params in OPPORTUNITY_QUICK:
         if all(str(value) in allowed.get(key, ()) for key, value in params.items()):
             chips.append((label, params))
+            if not placed_arts and set(params) == {"city"}:
+                chips.extend(art_chips)
+                placed_arts = True
+    if not placed_arts:
+        chips = art_chips + chips
     return chips
 
 
@@ -861,19 +934,19 @@ def _project_text(project):
         [
             project["title"],
             project["city"],
-            project["lead"],
+            project["art_title"],
             project["summary"],
             project["status"],
         ]
     )
 
 
-def list_projects(q="", city="", category=""):
+def list_projects(q="", city="", art=""):
     items = _projects()
     if city:
         items = [item for item in items if item["city"] == city]
-    if category:
-        items = [item for item in items if item["category"] == category]
+    if art:
+        items = [item for item in items if item["art"] == art]
     if q:
         items = [item for item in items if _contains(_project_text(item), q)]
     return items
@@ -900,15 +973,22 @@ ARTIST_QUICK = [
 ]
 
 
-def categories():
-    from ejranow.models import ArtCategory
+def artist_quick():
+    art_chips = [(item["title"], {"art": item["slug"]}) for item in artist_arts()]
+    chips = []
+    placed = False
+    for label, params in ARTIST_QUICK:
+        chips.append((label, params))
+        if not placed and set(params) == {"city"}:
+            chips.extend(art_chips)
+            placed = True
+    if not placed:
+        chips = art_chips + chips
+    return chips
 
-    titles = {item.slug: item.title for item in ArtCategory.objects.all()}
-    return [
-        {"slug": item["slug"], "title": titles[item["slug"]]}
-        for item in ART_CATEGORIES
-        if item["slug"] in titles
-    ]
+
+def arts():
+    return arts_in_use()
 
 
 def choice_group(name, label, pairs, selected):
@@ -928,6 +1008,7 @@ def choice_group(name, label, pairs, selected):
         "options": options,
         "open": selected_index is not None,
         "more": selected_index is not None and selected_index >= 6,
+        "selected": 1 if selected_index else 0,
     }
 
 
@@ -942,6 +1023,7 @@ def text_group(name, label, value, placeholder):
         "open": bool(value),
         "more": False,
         "options": [],
+        "selected": 1 if value else 0,
     }
 
 
@@ -1019,10 +1101,7 @@ def hire_stats():
 
 
 def hero_fields():
-    from ejranow.models import ArtCategory
-
-    titles = {item.slug: item.title for item in ArtCategory.objects.all()}
-    return [titles[item["slug"]] for item in ART_CATEGORIES if item["slug"] in titles]
+    return [item["title"] for item in arts_in_use()]
 
 
 def talent_stats():
@@ -1064,17 +1143,8 @@ def featured_opportunities():
 def featured_testimonials():
     from ejranow.models import Testimonial
 
-    items = Testimonial.objects.filter(featured=True).select_related("project")
-    return [
-        {
-            "quote": item.quote,
-            "name": item.name,
-            "role": item.role_label,
-            "project_slug": item.project.slug,
-            "project_title": item.project.title,
-        }
-        for item in items
-    ]
+    items = Testimonial.objects.filter(featured=True).select_related("project", "profile", "role")
+    return [_testimonial_dict(item) for item in items]
 
 
 def featured_cities():
@@ -1083,16 +1153,25 @@ def featured_cities():
     return list(City.objects.filter(featured=True).values_list("title", flat=True))
 
 
-def search_shortcuts():
-    from ejranow.models import ArtCategory, Role
+def search_modal_arts():
+    from ejranow.models import Art
 
-    arts = {item.slug: item.title for item in ArtCategory.objects.all()}
+    titles = dict(Art.choices)
+    shown = (
+        ("theatre", False),
+        ("music", False),
+        ("film", True),
+        ("painting", True),
+    )
+    return [{"slug": slug, "title": titles[slug], "soon": soon} for slug, soon in shown]
+
+
+def search_shortcuts():
+    from ejranow.models import Role
+
     roles = {item.slug: item.title for item in Role.objects.all()}
     return {
-        "search_arts": [
-            {"slug": item["slug"], "title": arts.get(item["slug"], item["title"])}
-            for item in ART_CATEGORIES
-        ],
+        "search_arts": search_modal_arts(),
         "search_roles": [
             {"slug": item["slug"], "title": roles[item["slug"]]}
             for item in ROLES
@@ -1102,7 +1181,7 @@ def search_shortcuts():
 
 
 def footer_shortcuts():
-    from ejranow.models import City, Role, Skill
+    from ejranow.models import City, ArtCategory, Project, Role
 
     cities = list(City.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
     by_slug = {item.slug: item for item in Role.objects.all()}
@@ -1111,14 +1190,26 @@ def footer_shortcuts():
         for item in ROLES
         if item["slug"] in by_slug
     ]
-    skills = list(
-        Skill.objects.order_by("group__priority", "title").values_list("title", flat=True)
-    )
+    projects = [
+        {"slug": item.slug, "title": item.title}
+        for item in Project.objects.order_by("-pk")[:7]
+    ]
+    productions = []
+    seen = set()
+    for title in ArtCategory.objects.filter(opportunities__isnull=False).order_by("priority", "title").values_list("title", flat=True):
+        if title in seen:
+            continue
+        seen.add(title)
+        productions.append(title)
+        if len(productions) == 3:
+            break
+    if not productions:
+        productions = list(ArtCategory.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
     return {
         "footer_cities": cities,
         "footer_roles": roles,
-        "footer_skills": skills,
-        "footer_productions": PRODUCTIONS[:3],
+        "footer_projects": projects,
+        "footer_productions": productions,
         "footer_socials": SOCIALS,
     }
 
@@ -1131,7 +1222,6 @@ def search(query):
 
 def seed():
     from ejranow.models import (
-        ArtCategory,
         City,
         Credit,
         Opportunity,
@@ -1140,35 +1230,39 @@ def seed():
         ProfileRole,
         ProfileSkill,
         Project,
+        ArtCategory,
         Role,
         Skill,
-        SkillGroup,
     )
 
-    groups = {}
-    for item in SKILL_GROUPS:
-        groups[item["slug"]], _created = SkillGroup.objects.get_or_create(
-            slug=item["slug"],
-            defaults={"title": item["title"], "priority": item["priority"]},
-        )
     skills_by_slug = {}
     for item in SKILLS:
         skills_by_slug[item["slug"]], _created = Skill.objects.get_or_create(
             slug=item["slug"],
-            defaults={"title": item["title"], "group": groups[item["group"]]},
+            defaults={"title": item["title"], "group": item["group"]},
         )
 
+    productions_by_title = {}
+    productions_by_slug = {}
+    for item in PRODUCTIONS:
+        art_category, _created = ArtCategory.objects.get_or_create(
+            slug=item["slug"],
+            defaults={
+                "title": item["title"],
+                "art": item["art"],
+                "priority": item["priority"],
+            },
+        )
+        productions_by_title[item["title"]] = art_category
+        productions_by_slug[item["slug"]] = art_category
     roles_by_slug = {}
     for item in ROLES:
         roles_by_slug[item["slug"]], _created = Role.objects.get_or_create(
             slug=item["slug"],
-            defaults={"title": item["title"]},
-        )
-    categories = {}
-    for item in ART_CATEGORIES:
-        categories[item["slug"]], _created = ArtCategory.objects.get_or_create(
-            slug=item["slug"],
-            defaults={"title": item["title"], "active": item["active"]},
+            defaults={
+                "title": item["title"],
+                "art_category": productions_by_slug[item.get("production", "stage-play")],
+            },
         )
     cities_by_title = {}
     for item in CITIES:
@@ -1223,8 +1317,7 @@ def seed():
             defaults={
                 "title": item["title"],
                 "city": cities_by_title[item["city"]],
-                "category": categories[item["category"]],
-                "lead_name": item["lead"],
+                "art_category": productions_by_title[item["production"]],
                 "lead_role": roles_by_slug[item["lead_role"]],
                 "summary": item["summary"],
                 "status": PROJECT_STATUS[item["status"]],
@@ -1237,7 +1330,7 @@ def seed():
                 "title": item["title"],
                 "project": projects[item["project"]],
                 "role": roles_by_slug[item["role"]],
-                "production": item["production"],
+                "art_category": productions_by_title[item["production"]],
                 "city": cities_by_title[item["city"]],
                 "age_min": item["age_min"],
                 "age_max": item["age_max"],

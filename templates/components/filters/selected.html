@@ -1,0 +1,12 @@
+{% load ejranow_ui %}
+{% applied_filters groups as selected %}
+{% if selected %}
+    <div class="filter-selected" @mousedown="suggest = false">
+        {% for item in selected %}
+            <a href="{{ item.href }}">
+                <span>{{ item.label }}</span>
+                {% include "components/icon.html" with name="x" size="14" %}
+            </a>
+        {% endfor %}
+    </div>
+{% endif %}

@@ -45,6 +45,8 @@ from ejranow.views import (
     project_list,
     search,
     sitemap_page,
+    sitemap_xml,
+    robots_txt,
     service_worker,
     web_manifest,
 )
@@ -54,6 +56,8 @@ urlpatterns = [
     path("about-us/", about, name="about"),
     path("magazine/", guide, name="magazine"),
     path("terms/", guide, name="terms"),
+    path("robots.txt", robots_txt, name="robots"),
+    path("sitemap.xml", sitemap_xml, name="sitemap-xml"),
     path("sitemap/", sitemap_page, name="sitemap"),
     path("contact/", guide, name="contact"),
     path("artists/", artist_list, name="artists"),

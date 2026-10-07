@@ -90,8 +90,8 @@ def role_title(slug):
 
 
 @register.filter
-def category_title(slug):
-    return catalog.category_title(slug)
+def art_title(slug):
+    return catalog.art_title(slug)
 
 
 @register.filter
@@ -122,3 +122,24 @@ def query_string(request, **kwargs):
             params[key] = value
     encoded = params.urlencode()
     return f"?{encoded}" if encoded else request.path
+
+
+@register.simple_tag(takes_context=True)
+def applied_filters(context, groups):
+    request = context["request"]
+    items = []
+    for group in groups:
+        if group["kind"] == "text":
+            if not group["value"]:
+                continue
+            label = group["value"]
+        else:
+            picked = next((option for option in group["options"] if option["selected"] and option["value"]), None)
+            if picked is None:
+                continue
+            label = picked["label"]
+        query = request.GET.copy()
+        query.pop(group["name"], None)
+        encoded = query.urlencode()
+        items.append({"label": label, "href": f"?{encoded}" if encoded else request.path})
+    return items

@@ -13,13 +13,14 @@ from ejranow.labels import APPLICATION_LABELS, INVITE_LABELS, MATCH_LABELS
 from ejranow.models import (
     Application,
     ApplicationStatus,
-    ArtCategory,
+    City,
     Invite,
     InviteStatus,
     Match,
     MatchStatus,
     Opportunity,
     OpportunityStatus,
+    ArtCategory,
     Project,
     ProjectStatus,
 )
@@ -37,8 +38,8 @@ def _slug(model, prefix):
     return f"{prefix}-{secrets.token_hex(8)}"
 
 
-def _theatre():
-    return ArtCategory.objects.filter(active=True).first() or ArtCategory.objects.first()
+def _stage_art():
+    return ArtCategory.objects.filter(slug="stage-play").first()
 
 
 def _ensure_match(profile, opportunity, application=None, invite=None):
@@ -116,17 +117,16 @@ def project_new(request):
         return bounce
     form = ProjectOpportunityForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        category = _theatre()
-        if category is None:
-            form.add_error(None, "دسته‌ای برای پروژه ثبت نشده است.")
+        art_category = _stage_art()
+        if art_category is None:
+            form.add_error(None, "نوع اجرایی برای پروژه ثبت نشده است.")
         else:
             project = Project.objects.create(
                 slug=_slug(Project, "p"),
                 title=form.cleaned_data["title"],
                 owner=profile,
                 city=form.cleaned_data["city"],
-                category=category,
-                lead_name=profile.name,
+                art_category=art_category,
                 summary=form.cleaned_data["summary"],
                 status=ProjectStatus.CASTING,
             )
@@ -135,10 +135,10 @@ def project_new(request):
                 title=form.cleaned_data["opportunity_title"],
                 project=project,
                 role=form.cleaned_data["role"],
-                city=project.city,
+                city=form.cleaned_data["opportunity_city"] or project.city,
                 deadline=form.cleaned_data["deadline"],
                 description=form.cleaned_data["description"],
-                production="نمایش صحنه‌ای",
+                art_category=art_category,
                 status=OpportunityStatus.OPEN,
             )
             return redirect("me-project", slug=project.slug)
@@ -151,25 +151,35 @@ def project_manage(request, slug):
     if bounce:
         return bounce
     project = get_object_or_404(
-        Project.objects.select_related("city", "category"),
+        Project.objects.select_related("city", "art_category"),
         slug=slug,
         owner=profile,
     )
     action = request.POST.get("action") if request.method == "POST" else ""
-    opportunity_form = OpportunityForm(request.POST if action == "opportunity" else None)
+    opportunity_initial = {"city": project.city_id} if project.city_id else None
+    opportunity_form = OpportunityForm(
+        request.POST if action == "opportunity" else None,
+        initial=opportunity_initial,
+    )
     invite_form = InviteForm(project, profile, request.POST if action == "invite" else None)
     if request.method == "POST":
         action = request.POST.get("action")
+        if action == "opportunity-city":
+            opportunity = get_object_or_404(project.opportunities, pk=request.POST.get("opportunity"))
+            city_id = request.POST.get("city") or None
+            opportunity.city = City.objects.filter(pk=city_id).first() if city_id else None
+            opportunity.save(update_fields=["city"])
+            return redirect("me-project", slug=project.slug)
         if action == "opportunity" and opportunity_form.is_valid():
             Opportunity.objects.create(
                 slug=_slug(Opportunity, "o"),
                 title=opportunity_form.cleaned_data["title"],
                 project=project,
                 role=opportunity_form.cleaned_data["role"],
-                city=project.city,
+                city=opportunity_form.cleaned_data["city"] or project.city,
                 deadline=opportunity_form.cleaned_data["deadline"],
                 description=opportunity_form.cleaned_data["description"],
-                production="نمایش صحنه‌ای",
+                art_category=project.art_category,
                 status=OpportunityStatus.OPEN,
             )
             return redirect("me-project", slug=project.slug)
@@ -191,7 +201,7 @@ def project_manage(request, slug):
     grouped = defaultdict(list)
     for application in applications:
         grouped[application.opportunity_id].append(application)
-    opportunities = list(project.opportunities.select_related("role"))
+    opportunities = list(project.opportunities.select_related("role", "city"))
     for opportunity in opportunities:
         opportunity.application_rows = grouped[opportunity.id]
     return render(

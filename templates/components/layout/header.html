@@ -8,7 +8,7 @@
         </a>
         <nav class="site-nav" aria-label="اصلی">
             <a class="{% if request.path == '/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a>
-            <a class="{% if '/opportunities/' in request.path or request.path == '/opportunities/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فرصت‌ها</a>
+            <a class="{% if '/opportunities/' in request.path or request.path == '/opportunities/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فراخوان‌ها</a>
             <a class="{% if '/artists/' in request.path %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'artists' %}">هنرمندان</a>
             <a class="{% if request.path == '/projects/' or '/projects/' == request.path|slice:':10' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
         </nav>
@@ -32,10 +32,26 @@
         </div>
         <div class="site-header__end">
             {% if user.is_authenticated %}
-                <a class="site-account" href="{% url 'me-profile' %}">
-                    {% include "components/icon.html" with name="user" %}
-                    <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
-                </a>
+                <div class="site-account-wrap" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                    <a class="site-account site-account--mobile" href="{% url 'me-profile' %}">
+                        {% include "components/icon.html" with name="user" %}
+                        <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
+                    </a>
+                    <button class="site-account site-account--desk" type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
+                        {% include "components/icon.html" with name="user" %}
+                        <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
+                    </button>
+                    <div class="site-account__panel" x-cloak x-show="open" role="menu">
+                        <a role="menuitem" href="{% url 'me-profile' %}">
+                            {% include "components/icon.html" with name="user" size="18" class="site-account__glyph" %}
+                            حساب کاربری
+                        </a>
+                        <hr class="site-account__rule">
+                        <a role="menuitem" href="{% url 'me-projects' %}">{% include "components/icon.html" with name="clapperboard" size="18" %}پروژه‌ها</a>
+                        <a role="menuitem" href="{% url 'me-applications' %}">{% include "components/icon.html" with name="file-text" size="18" %}درخواست‌ها</a>
+                        <a role="menuitem" href="{% url 'me-invites' %}">{% include "components/icon.html" with name="mail" size="18" %}دعوت‌ها</a>
+                    </div>
+                </div>
             {% else %}
                 <a class="site-account" href="{% url 'login' %}">
                     {% include "components/icon.html" with name="user" %}

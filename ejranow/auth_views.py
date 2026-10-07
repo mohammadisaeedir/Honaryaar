@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -5,7 +7,7 @@ from django.views.decorators.http import require_POST
 
 from ejranow.accounts import ensure_profile, user_for_phone
 from ejranow.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
-from ejranow.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillGroup
+from ejranow.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillArea
 
 
 def _safe_next(value):
@@ -66,6 +68,7 @@ def _save_credits(profile, rows):
             continue
         if current:
             current.title = row["title"]
+            current.role = row.get("role")
             current.role_name = row["role_name"]
             current.year = row["year"]
             current.save()
@@ -73,6 +76,7 @@ def _save_credits(profile, rows):
             Credit.objects.create(
                 profile=profile,
                 title=row["title"],
+                role=row.get("role"),
                 role_name=row["role_name"],
                 year=row["year"],
             )
@@ -113,16 +117,20 @@ def _skill_levels_from_post(post):
 
 
 def _skill_groups(levels):
+    grouped = defaultdict(list)
+    for skill in Skill.objects.all():
+        grouped[skill.group].append(skill)
     groups = []
-    for group in SkillGroup.objects.prefetch_related("skills").order_by("priority", "title"):
+    for value, label in SkillArea.choices:
         rows = []
         selected = 0
-        for skill in group.skills.all():
+        for skill in grouped.get(value, []):
             level = levels.get(skill.pk, 0)
             rows.append({"skill": skill, "level": level})
             if level:
                 selected += 1
-        groups.append({"group": group, "rows": rows, "selected": selected})
+        if rows:
+            groups.append({"group": {"title": label}, "rows": rows, "selected": selected})
     return groups
 
 
@@ -186,7 +194,7 @@ def me_profile(request):
     profile = ensure_profile(request.user)
     editing = request.GET.get("edit") == "1"
     role_links = list(profile.profile_roles.select_related("role"))
-    skill_links = list(profile.skill_links.select_related("skill__group"))
+    skill_links = list(profile.skill_links.select_related("skill"))
     if request.method == "POST":
         skill_levels = _skill_levels_from_post(request.POST)
         primary_index = request.POST.get("role_primary", "")
@@ -200,6 +208,7 @@ def me_profile(request):
             "last_name": profile.last_name,
             "city": profile.city_id,
             "about": profile.about,
+            "arts": profile.arts or [],
         },
     )
     role_formset = RoleFormSet(
@@ -210,7 +219,7 @@ def me_profile(request):
     credit_formset = CreditFormSet(
         request.POST or None,
         initial=[
-            {"credit_id": item.id, "title": item.title, "role_name": item.role_name, "year": item.year}
+            {"credit_id": item.id, "title": item.title, "role": item.role_id, "role_name": item.role_name, "year": item.year}
             for item in profile.credits.all()
         ],
         prefix="credit",
@@ -236,6 +245,7 @@ def me_profile(request):
             profile.name = f"{profile.first_name} {profile.last_name}".strip()
             profile.city = form.cleaned_data["city"]
             profile.about = form.cleaned_data["about"]
+            profile.arts = form.cleaned_data["arts"]
             profile.save()
             _save_skills(profile, skill_levels)
             chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)

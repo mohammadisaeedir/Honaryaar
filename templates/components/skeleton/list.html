@@ -1,0 +1,39 @@
+<div class="skel-pane mt-6" aria-hidden="true">
+    {% if kind == "artists" %}
+        <div class="skel-grid skel-grid--2">
+            {% for _ in "123456" %}
+                <article class="skel-card">
+                    <div class="flex items-center gap-3">
+                        <span class="bone bone-avatar"></span>
+                        <div class="min-w-0 flex-1">
+                            <span class="bone bone-md"></span>
+                            <span class="bone bone-sm"></span>
+                        </div>
+                    </div>
+                    <div class="skel-row">
+                        <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+                    </div>
+                    <span class="bone bone-btn"></span>
+                </article>
+            {% endfor %}
+        </div>
+    {% elif kind == "projects" %}
+        <div class="skel-grid skel-grid--3">
+            {% for _ in "123456" %}
+                <article class="skel-card">
+                    <span class="bone bone-xs"></span>
+                    <span class="bone bone-md"></span>
+                    <span class="bone bone-sm"></span>
+                    <span class="bone bone-sm"></span>
+                    <span class="bone bone-btn"></span>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="skel-grid skel-grid--3">
+            {% for _ in "123456" %}
+                {% include "components/skeleton/role_card.html" %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

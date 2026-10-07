@@ -17,7 +17,11 @@
 
         <div class="search-modal__arts" aria-label="جستجوهای محبوب">
             {% for art in search_arts %}
-                <a class="search-modal__art art-{{ art.slug }}" href="{% url 'opportunities' %}?q={{ art.title|urlencode }}">
+                {% if art.soon %}
+                    <span class="search-modal__art art-{{ art.slug }} is-soon" aria-disabled="true">
+                {% else %}
+                    <a class="search-modal__art art-{{ art.slug }}" href="{% url 'opportunities' %}?q={{ art.title|urlencode }}">
+                {% endif %}
                     {% if art.slug == "theatre" %}
                         {% include "components/icon.html" with name="drama" size="18" %}
                     {% elif art.slug == "music" %}
@@ -28,7 +32,8 @@
                         {% include "components/icon.html" with name="palette" size="18" %}
                     {% endif %}
                     <span>{{ art.title }}</span>
-                </a>
+                    {% if art.soon %}<span class="search-modal__soon">به زودی</span>{% endif %}
+                {% if art.soon %}</span>{% else %}</a>{% endif %}
             {% endfor %}
         </div>
 

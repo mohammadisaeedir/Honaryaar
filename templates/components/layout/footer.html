@@ -32,12 +32,12 @@
 
         <div class="site-footer__dirs">
             <div class="site-footer__pair">
-                <h2 class="site-footer__title">{% include "components/icon.html" with name="megaphone" size="18" %}فرصت‌های هنری</h2>
+                <h2 class="site-footer__title">{% include "components/icon.html" with name="megaphone" size="18" %}فراخوان‌های هنری</h2>
                 <div class="site-footer__pair-cols">
                     <section>
                         <ul class="site-footer__list">
-                            <li><a href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
-                            <li><a href="{% url 'opportunities' %}">سایر شهرها</a></li>
+                            <li><a class="site-footer__city" href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">{% include "components/icon.html" with name="map-pin" size="16" %}تهران</a></li>
+                            <li><a class="site-footer__city" href="{% url 'opportunities' %}">{% include "components/icon.html" with name="map-pin" size="16" %}سایر شهرها</a></li>
                         </ul>
                         <h3 class="site-footer__label">انواع فرصت هنری</h3>
                         <ul class="site-footer__list">
@@ -56,24 +56,24 @@
                 </div>
             </div>
             <div class="site-footer__pair">
-                <h2 class="site-footer__title">{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h2>
                 <div class="site-footer__pair-cols">
                     <section>
+                        <h2 class="site-footer__title">{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h2>
                         <ul class="site-footer__list">
-                            <li><a href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
-                            <li><a href="{% url 'artists' %}">سایر شهرها</a></li>
+                            <li><a class="site-footer__city" href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">{% include "components/icon.html" with name="map-pin" size="16" %}تهران</a></li>
+                            <li><a class="site-footer__city" href="{% url 'artists' %}">{% include "components/icon.html" with name="map-pin" size="16" %}سایر شهرها</a></li>
                         </ul>
-                        <h3 class="site-footer__label">مهارت‌ها</h3>
-                        <ul class="site-footer__list">
-                            {% for skill in footer_skills|slice:":3" %}
-                                <li><a href="{% url 'artists' %}?q={{ skill|urlencode }}">{{ skill }}</a></li>
+                        <ul class="site-footer__list site-footer__list--follow">
+                            {% for role in footer_roles|slice:":5" %}
+                                <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
                             {% endfor %}
                         </ul>
                     </section>
                     <section>
+                        <h2 class="site-footer__title">{% include "components/icon.html" with name="clapperboard" size="18" %}پروژه‌های جدید</h2>
                         <ul class="site-footer__list">
-                            {% for role in footer_roles|slice:":7" %}
-                                <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
+                            {% for project in footer_projects %}
+                                <li><a href="{% url 'project' project.slug %}">{{ project.title }}</a></li>
                             {% endfor %}
                         </ul>
                     </section>

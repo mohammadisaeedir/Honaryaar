@@ -5,6 +5,7 @@
         <div class="min-w-0">
             <h3 class="truncate text-[18px] font-semibold leading-[26px]">{{ artist.name }}</h3>
             <p class="text-sm leading-[22px] text-muted-foreground">{{ artist.role|role_title }} · {{ artist.city }}</p>
+            {% if artist.art_titles %}<p class="text-xs leading-[18px] text-muted-foreground">{{ artist.art_titles|join:" · " }}</p>{% endif %}
         </div>
     </div>
     <div class="skill-list mt-4">

@@ -5,7 +5,7 @@
         <span class="role-card__badge">{% include "components/icon.html" with name="star" size="14" %}ویژه</span>
     {% endif %}
 </div>
-<p class="role-card__project">{{ project.title }}</p>
+<h3 class="role-card__project">{{ project.title }}</h3>
 <p class="role-card__part">{{ opportunity.title }}</p>
 {% include "components/casting/fact_chips.html" with card=1 %}
 {% if opportunity.deadline %}

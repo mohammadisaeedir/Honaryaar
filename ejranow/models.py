@@ -1,10 +1,16 @@
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
 class Role(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
+    art_category = models.ForeignKey(
+        "ArtCategory",
+        on_delete=models.PROTECT,
+        related_name="roles",
+    )
 
     class Meta:
         ordering = ["title"]
@@ -13,10 +19,44 @@ class Role(models.Model):
         return self.title
 
 
+class Province(models.TextChoices):
+    EAST_AZERBAIJAN = "east-azerbaijan", "آذربایجان شرقی"
+    WEST_AZERBAIJAN = "west-azerbaijan", "آذربایجان غربی"
+    ARDABIL = "ardabil", "اردبیل"
+    ISFAHAN = "isfahan", "اصفهان"
+    ALBORZ = "alborz", "البرز"
+    ILAM = "ilam", "ایلام"
+    BUSHEHR = "bushehr", "بوشهر"
+    TEHRAN = "tehran", "تهران"
+    CHAHARMAHAL_BAKHTIARI = "chaharmahal-bakhtiari", "چهارمحال و بختیاری"
+    SOUTH_KHORASAN = "south-khorasan", "خراسان جنوبی"
+    RAZAVI_KHORASAN = "razavi-khorasan", "خراسان رضوی"
+    NORTH_KHORASAN = "north-khorasan", "خراسان شمالی"
+    KHUZESTAN = "khuzestan", "خوزستان"
+    ZANJAN = "zanjan", "زنجان"
+    SEMNAN = "semnan", "سمنان"
+    SISTAN_BALUCHESTAN = "sistan-baluchestan", "سیستان و بلوچستان"
+    FARS = "fars", "فارس"
+    QAZVIN = "qazvin", "قزوین"
+    QOM = "qom", "قم"
+    KURDISTAN = "kurdistan", "کردستان"
+    KERMAN = "kerman", "کرمان"
+    KERMANSHAH = "kermanshah", "کرمانشاه"
+    KOHGILUYEH_BOYER_AHMAD = "kohgiluyeh-boyer-ahmad", "کهگیلویه و بویراحمد"
+    GOLESTAN = "golestan", "گلستان"
+    GILAN = "gilan", "گیلان"
+    LORESTAN = "lorestan", "لرستان"
+    MAZANDARAN = "mazandaran", "مازندران"
+    MARKAZI = "markazi", "مرکزی"
+    HORMOZGAN = "hormozgan", "هرمزگان"
+    HAMADAN = "hamadan", "همدان"
+    YAZD = "yazd", "یزد"
+
+
 class City(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
-    province = models.CharField(max_length=80, blank=True)
+    province = models.CharField(max_length=40, choices=Province.choices, blank=True)
     priority = models.PositiveSmallIntegerField(default=100)
     featured = models.BooleanField(default=False)
 
@@ -28,13 +68,25 @@ class City(models.Model):
         return self.title
 
 
+class Art(models.TextChoices):
+    THEATRE = "theatre", "تئاتر"
+    MUSIC = "music", "موسیقی"
+    FILM = "film", "سینما"
+    PAINTING = "painting", "نقاشی"
+    ARCHITECTURE = "architecture", "معماری"
+    SCULPTURE = "sculpture", "مجسمه‌سازی"
+    LITERATURE = "literature", "ادبیات"
+
+
 class ArtCategory(models.Model):
+    art = models.CharField(max_length=20, choices=Art.choices)
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
-    active = models.BooleanField(default=False)
+    priority = models.PositiveSmallIntegerField(default=100)
 
     class Meta:
-        ordering = ["title"]
+        ordering = ["priority", "title"]
+        verbose_name = "art category"
         verbose_name_plural = "art categories"
 
     def __str__(self):
@@ -52,33 +104,34 @@ class SkillLevel(models.IntegerChoices):
     ADVANCED = 3, "Advanced"
 
 
-class SkillGroup(models.Model):
-    slug = models.SlugField(unique=True)
-    title = models.CharField(max_length=80)
-    priority = models.PositiveSmallIntegerField(default=100)
-
-    class Meta:
-        ordering = ["priority", "title"]
-
-    def __str__(self):
-        return self.title
+class SkillArea(models.TextChoices):
+    ACTING = "acting", "بازیگری"
+    TECHNIQUE = "technique", "تکنیک بازیگری"
+    SINGING = "singing", "آواز"
+    DANCE = "dance", "رقص"
+    COMEDY = "comedy", "کمدی"
+    SPORTS = "sports", "ورزش"
+    LANGUAGE = "language", "زبان و گویش"
+    PRODUCTION = "production", "تولید"
+    GENERAL = "general", "مهارت‌های عمومی"
 
 
 class Skill(models.Model):
-    group = models.ForeignKey(SkillGroup, on_delete=models.PROTECT, related_name="skills")
+    group = models.CharField(max_length=20, choices=SkillArea.choices)
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
 
     class Meta:
-        ordering = ["group__priority", "title"]
+        ordering = ["group", "title"]
 
     def __str__(self):
         return self.label
 
     @property
     def label(self):
-        if self.group_id and self.group.title != self.title:
-            return f"{self.group.title}: {self.title}"
+        group = self.get_group_display()
+        if group and group != self.title:
+            return f"{group}: {self.title}"
         return self.title
 
 
@@ -102,6 +155,13 @@ class Profile(models.Model):
         related_name="profiles",
     )
     about = models.TextField(blank=True)
+    arts = ArrayField(
+        models.CharField(max_length=20, choices=Art.choices),
+        default=list,
+        blank=True,
+        verbose_name="arts",
+        help_text="Arts this person works in or is interested in.",
+    )
     status = models.CharField(
         max_length=20,
         choices=ProfileStatus.choices,
@@ -126,7 +186,7 @@ class ProfileSkill(models.Model):
     level = models.PositiveSmallIntegerField(choices=SkillLevel.choices, default=SkillLevel.INTERMEDIATE)
 
     class Meta:
-        ordering = ["skill__group__priority", "skill__title"]
+        ordering = ["skill__group", "skill__title"]
         constraints = [
             models.UniqueConstraint(fields=["profile", "skill"], name="unique_profile_skill"),
         ]
@@ -171,6 +231,13 @@ class ProfileMedia(models.Model):
 class Credit(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="credits")
     title = models.CharField(max_length=160)
+    role = models.ForeignKey(
+        Role,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="credits",
+    )
     role_name = models.CharField(max_length=120)
     year = models.CharField(max_length=20, blank=True)
 
@@ -203,8 +270,11 @@ class Project(models.Model):
         on_delete=models.PROTECT,
         related_name="projects",
     )
-    category = models.ForeignKey(ArtCategory, on_delete=models.PROTECT, related_name="projects")
-    lead_name = models.CharField(max_length=120, blank=True)
+    art_category = models.ForeignKey(
+        "ArtCategory",
+        on_delete=models.PROTECT,
+        related_name="projects",
+    )
     lead_role = models.ForeignKey(
         Role,
         null=True,
@@ -227,9 +297,29 @@ class Project(models.Model):
 
 
 class Testimonial(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="testimonials")
+    project = models.ForeignKey(
+        Project,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="testimonials",
+    )
+    profile = models.ForeignKey(
+        Profile,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="testimonials",
+    )
+    role = models.ForeignKey(
+        Role,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="testimonials",
+    )
     quote = models.TextField()
-    name = models.CharField(max_length=120)
+    name = models.CharField(max_length=120, blank=True)
     role_label = models.CharField(max_length=80, blank=True)
     featured = models.BooleanField(default=False)
     priority = models.PositiveSmallIntegerField(default=100)
@@ -238,7 +328,11 @@ class Testimonial(models.Model):
         ordering = ["priority", "id"]
 
     def __str__(self):
-        return f"{self.name} · {self.project}"
+        who = self.name
+        if not who and self.profile_id:
+            who = self.profile.name or self.profile.slug
+        where = self.project.title if self.project_id else "عمومی"
+        return f"{who or '—'} · {where}"
 
 
 class OpportunityStatus(models.TextChoices):
@@ -257,7 +351,11 @@ class Opportunity(models.Model):
     title = models.CharField(max_length=160)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="opportunities")
     role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="opportunities")
-    production = models.CharField(max_length=80, blank=True)
+    art_category = models.ForeignKey(
+        "ArtCategory",
+        on_delete=models.PROTECT,
+        related_name="opportunities",
+    )
     city = models.ForeignKey(
         "City",
         null=True,

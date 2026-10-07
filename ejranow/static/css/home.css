@@ -7,6 +7,12 @@
     padding-top: 28px;
 }
 
+@media (min-width: 768px) {
+    .home-page main {
+        padding-bottom: 72px;
+    }
+}
+
 .hero-switch-wrap {
     display: flex;
     justify-content: center;
@@ -34,7 +40,7 @@
     background: transparent;
     color: #17131a;
     font: inherit;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -53,7 +59,7 @@
 .hero-grid {
     display: grid;
     gap: 28px;
-    align-items: stretch;
+    align-items: start;
 }
 
 .hero-copy {
@@ -80,7 +86,7 @@
 .hero-rotate {
     margin: 0;
     color: #17131a;
-    font-size: 32px;
+    font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.45;
@@ -122,7 +128,7 @@
 .hero-stats strong {
     display: block;
     color: #17131a;
-    font-size: 26px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1;
@@ -150,7 +156,7 @@
     border-radius: 10px;
     background: #c13281;
     color: #fff;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 700;
     text-decoration: none;
 }
@@ -164,11 +170,12 @@
 
 .hero-photo {
     position: relative;
+    align-self: center;
     overflow: hidden;
-    min-height: 280px;
+    width: min(260px, 78%);
+    height: 220px;
+    margin-inline: auto;
     border-radius: 24px;
-    aspect-ratio: 5 / 4;
-    /* background: #efe4ea; */
 }
 
 .hero-photo img,
@@ -182,6 +189,8 @@
 .hero-lottie {
     position: absolute;
     inset: 0;
+    width: auto;
+    height: auto;
     opacity: 0;
     transition: opacity 0.45s ease;
     pointer-events: none;
@@ -192,17 +201,11 @@
 }
 
 .hero-lottie--hire {
-    inset: 12% 10% 14%;
-    width: auto;
-    height: auto;
+    inset: 12% 8% 14%;
 }
 
 .home-block {
     margin-top: 72px;
-}
-
-.home-block--featured {
-    margin-top: 24px;
 }
 
 .home-head {
@@ -217,7 +220,7 @@
 .home-block > h2 {
     margin: 0 0 18px;
     color: #17131a;
-    font-size: 28px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.25;
@@ -257,16 +260,16 @@
 .join-card img,
 .join-lottie {
     display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 220px;
+    height: 220px;
+    margin-inline: auto;
+    object-fit: contain;
     border-radius: 20px;
-    aspect-ratio: 4 / 5;
 }
 
 .join-copy h2 {
     margin: 0;
-    font-size: 32px;
+    font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.03em;
     line-height: 1.2;
@@ -275,7 +278,7 @@
 .join-copy > p {
     margin: 12px 0 0;
     color: #3d3834;
-    font-size: 15px;
+    font-size: 12px;
     line-height: 24px;
 }
 
@@ -291,7 +294,7 @@
     gap: 10px;
     margin-top: 12px;
     color: #17131a;
-    font-size: 15px;
+    font-size: 12px;
     line-height: 24px;
 }
 
@@ -329,7 +332,7 @@
 
 .news-card__title {
     color: #c13281;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 22px;
 }
@@ -400,7 +403,7 @@
     margin-top: 8px;
     color: #17131a;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 26px;
+    font-size: 20px;
     font-weight: 700;
     line-height: 1;
 }
@@ -408,7 +411,7 @@
 .t-card blockquote {
     margin: 0;
     color: #17131a;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.6;
 }
@@ -437,7 +440,7 @@
 .t-card figcaption strong {
     display: block;
     color: #17131a;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 22px;
 }
@@ -451,14 +454,14 @@
 
 .t-card__meta b {
     color: #17131a;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 700;
     line-height: 20px;
 }
 
 .t-card__meta a {
     color: #3d6b58;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
     line-height: 20px;
     text-decoration: none;
@@ -479,7 +482,7 @@
 .quote-card p {
     margin: 0;
     color: #17131a;
-    font-size: 18px;
+    font-size: 12px;
     font-weight: 700;
     line-height: 1.45;
 }
@@ -487,7 +490,7 @@
 .quote-card figcaption {
     margin-top: 16px;
     color: #3d6b58;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .quote-card a {
@@ -498,30 +501,39 @@
 
 @media (min-width: 900px) {
     .hero-grid {
-        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-        gap: 40px;
+        grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+        gap: 32px;
         align-items: stretch;
     }
 
     .hero-title,
     .hero-rotate {
-        font-size: 44px;
+        font-size: 22px;
     }
 
     .hero-photo {
-        aspect-ratio: auto;
-        min-height: 460px;
-        height: 100%;
+        align-self: stretch;
+        width: auto;
+        max-height: none;
+        min-height: 0;
+        height: auto;
+        margin-inline: 0;
     }
 
     .join-card {
-        grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.7fr);
-        padding: 28px;
-        gap: 36px;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        align-items: center;
+        padding: 20px 28px;
+        gap: 24px;
+    }
+
+    .join-lottie {
+        width: 240px;
+        height: 240px;
     }
 
     .join-copy h2 {
-        font-size: 40px;
+        font-size: 16px;
     }
 
     .t-card { flex-basis: calc(50% - 8px); }
