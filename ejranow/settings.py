@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+    "django.forms",
     "ejranow",
 ]
 
@@ -77,10 +78,73 @@ def _static_file(path):
     return resolve
 
 
+def _nav(title, icon, url_name):
+    from django.urls import reverse
+
+    return {"title": title, "icon": icon, "link": reverse(url_name)}
+
+
 def _sidebar(request):
     from django.urls import reverse
 
-    groups = [
+    groups = []
+    if getattr(request.user, "is_staff", False):
+        basic_data = [
+            _nav("Cities", "location_city", "admin:ejranow_city_changelist"),
+            _nav("Art categories", "category", "admin:ejranow_artcategory_changelist"),
+            _nav("Roles", "badge", "admin:ejranow_role_changelist"),
+            _nav("Skills", "star", "admin:ejranow_skill_changelist"),
+        ]
+        if getattr(request.user, "is_superuser", False):
+            basic_data.append(
+                {
+                    "title": "Documents",
+                    "icon": "description",
+                    "link": reverse("admin-documents"),
+                }
+            )
+        groups.extend(
+            [
+                {
+                    "title": "Basic data",
+                    "items": basic_data,
+                },
+                {
+                    "title": "People",
+                    "items": [
+                        _nav("Profiles", "person", "admin:ejranow_profile_changelist"),
+                        _nav("Profile roles", "badge", "admin:ejranow_profilerole_changelist"),
+                        _nav("Profile skills", "star", "admin:ejranow_profileskill_changelist"),
+                        _nav("Credits", "history_edu", "admin:ejranow_credit_changelist"),
+                        _nav("Media", "perm_media", "admin:ejranow_profilemedia_changelist"),
+                    ],
+                },
+                {
+                    "title": "Projects",
+                    "items": [
+                        _nav("Projects", "theater_comedy", "admin:ejranow_project_changelist"),
+                        _nav("Opportunities", "campaign", "admin:ejranow_opportunity_changelist"),
+                        _nav("Testimonials", "format_quote", "admin:ejranow_testimonial_changelist"),
+                    ],
+                },
+                {
+                    "title": "Casting",
+                    "items": [
+                        _nav("Applications", "assignment", "admin:ejranow_application_changelist"),
+                        _nav("Invites", "forward_to_inbox", "admin:ejranow_invite_changelist"),
+                        _nav("Matches", "handshake", "admin:ejranow_match_changelist"),
+                    ],
+                },
+                {
+                    "title": "Support",
+                    "items": [
+                        _nav("Support tickets", "support_agent", "admin:ejranow_supportticket_changelist"),
+                        _nav("Bookmarks", "bookmark", "admin:ejranow_bookmark_changelist"),
+                    ],
+                },
+            ]
+        )
+    groups.append(
         {
             "title": "Authentication",
             "items": [
@@ -96,43 +160,7 @@ def _sidebar(request):
                 },
             ],
         }
-    ]
-    if getattr(request.user, "is_staff", False):
-        groups.append(
-            {
-                "title": "Casting",
-                "items": [
-                    {"title": "Cities", "icon": "location_city", "link": reverse("admin:ejranow_city_changelist")},
-                    {"title": "Art categories", "icon": "category", "link": reverse("admin:ejranow_artcategory_changelist")},
-                    {"title": "Roles", "icon": "badge", "link": reverse("admin:ejranow_role_changelist")},
-                    {"title": "Skills", "icon": "star", "link": reverse("admin:ejranow_skill_changelist")},
-                    {"title": "Profiles", "icon": "person", "link": reverse("admin:ejranow_profile_changelist")},
-                    {"title": "Profile roles", "icon": "badge", "link": reverse("admin:ejranow_profilerole_changelist")},
-                    {"title": "Profile skills", "icon": "star", "link": reverse("admin:ejranow_profileskill_changelist")},
-                    {"title": "Credits", "icon": "history_edu", "link": reverse("admin:ejranow_credit_changelist")},
-                    {"title": "Media", "icon": "perm_media", "link": reverse("admin:ejranow_profilemedia_changelist")},
-                    {"title": "Projects", "icon": "theater_comedy", "link": reverse("admin:ejranow_project_changelist")},
-                    {"title": "Opportunities", "icon": "campaign", "link": reverse("admin:ejranow_opportunity_changelist")},
-                    {"title": "Testimonials", "icon": "format_quote", "link": reverse("admin:ejranow_testimonial_changelist")},
-                    {"title": "Applications", "icon": "assignment", "link": reverse("admin:ejranow_application_changelist")},
-                    {"title": "Invites", "icon": "forward_to_inbox", "link": reverse("admin:ejranow_invite_changelist")},
-                    {"title": "Matches", "icon": "handshake", "link": reverse("admin:ejranow_match_changelist")},
-                ],
-            }
-        )
-    if getattr(request.user, "is_superuser", False):
-        groups.append(
-            {
-                "title": "Internal",
-                "items": [
-                    {
-                        "title": "Documents",
-                        "icon": "description",
-                        "link": reverse("admin-documents"),
-                    }
-                ],
-            }
-        )
+    )
     return groups
 
 
@@ -143,6 +171,7 @@ UNFOLD = {
     "STYLES": [
         "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap",
         _static_file("css/admin-font.css"),
+        _static_file("css/art-picker.css"),
     ],
     "SIDEBAR": {
         "navigation": _sidebar,
@@ -217,6 +246,8 @@ TEMPLATES = [
         },
     },
 ]
+
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 WSGI_APPLICATION = 'ejranow.wsgi.application'
 

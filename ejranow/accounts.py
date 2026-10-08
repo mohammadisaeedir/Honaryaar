@@ -47,7 +47,6 @@ def user_for_phone(phone):
     if created:
         user.set_unusable_password()
         user.save(update_fields=["password"])
-    ensure_profile(user)
     return user
 
 
@@ -62,7 +61,7 @@ def current_profile(user):
 
 def ready_profile(user):
     profile = current_profile(user)
-    if profile and profile.first_name and profile.last_name:
+    if profile and user.first_name and user.last_name:
         return profile
     return None
 
@@ -75,9 +74,12 @@ def professional_profile_ready(user):
 
 
 def ensure_profile(user):
+    """Artist account for someone using the public site. Staff can stay without one."""
     try:
         return user.profile
     except Profile.DoesNotExist:
+        if getattr(user, "is_staff", False):
+            return None
         return Profile.objects.create(
             user=user,
             slug=_new_slug(),

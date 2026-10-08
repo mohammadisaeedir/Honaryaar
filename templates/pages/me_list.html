@@ -1,4 +1,5 @@
 {% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
 
 {% block title %}{{ page_title }} · هنریار{% endblock %}
 {% block account_title %}{{ page_title }}{% endblock %}
@@ -11,17 +12,59 @@
                 <a class="pf-board__add" href="{{ add_url }}">{{ add_label }}</a>
             {% endif %}
         </div>
-        {% if items %}
-            <div class="pf-board__list">
-                {% for item in items %}
-                    <a class="pf-request pf-request--{{ item.tone }}" href="{{ item.url }}">
-                        <h2>{{ item.title }}</h2>
-                        {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
-                    </a>
-                {% endfor %}
+        {% if saved_tab %}
+            <div x-data="{ tab: 'work' }">
+                <div class="profile-tabs" role="tablist" aria-label="همکاری و نشان‌شده‌ها">
+                    <button class="profile-tabs__tab is-on" type="button" role="tab" :class="{ 'is-on': tab === 'work' }" :aria-selected="tab === 'work'" @click="tab = 'work'">لیست همکاری‌ها ({{ items|length }})</button>
+                    <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'saved' }" :aria-selected="tab === 'saved'" @click="tab = 'saved'">نشان‌شده‌ها ({{ bookmarks|length }})</button>
+                </div>
+                <div class="profile-pane is-on" :class="{ 'is-on': tab === 'work' }">
+                    {% if items %}
+                        <div class="pf-board__list">
+                            {% for item in items %}
+                                <a class="pf-request" href="{{ item.url }}">
+                                    <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
+                                    {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% include "components/account/empty.html" with icon=empty_icon text=empty_text %}
+                    {% endif %}
+                </div>
+                <div class="profile-pane" :class="{ 'is-on': tab === 'saved' }">
+                    {% if bookmarks %}
+                        <ul class="saved-rows">
+                            {% for item in bookmarks %}
+                                <li>
+                                    <a href="{{ item.url }}">{{ item.title }}</a>
+                                    {% status_chip item.status_code %}
+                                    <form method="post" action="{{ item.remove }}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        <button type="button" data-title="{{ item.title }}" @click="$dispatch('bookmark-remove', { title: $el.dataset.title, form: $el.closest('form') })">حذف</button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        {% include "components/account/empty.html" with icon="collaborations" text="هنوز کسی را نشان نکرده‌اید." %}
+                    {% endif %}
+                </div>
             </div>
         {% else %}
-            {% include "components/account/empty.html" with icon=empty_icon text=empty_text action_href=add_url action_label=add_label %}
+            {% if items %}
+                <div class="pf-board__list">
+                    {% for item in items %}
+                        <a class="pf-request" href="{{ item.url }}">
+                            <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
+                            {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {% include "components/account/empty.html" with icon=empty_icon text=empty_text action_href=add_url action_label=add_label %}
+            {% endif %}
         {% endif %}
     </div>
 {% endblock %}

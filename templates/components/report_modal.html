@@ -1,0 +1,40 @@
+<div
+    class="report-modal"
+    x-data="{ open: {% if report_open %}true{% else %}false{% endif %} }"
+    x-show="open"
+    x-cloak
+    x-effect="document.body.classList.toggle('is-report-open', open)"
+    @open-report.window="open = true"
+    @keydown.escape.window="open = false"
+>
+    <div class="report-modal__backdrop" @click="open = false"></div>
+    <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" @click.stop>
+        <div class="report-modal__top">
+            <h2 id="report-modal-title">گزارش</h2>
+            <button class="report-modal__close" type="button" @click="open = false" aria-label="بستن">
+                {% include "components/icon.html" with name="x" size="20" %}
+            </button>
+        </div>
+        <p class="report-modal__target">{{ report_title }}</p>
+        {% if report_sent %}
+            <p class="plain-copy">گزارش ثبت شد. بررسی‌اش می‌کنیم.</p>
+        {% else %}
+            <form class="support-form" method="post" action="{{ report_action }}">
+                {% csrf_token %}
+                <fieldset class="mb-4">
+                    <legend class="field-label">دلیل</legend>
+                    {{ report_form.kind_reason }}
+                    {% if report_form.kind_reason.errors %}<p class="support-error">{{ report_form.kind_reason.errors.0 }}</p>{% endif %}
+                </fieldset>
+                <label class="mb-4 block">
+                    <span class="field-label">توضیح</span>
+                    <textarea class="field" name="body" rows="5">{{ report_form.body.value|default:'' }}</textarea>
+                    {% if report_form.body.errors %}<p class="support-error">{{ report_form.body.errors.0 }}</p>{% endif %}
+                </label>
+                <div class="mt-4">
+                    {% include "components/button.html" with label="ثبت گزارش" button_type="submit" %}
+                </div>
+            </form>
+        {% endif %}
+    </div>
+</div>

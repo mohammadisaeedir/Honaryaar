@@ -1,0 +1,53 @@
+{% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
+
+{% block title %}{{ ticket.kind_reason_label }} · پشتیبانی · هنریار{% endblock %}
+{% block account_title %}پشتیبانی{% endblock %}
+
+{% block account_main %}
+    <div class="pf-plp" dir="rtl">
+        <div class="pf-board__head">
+            <h1>{{ ticket.kind_reason_label }}</h1>
+            <a class="pf-board__quiet" href="{% url 'me-tickets' %}">بازگشت</a>
+        </div>
+        <div class="ticket-detail__meta">
+            {% status_chip ticket.status %}
+        </div>
+        <div class="repeat-wrap">
+            <table class="ticket-table">
+                <thead>
+                    <tr>
+                        <th>فرستنده</th>
+                        <th>پیام</th>
+                        <th>زمان</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in messages_list %}
+                        <tr>
+                            <td>{% if item.from_staff %}پشتیبانی{% else %}شما{% endif %}</td>
+                            <td class="ticket-table__body">{{ item.body }}</td>
+                            <td>{{ item.created_at|jalali }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if ticket.status == "closed" %}
+            <p class="ticket-detail__note">این تیکت بسته شده است.</p>
+        {% else %}
+            <form class="ticket-reply" method="post" action="{% url 'me-ticket' ticket.pk %}">
+                {% csrf_token %}
+                <label class="block">
+                    <span class="field-label">پاسخ</span>
+                    <textarea class="field" name="body" rows="4">{{ form.body.value|default:'' }}</textarea>
+                    {% if form.body.errors %}<p class="support-error">{{ form.body.errors.0 }}</p>{% endif %}
+                </label>
+                <div class="ticket-reply__actions">
+                    {% include "components/button.html" with label="ارسال" button_type="submit" %}
+                    <button class="pf-board__quiet" type="submit" name="action" value="close" formnovalidate>بستن تیکت</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

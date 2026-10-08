@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -41,6 +42,7 @@ def login_code(request):
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         request.session.pop("login_phone", None)
         request.session.pop("login_next", None)
+        messages.success(request, "وارد شدید.")
         return redirect(nxt or "home")
     return render(request, "pages/login_code.html", {"form": form, "phone": phone})
 
@@ -48,6 +50,7 @@ def login_code(request):
 @require_POST
 def logout_view(request):
     logout(request)
+    messages.success(request, "از حساب خارج شدید.")
     return redirect("home")
 
 
@@ -192,6 +195,12 @@ def _save_roles(profile, roles, primary):
 @login_required
 def me_profile(request):
     profile = ensure_profile(request.user)
+    if profile is None:
+        return render(
+            request,
+            "pages/me_profile.html",
+            {"profile": None, "editing": False},
+        )
     editing = request.GET.get("edit") == "1"
     role_links = list(profile.profile_roles.select_related("role"))
     skill_links = list(profile.skill_links.select_related("skill"))
@@ -204,10 +213,13 @@ def me_profile(request):
     form = ProfileForm(
         request.POST or None,
         initial={
-            "first_name": profile.first_name,
-            "last_name": profile.last_name,
+            "first_name": profile.user.first_name,
+            "last_name": profile.user.last_name,
+            "name": profile.name,
             "city": profile.city_id,
             "about": profile.about,
+            "birth_date": profile.birth_date,
+            "gender": profile.gender,
             "arts": profile.arts or [],
         },
     )
@@ -240,11 +252,11 @@ def me_profile(request):
             and credit_formset.is_valid()
             and media_formset.is_valid()
         ):
-            profile.first_name = form.cleaned_data["first_name"]
-            profile.last_name = form.cleaned_data["last_name"]
-            profile.name = f"{profile.first_name} {profile.last_name}".strip()
+            profile.name = form.cleaned_data["name"]
             profile.city = form.cleaned_data["city"]
             profile.about = form.cleaned_data["about"]
+            profile.birth_date = form.cleaned_data["birth_date"]
+            profile.gender = form.cleaned_data["gender"]
             profile.arts = form.cleaned_data["arts"]
             profile.save()
             _save_skills(profile, skill_levels)
@@ -252,10 +264,20 @@ def me_profile(request):
             _save_roles(profile, chosen_roles, primary_role)
             _save_credits(profile, credit_formset.cleaned_data)
             _save_media(profile, media_formset.cleaned_data)
-            request.user.first_name = profile.first_name
-            request.user.last_name = profile.last_name
+            request.user.first_name = form.cleaned_data["first_name"]
+            request.user.last_name = form.cleaned_data["last_name"]
             request.user.save(update_fields=["first_name", "last_name"])
+            messages.success(request, "پروفایل ذخیره شد.")
             return redirect("me-profile")
+    edit_tab = "identity"
+    if request.method == "POST" and form.errors:
+        edit_tab = "identity"
+    elif request.method == "POST" and not role_formset.is_valid():
+        edit_tab = "roles"
+    elif request.method == "POST" and not credit_formset.is_valid():
+        edit_tab = "credits"
+    elif request.method == "POST" and not media_formset.is_valid():
+        edit_tab = "media"
     return render(
         request,
         "pages/me_profile.html",
@@ -271,5 +293,6 @@ def me_profile(request):
             "roles": Role.objects.all(),
             "credit_formset": credit_formset,
             "media_formset": media_formset,
+            "edit_tab": edit_tab,
         },
     )

@@ -1,11 +1,15 @@
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
 class Role(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
+    group = models.CharField(max_length=80)
     art_category = models.ForeignKey(
         "ArtCategory",
         on_delete=models.PROTECT,
@@ -13,9 +17,14 @@ class Role(models.Model):
     )
 
     class Meta:
-        ordering = ["title"]
+        ordering = ["group", "title"]
+        constraints = [
+            models.UniqueConstraint(fields=["group", "title"], name="unique_role_group_title"),
+        ]
 
     def __str__(self):
+        if self.group:
+            return f"{self.title} · {self.group}"
         return self.title
 
 
@@ -135,18 +144,19 @@ class Skill(models.Model):
         return self.title
 
 
+class ProfileGender(models.TextChoices):
+    MALE = "male", "Male"
+    FEMALE = "female", "Female"
+
+
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="profile",
     )
     slug = models.SlugField(unique=True)
-    first_name = models.CharField(max_length=60, blank=True)
-    last_name = models.CharField(max_length=60, blank=True)
-    name = models.CharField(max_length=120, blank=True)
+    name = models.CharField(max_length=120, blank=True, verbose_name="Art name")
     city = models.ForeignKey(
         "City",
         null=True,
@@ -155,6 +165,8 @@ class Profile(models.Model):
         related_name="profiles",
     )
     about = models.TextField(blank=True)
+    birth_date = models.DateField(null=True, blank=True, verbose_name="Birth date")
+    gender = models.CharField(max_length=20, choices=ProfileGender.choices, blank=True, verbose_name="Gender")
     arts = ArrayField(
         models.CharField(max_length=20, choices=Art.choices),
         default=list,
@@ -172,12 +184,19 @@ class Profile(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
-        if self.name:
-            return self.name
+    def public_name(self):
+        art_name = (self.name or "").strip()
+        if art_name:
+            return art_name
         if self.user_id:
+            full = f"{self.user.first_name} {self.user.last_name}".strip()
+            if full:
+                return full
             return self.user.username
         return self.slug
+
+    def __str__(self):
+        return self.public_name()
 
 
 class ProfileSkill(models.Model):
@@ -249,8 +268,12 @@ class Credit(models.Model):
 
 
 class ProjectStatus(models.TextChoices):
-    CASTING = "casting", "در حال جذب بازیگر"
-    OPEN_CALL = "open_call", "فراخوان باز"
+    DRAFT = "draft", "پیش‌نویس"
+    CASTING = "casting", "در حال جذب"
+    COMPLETED = "completed", "اتمام"
+
+
+PUBLIC_PROJECT_STATUSES = (ProjectStatus.CASTING, ProjectStatus.COMPLETED)
 
 
 class Project(models.Model):
@@ -286,7 +309,7 @@ class Project(models.Model):
     status = models.CharField(
         max_length=20,
         choices=ProjectStatus.choices,
-        default=ProjectStatus.CASTING,
+        default=ProjectStatus.DRAFT,
     )
 
     class Meta:
@@ -330,7 +353,7 @@ class Testimonial(models.Model):
     def __str__(self):
         who = self.name
         if not who and self.profile_id:
-            who = self.profile.name or self.profile.slug
+            who = self.profile.public_name()
         where = self.project.title if self.project_id else "عمومی"
         return f"{who or '—'} · {where}"
 
@@ -344,6 +367,38 @@ class Gender(models.TextChoices):
     MALE = "male", "Male"
     FEMALE = "female", "Female"
     ANY = "any", "No difference"
+
+
+class CollaborationType(models.TextChoices):
+    PROJECT_HIRE = "project_hire", "Project hire"
+    CONTRACTOR = "contractor", "Contractor"
+    SALARY = "salary", "Wage"
+    DAILY = "daily", "Daily rate"
+    HOURLY = "hourly", "Hourly"
+    SESSION = "session", "Per session"
+    PERCENTAGE = "percentage", "Percentage"
+    PARTNERSHIP = "partnership", "Partnership"
+    EQUITY = "equity", "Equity share"
+    HONORARY = "honorary", "Honorary"
+    INTERNSHIP = "internship", "Internship"
+    VOLUNTEER = "volunteer", "Volunteer"
+    LONG_TERM = "long_term", "Long-term"
+    TEMPORARY = "temporary", "Temporary"
+
+
+class ExperienceLevel(models.TextChoices):
+    BEGINNER = "beginner", "Beginner"
+    INTERMEDIATE = "intermediate", "Intermediate"
+    PROFESSIONAL = "professional", "Professional"
+
+
+class SpecialCondition(models.TextChoices):
+    URGENT = "urgent", "Urgent"
+    NO_TEST = "no_test", "No audition"
+    TEST_REQUIRED = "test_required", "Audition required"
+    PAID = "paid", "Paid"
+    STUDENT = "student", "Student project"
+    SPONSORED = "sponsored", "Sponsored"
 
 
 class Opportunity(models.Model):
@@ -366,6 +421,19 @@ class Opportunity(models.Model):
     age_min = models.PositiveSmallIntegerField(null=True, blank=True)
     age_max = models.PositiveSmallIntegerField(null=True, blank=True)
     gender = models.CharField(max_length=20, choices=Gender.choices, default=Gender.ANY)
+    collaboration_type = models.CharField(
+        max_length=20,
+        choices=CollaborationType.choices,
+        blank=True,
+        verbose_name="Collaboration type",
+    )
+    experience_level = models.CharField(
+        max_length=20,
+        choices=ExperienceLevel.choices,
+        blank=True,
+        verbose_name="Experience",
+    )
+    special_conditions = models.JSONField(default=list, blank=True, verbose_name="Special conditions")
     count = models.PositiveSmallIntegerField(default=1)
     paid = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
@@ -485,3 +553,229 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.profile} × {self.opportunity}"
+
+
+class TicketKind(models.TextChoices):
+    CONTACT = "contact", "Contact"
+    REPORT = "report", "Report"
+    TICKET = "ticket", "Ticket"
+
+
+class TicketStatus(models.TextChoices):
+    OPEN = "open", "Open"
+    ANSWERED = "answered", "Answered"
+    CLOSED = "closed", "Closed"
+
+
+class KindReason(models.TextChoices):
+    GENERAL = "general", "Public"
+    COLLABORATION = "collaboration", "Collaboration"
+    COMPLAINT = "complaint", "Criticism and complaint"
+    ACCOUNT = "account", "Account"
+    PROFILE = "profile", "Profile"
+    PROJECT = "project", "Project"
+    OPPORTUNITY = "opportunity", "Opportunity"
+    TECHNICAL = "technical", "Technical"
+    WRONG = "wrong", "Wrong information"
+    OWNERSHIP = "ownership", "Ownership mismatch"
+    SPAM = "spam", "Spam"
+    OTHER = "other", "Other"
+
+
+CONTACT_REASONS = (
+    (KindReason.GENERAL, "عمومی"),
+    (KindReason.COLLABORATION, "همکاری"),
+    (KindReason.COMPLAINT, "انتقاد و شکایت"),
+    (KindReason.OTHER, "سایر"),
+)
+TICKET_REASONS = (
+    (KindReason.ACCOUNT, "حساب کاربری"),
+    (KindReason.PROFILE, "پروفایل"),
+    (KindReason.PROJECT, "پروژه"),
+    (KindReason.OPPORTUNITY, "فراخوان"),
+    (KindReason.TECHNICAL, "مشکل فنی"),
+    (KindReason.OTHER, "سایر"),
+)
+REPORT_REASONS = (
+    (KindReason.WRONG, "اطلاعات نادرست"),
+    (KindReason.OWNERSHIP, "مغایرت مالکیت"),
+    (KindReason.SPAM, "اسپم"),
+    (KindReason.OTHER, "سایر"),
+)
+KIND_REASON_VALUES = {
+    TicketKind.CONTACT: {value for value, _label in CONTACT_REASONS},
+    TicketKind.TICKET: {value for value, _label in TICKET_REASONS},
+    TicketKind.REPORT: {value for value, _label in REPORT_REASONS},
+}
+REPORT_TARGET_MODELS = {"profile", "project", "opportunity"}
+BOOKMARK_TARGET_MODELS = {"profile", "project", "opportunity"}
+
+
+class Bookmark(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bookmarks",
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.PROTECT,
+        limit_choices_to={"app_label": "ejranow", "model__in": ["profile", "project", "opportunity"]},
+    )
+    object_id = models.PositiveBigIntegerField()
+    target = GenericForeignKey("content_type", "object_id")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "content_type", "object_id"],
+                name="unique_bookmark_target",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.content_type_id or self.content_type.model not in BOOKMARK_TARGET_MODELS:
+            raise ValidationError({"content_type": "A bookmark points at a profile, project, or opportunity."})
+
+    def __str__(self):
+        return f"{self.user} · {self.target_label() or self.object_id}"
+
+    def target_label(self):
+        item = self.target
+        if item is None:
+            return ""
+        if hasattr(item, "public_name"):
+            return item.public_name()
+        return getattr(item, "title", "")
+
+
+class SupportTicket(models.Model):
+    kind = models.CharField(max_length=20, choices=TicketKind.choices)
+    kind_reason = models.CharField(max_length=20, choices=KindReason.choices)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="support_tickets",
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        limit_choices_to={"app_label": "ejranow", "model__in": ["profile", "project", "opportunity"]},
+    )
+    object_id = models.PositiveBigIntegerField(null=True, blank=True)
+    target = GenericForeignKey("content_type", "object_id")
+    status = models.CharField(max_length=20, choices=TicketStatus.choices, default=TicketStatus.OPEN)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                name="support_ticket_requires_user",
+                condition=models.Q(kind=TicketKind.TICKET, user__isnull=False) | ~models.Q(kind=TicketKind.TICKET),
+            ),
+            models.CheckConstraint(
+                name="support_ticket_kind_reason",
+                condition=(
+                    models.Q(
+                        kind=TicketKind.CONTACT,
+                        kind_reason__in=[value for value, _label in CONTACT_REASONS],
+                    )
+                    | models.Q(
+                        kind=TicketKind.TICKET,
+                        kind_reason__in=[value for value, _label in TICKET_REASONS],
+                    )
+                    | models.Q(
+                        kind=TicketKind.REPORT,
+                        kind_reason__in=[value for value, _label in REPORT_REASONS],
+                    )
+                ),
+            ),
+            models.CheckConstraint(
+                name="support_ticket_target",
+                condition=(
+                    models.Q(kind=TicketKind.REPORT, content_type__isnull=False, object_id__isnull=False)
+                    | models.Q(
+                        kind__in=[TicketKind.CONTACT, TicketKind.TICKET],
+                        content_type__isnull=True,
+                        object_id__isnull=True,
+                    )
+                ),
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        allowed = KIND_REASON_VALUES.get(self.kind, set())
+        if self.kind_reason not in allowed:
+            raise ValidationError({"kind_reason": "This reason does not belong to the selected kind."})
+        has_target = bool(self.content_type_id and self.object_id)
+        if self.kind == TicketKind.REPORT:
+            if not has_target or self.content_type.model not in REPORT_TARGET_MODELS:
+                raise ValidationError({"content_type": "A report points at a profile, project, or opportunity."})
+        elif self.content_type_id or self.object_id:
+            raise ValidationError({"content_type": "Only a report has a target."})
+        if self.kind == TicketKind.TICKET and not self.user_id:
+            raise ValidationError({"user": "A ticket requires a user."})
+
+    def __str__(self):
+        return f"{self.get_kind_display()} #{self.pk}"
+
+    def target_label(self):
+        item = self.target
+        if item is None:
+            return ""
+        if hasattr(item, "public_name"):
+            return item.public_name()
+        return getattr(item, "title", "")
+
+    def kind_reason_label(self):
+        labels = dict(CONTACT_REASONS + TICKET_REASONS + REPORT_REASONS)
+        return labels.get(self.kind_reason, self.kind_reason)
+
+    def status_label(self):
+        return {"open": "باز", "answered": "پاسخ‌داده‌شده", "closed": "بسته"}.get(self.status, self.status)
+
+    def latest_body(self):
+        cached = getattr(self, "_prefetched_objects_cache", {}).get("messages")
+        if cached is not None:
+            rows = list(cached)
+            return rows[-1].body if rows else self.body
+        last = self.messages.order_by("-created_at").first()
+        return last.body if last else self.body
+
+
+class TicketMessage(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name="messages")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="ticket_messages",
+    )
+    from_staff = models.BooleanField(default=False)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+
+    def __str__(self):
+        return f"{self.ticket_id} · {self.created_at:%Y-%m-%d %H:%M}"
+
+    def sender_name(self):
+        user = self.author
+        if user is None:
+            return ""
+        name = f"{user.first_name} {user.last_name}".strip()
+        return name or user.get_username()

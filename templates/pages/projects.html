@@ -10,8 +10,9 @@
     <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">هر پروژه می‌تواند چند نقش باز داشته باشد.</p>
     <div class="list-tools" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
         <form class="page-search" method="get" action="{% url 'projects' %}" role="search" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
-            <input type="hidden" name="city" value="{{ filters.city }}">
-            <input type="hidden" name="art" value="{{ filters.art }}">
+            {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
+            {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
+            {% for value in filters.status %}<input type="hidden" name="status" value="{{ value }}">{% endfor %}
             <label class="sr-only" for="projects-q">جستجو در پروژه‌ها</label>
             <input class="field" id="projects-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام پروژه یا شهر" enterkeyhint="search">
             {% include "components/filters/suggest.html" %}

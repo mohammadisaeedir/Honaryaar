@@ -1,9 +1,25 @@
+from datetime import date
+
 from django import forms
+from django.contrib.contenttypes.models import ContentType
 from django.forms import BaseFormSet, formset_factory
 
 from ejranow.accounts import code_matches, normalize_phone
-from ejranow.labels import MEDIA_LABELS
-from ejranow.models import Art, City, Opportunity, Profile, Role
+from ejranow.jalali_widget import JalaliDateWidget
+from ejranow.labels import CHIP_LABELS, COLLABORATION_TYPES, EXPERIENCE_LEVELS, MEDIA_LABELS, SPECIAL_CONDITIONS
+from ejranow.models import (
+    CONTACT_REASONS,
+    REPORT_REASONS,
+    TICKET_REASONS,
+    Art,
+    ArtCategory,
+    Bookmark,
+    City,
+    Opportunity,
+    Profile,
+    ProjectStatus,
+    Role,
+)
 
 
 class PhoneForm(forms.Form):
@@ -34,16 +50,34 @@ class CodeForm(forms.Form):
         return code
 
 
+class ArtPickerWidget(forms.CheckboxSelectMultiple):
+    template_name = "widgets/art_picker.html"
+
+
+class ReasonPickerWidget(forms.RadioSelect):
+    template_name = "widgets/reason_picker.html"
+
+
 class ProfileForm(forms.Form):
     first_name = forms.CharField(max_length=60, required=False)
     last_name = forms.CharField(max_length=60, required=False)
+    name = forms.CharField(max_length=120, required=False)
     city = forms.ModelChoiceField(
         queryset=City.objects.all(),
         required=False,
         empty_label="انتخاب شهر",
     )
     about = forms.CharField(required=False)
-    arts = forms.MultipleChoiceField(choices=Art.choices, required=False)
+    birth_date = forms.DateField(
+        required=False,
+        input_formats=["%Y-%m-%d"],
+        widget=JalaliDateWidget(attrs={"class": "field jalali-date__text"}),
+    )
+    gender = forms.ChoiceField(
+        required=False,
+        choices=[("", "انتخاب جنسیت"), ("male", "مرد"), ("female", "زن")],
+    )
+    arts = forms.MultipleChoiceField(choices=Art.choices, required=False, widget=ArtPickerWidget)
 
     def clean_first_name(self):
         return (self.cleaned_data.get("first_name") or "").strip()
@@ -51,8 +85,17 @@ class ProfileForm(forms.Form):
     def clean_last_name(self):
         return (self.cleaned_data.get("last_name") or "").strip()
 
+    def clean_name(self):
+        return (self.cleaned_data.get("name") or "").strip()
+
     def clean_about(self):
         return self.cleaned_data["about"].strip()
+
+    def clean_birth_date(self):
+        value = self.cleaned_data.get("birth_date")
+        if value and value > date.today():
+            raise forms.ValidationError("تاریخ تولد نمی‌تواند در آینده باشد.")
+        return value
 
 
 class RoleRowForm(forms.Form):
@@ -122,24 +165,21 @@ CreditFormSet = formset_factory(CreditRowForm, extra=0)
 MediaFormSet = formset_factory(MediaRowForm, extra=0)
 
 
-class ProjectOpportunityForm(forms.Form):
+class ProjectCreateForm(forms.Form):
     title = forms.CharField(
         max_length=160,
         error_messages={"required": "نام پروژه را وارد کنید."},
     )
     city = forms.ModelChoiceField(queryset=City.objects.all(), required=False)
+    art_category = forms.ModelChoiceField(
+        queryset=ArtCategory.objects.order_by("priority", "title"),
+        error_messages={"required": "نوع هنر را انتخاب کنید."},
+    )
     summary = forms.CharField(required=False)
-    opportunity_title = forms.CharField(
-        max_length=160,
-        error_messages={"required": "نام نقش را وارد کنید."},
+    status = forms.ChoiceField(
+        choices=[(value, CHIP_LABELS[value]) for value, _label in ProjectStatus.choices],
+        initial=ProjectStatus.DRAFT,
     )
-    role = forms.ModelChoiceField(
-        queryset=Role.objects.all(),
-        error_messages={"required": "نقش را انتخاب کنید."},
-    )
-    deadline = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
-    description = forms.CharField(required=False)
-    opportunity_city = forms.ModelChoiceField(queryset=City.objects.all(), required=False)
 
     def clean_title(self):
         value = self.cleaned_data["title"].strip()
@@ -147,17 +187,12 @@ class ProjectOpportunityForm(forms.Form):
             raise forms.ValidationError("نام پروژه را وارد کنید.")
         return value
 
-    def clean_opportunity_title(self):
-        value = self.cleaned_data["opportunity_title"].strip()
-        if not value:
-            raise forms.ValidationError("نام نقش را وارد کنید.")
-        return value
-
     def clean_summary(self):
         return self.cleaned_data["summary"].strip()
 
-    def clean_description(self):
-        return self.cleaned_data["description"].strip()
+
+AGE_FLOOR = 16
+AGE_CEILING = 80
 
 
 class OpportunityForm(forms.Form):
@@ -169,9 +204,35 @@ class OpportunityForm(forms.Form):
         queryset=Role.objects.all(),
         error_messages={"required": "نقش را انتخاب کنید."},
     )
-    deadline = forms.DateField(required=False, input_formats=["%Y-%m-%d"])
+    deadline = forms.DateField(
+        required=False,
+        input_formats=["%Y-%m-%d"],
+        widget=JalaliDateWidget(attrs={"class": "field jalali-date__text"}),
+    )
     description = forms.CharField(required=False)
     city = forms.ModelChoiceField(queryset=City.objects.all(), required=False)
+    collaboration_type = forms.ChoiceField(choices=[("", "انتخاب نوع همکاری")] + COLLABORATION_TYPES, required=False)
+    experience_level = forms.ChoiceField(choices=[("", "انتخاب سطح تجربه")] + EXPERIENCE_LEVELS, required=False)
+    special_conditions = forms.MultipleChoiceField(choices=SPECIAL_CONDITIONS, required=False)
+    age_min = forms.IntegerField(required=False, min_value=AGE_FLOOR, max_value=AGE_CEILING)
+    age_max = forms.IntegerField(required=False, min_value=AGE_FLOOR, max_value=AGE_CEILING)
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get("age_min")
+        end = cleaned.get("age_max")
+        if start is None and end is None:
+            return cleaned
+        if start is None or end is None:
+            self.add_error("age_min", "هر دو سر رنج سنی را مشخص کنید.")
+            return cleaned
+        if start > end:
+            self.add_error("age_min", "شروع رنج سنی از پایان آن بیشتر است.")
+            return cleaned
+        if start == AGE_FLOOR and end == AGE_CEILING:
+            cleaned["age_min"] = None
+            cleaned["age_max"] = None
+        return cleaned
 
     def clean_title(self):
         value = self.cleaned_data["title"].strip()
@@ -190,6 +251,11 @@ class ApplyForm(forms.Form):
         return self.cleaned_data["message"].strip()
 
 
+def _invite_name(profile):
+    full = f"{profile.user.first_name} {profile.user.last_name}".strip()
+    return full or profile.public_name()
+
+
 class InviteForm(forms.Form):
     opportunity = forms.ModelChoiceField(
         queryset=Opportunity.objects.none(),
@@ -204,9 +270,64 @@ class InviteForm(forms.Form):
     def __init__(self, project, owner, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["opportunity"].queryset = project.opportunities.all()
+        profile_type = ContentType.objects.get_for_model(Profile)
+        saved_ids = Bookmark.objects.filter(
+            user_id=owner.user_id,
+            content_type=profile_type,
+        ).values_list("object_id", flat=True)
         self.fields["profile"].queryset = (
-            Profile.objects.exclude(pk=owner.pk).exclude(name="").order_by("name")
+            Profile.objects.filter(pk__in=saved_ids)
+            .exclude(pk=owner.pk)
+            .select_related("user")
+            .order_by("user__first_name", "user__last_name", "name")
         )
+        self.fields["profile"].label_from_instance = _invite_name
 
     def clean_message(self):
         return self.cleaned_data["message"].strip()
+
+
+class ContactForm(forms.Form):
+    kind_reason = forms.ChoiceField(
+        choices=CONTACT_REASONS,
+        widget=ReasonPickerWidget,
+        error_messages={"required": "موضوع را انتخاب کنید."},
+    )
+    body = forms.CharField(error_messages={"required": "پیام را بنویسید."})
+
+    def clean_body(self):
+        return self.cleaned_data["body"].strip()
+
+
+class ReportForm(forms.Form):
+    kind_reason = forms.ChoiceField(
+        choices=REPORT_REASONS,
+        widget=ReasonPickerWidget,
+        error_messages={"required": "دلیل گزارش را انتخاب کنید."},
+    )
+    body = forms.CharField(error_messages={"required": "توضیح را بنویسید."})
+
+    def clean_body(self):
+        return self.cleaned_data["body"].strip()
+
+
+class TicketReplyForm(forms.Form):
+    body = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "field", "rows": 4}),
+        error_messages={"required": "پیام را بنویسید."},
+    )
+
+    def clean_body(self):
+        return self.cleaned_data["body"].strip()
+
+
+class TicketForm(forms.Form):
+    kind_reason = forms.ChoiceField(
+        choices=TICKET_REASONS,
+        widget=ReasonPickerWidget,
+        error_messages={"required": "موضوع را انتخاب کنید."},
+    )
+    body = forms.CharField(error_messages={"required": "پیام را بنویسید."})
+
+    def clean_body(self):
+        return self.cleaned_data["body"].strip()

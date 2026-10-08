@@ -5,148 +5,390 @@
 {% block account_title %}{{ project.title }}{% endblock %}
 
 {% block account_main %}
-    <div class="pf-plp" dir="rtl">
-    <h1>{{ project.title }}</h1>
-    <dl class="pf-record">
-        <div>
-            <dt>وضعیت</dt>
-            <dd>{{ project.get_status_display }}</dd>
+    <div class="pf-plp" dir="rtl" x-data="{ step: '{{ step }}', oppOpen: {% if opportunity_form.errors %}true{% else %}false{% endif %}, editing: '{% if opportunity_form.errors %}{{ request.POST.opportunity|default:'' }}{% endif %}', deleteFor: '', deleteTitle: '', inviteFor: {% if invite_focus %}{{ invite_focus }}{% else %}null{% endif %}, inviteAdd: {% if invite_form.errors %}true{% else %}false{% endif %} }" x-effect="document.body.classList.toggle('is-report-open', oppOpen || inviteFor !== null || deleteFor !== '')" @keydown.escape.window="oppOpen = false; inviteFor = null; inviteAdd = false; deleteFor = ''">
+        <h1>{{ project.title }}</h1>
+        <div class="profile-tabs" role="tablist" aria-label="ساخت پروژه">
+            <button class="profile-tabs__tab{% if step == 'general' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': step === 'general' }" :aria-selected="step === 'general'" @click="step = 'general'">کلیات</button>
+            <button class="profile-tabs__tab{% if step == 'opportunities' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': step === 'opportunities' }" :aria-selected="step === 'opportunities'" @click="step = 'opportunities'">فرصت‌ها</button>
         </div>
-        <div>
-            <dt>شهر</dt>
-            <dd>{% if project.city %}{{ project.city }}{% else %}ثبت نشده{% endif %}</dd>
-        </div>
-        {% if project.summary %}
-            <div>
-                <dt>خلاصه</dt>
-                <dd>{{ project.summary }}</dd>
-            </div>
-        {% endif %}
-    </dl>
 
-    <section class="mt-8 grid gap-4">
-        {% for opportunity in opportunities %}
-            <article class="rounded-card border border-border p-4">
-                <h2 class="text-[18px] font-semibold leading-[26px]">{{ opportunity.title }}</h2>
-                <p class="mt-1 text-sm leading-[22px] text-muted-foreground">{{ opportunity.role.title }}{% if opportunity.city %} · {{ opportunity.city }}{% endif %}</p>
-                <form class="mt-3 flex flex-wrap items-end gap-2" method="post" action="{% url 'me-project' project.slug %}">
+        <div class="profile-pane{% if step == 'general' %} is-on{% endif %}" :class="{ 'is-on': step === 'general' }">
+            <form class="mt-6 max-w-lg" method="post" action="{% url 'me-project' project.slug %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="project">
+                <label class="mb-4 block">
+                    <span class="field-label">نام</span>
+                    <input class="field" type="text" name="title" value="{{ project_form.title.value|default:'' }}" maxlength="160">
+                    {% if project_form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ project_form.title.errors.0 }}</p>{% endif %}
+                </label>
+                <label class="mb-4 block">
+                    <span class="field-label">مدیر پروژه</span>
+                    <input class="field" type="text" value="{{ owner_name }}" readonly>
+                </label>
+                <label class="mb-4 block">
+                    <span class="field-label">شهر</span>
+                    <select class="field field-select" name="city">
+                        <option value="">انتخاب شهر</option>
+                        {% for city in project_form.fields.city.queryset %}
+                            <option value="{{ city.pk }}" {% if project_form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="mb-4 block">
+                    <span class="field-label">نوع هنر</span>
+                    <select class="field field-select" name="art_category">
+                        <option value="">انتخاب نوع هنر</option>
+                        {% for category in project_form.fields.art_category.queryset %}
+                            <option value="{{ category.pk }}" {% if project_form.art_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.get_art_display }} · {{ category.title }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if project_form.art_category.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ project_form.art_category.errors.0 }}</p>{% endif %}
+                </label>
+                <label class="mb-4 block">
+                    <span class="field-label">خلاصه</span>
+                    <textarea class="field" style="min-height: 7rem" name="summary" rows="4">{{ project_form.summary.value|default:'' }}</textarea>
+                </label>
+                <label class="mb-4 block">
+                    <span class="field-label">وضعیت</span>
+                    <select class="field field-select" name="status">
+                        {% for value, label in project_form.fields.status.choices %}
+                            <option value="{{ value }}" {% if project_form.status.value == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <div class="mt-6">
+                    {% include "components/button.html" with label="ادامه" button_type="submit" %}
+                </div>
+            </form>
+        </div>
+
+        <div class="profile-pane{% if step == 'opportunities' %} is-on{% endif %}" :class="{ 'is-on': step === 'opportunities' }">
+            <div class="opp-head">
+                <h2>فرصت‌ها</h2>
+                <button class="pf-board__add" type="button" @click="editing = ''; oppOpen = true; window.fillOpportunity('')">افزودن</button>
+            </div>
+            <div class="opp-table-wrap">
+                <table class="opp-table">
+                    <thead>
+                        <tr>
+                            <th>نام نقش</th>
+                            <th>نقش</th>
+                            <th>شهر</th>
+                            <th>ددلاین</th>
+                            <th>وضعیت</th>
+                            <th>دعوت‌ها</th>
+                            <th><span class="sr-only">عملیات</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for opportunity in opportunities %}
+                            <tr>
+                                <td>
+                                    {{ opportunity.title }}
+                                    {% if opportunity.collaboration_type or opportunity.experience_level or opportunity.special_conditions or opportunity.age_min or opportunity.age_max %}
+                                        <p class="opp-terms">
+                                            {% if opportunity.collaboration_type %}{{ opportunity.collaboration_type|collaboration_label }}{% endif %}
+                                            {% if opportunity.experience_level %}{% if opportunity.collaboration_type %} · {% endif %}{{ opportunity.experience_level|experience_label }}{% endif %}
+                                            {% for code in opportunity.special_conditions %} · {{ code|special_label }}{% endfor %}
+                                            {% if opportunity.age_min or opportunity.age_max %}{% if opportunity.collaboration_type or opportunity.experience_level or opportunity.special_conditions %} · {% endif %}{{ opportunity|age_label }}{% endif %}
+                                        </p>
+                                    {% endif %}
+                                </td>
+                                <td>{{ opportunity.role.title }}</td>
+                                <td>{% if opportunity.city %}{{ opportunity.city.title }}{% else %}—{% endif %}</td>
+                                <td>{% if opportunity.deadline %}{{ opportunity.deadline|jalali }}{% else %}—{% endif %}</td>
+                                <td>{% status_chip opportunity.status %}</td>
+                                <td>
+                                    <button class="opp-invite" type="button" @click="inviteFor = {{ opportunity.pk }}; inviteAdd = false">دعوت‌ها ({{ opportunity.invite_rows|length }})</button>
+                                </td>
+                                <td>
+                                    <div class="opp-actions">
+                                        <button class="opp-icon" type="button" aria-label="ویرایش" @click="editing = '{{ opportunity.pk }}'; oppOpen = true; window.fillOpportunity('{{ opportunity.pk }}')">
+                                            {% include "components/icon.html" with name="pencil" size="16" %}
+                                        </button>
+                                        <button class="opp-icon opp-icon--delete" type="button" aria-label="حذف" data-title="{{ opportunity.title }}" @click="deleteTitle = $el.dataset.title; deleteFor = '{{ opportunity.pk }}'">
+                                            {% include "components/icon.html" with name="trash" size="16" %}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7">هنوز فرصتی ثبت نشده.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% for opportunity in opportunities %}
+                {% if opportunity.application_rows %}
+                    <div class="mt-4 rounded-card border border-border p-4">
+                        <h3 class="text-sm font-semibold leading-[22px]">درخواست‌های {{ opportunity.title }}</h3>
+                        {% for application in opportunity.application_rows %}
+                            <div class="border-t border-border py-3">
+                                <p class="text-sm font-semibold leading-[22px]">{{ application.profile.public_name }}</p>
+                                <div class="mt-1">{% status_chip application.status %}</div>
+                                {% if application.message %}
+                                    <p class="mt-2 text-sm leading-[22px]">{{ application.message }}</p>
+                                {% endif %}
+                                <form class="mt-3 flex flex-wrap gap-2" method="post" action="{% url 'application-status' application.pk %}">
+                                    {% csrf_token %}
+                                    <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="shortlisted">فهرست کوتاه</button>
+                                    <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="conversation">گفتگو</button>
+                                    <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-3 text-xs font-semibold text-white" type="submit" name="status" value="matched">مچ</button>
+                                    <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="rejected">رد</button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="report-modal" x-show="oppOpen" x-cloak @click.self="oppOpen = false">
+            <div class="report-modal__backdrop" @click="oppOpen = false"></div>
+            <div class="report-modal__panel report-modal__panel--tall" role="dialog" aria-modal="true" aria-labelledby="opp-modal-title" @click.stop>
+                <div class="report-modal__top">
+                    <h2 id="opp-modal-title" x-text="editing ? 'ویرایش فرصت' : 'فرصت جدید'">فرصت جدید</h2>
+                    <button class="report-modal__close" type="button" @click="oppOpen = false" aria-label="بستن">
+                        {% include "components/icon.html" with name="x" size="20" %}
+                    </button>
+                </div>
+                <form method="post" action="{% url 'me-project' project.slug %}" data-opp-form data-default-city="{{ project.city_id|default:'' }}">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="opportunity-city">
-                    <input type="hidden" name="opportunity" value="{{ opportunity.pk }}">
-                    <label class="block min-w-40">
+                    <input type="hidden" name="action" value="opportunity">
+                    <input type="hidden" name="opportunity" :value="editing">
+                    <label class="mb-4 block">
+                        <span class="field-label">نام نقش</span>
+                        <input class="field" type="text" name="title" value="{{ opportunity_form.title.value|default:'' }}" maxlength="160">
+                        {% if opportunity_form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.title.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="mb-4 block">
+                        <span class="field-label">نقش</span>
+                        <select class="field field-select" name="role">
+                            <option value="">انتخاب نقش</option>
+                            {% for role in opportunity_form.fields.role.queryset %}
+                                <option value="{{ role.pk }}" {% if opportunity_form.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if opportunity_form.role.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.role.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="mb-4 block">
+                        <span class="field-label">ددلاین</span>
+                        {{ opportunity_form.deadline }}
+                    </label>
+                    <label class="mb-4 block">
                         <span class="field-label">شهر فراخوان</span>
                         <select class="field field-select" name="city">
-                            <option value="">بدون شهر</option>
+                            <option value="">همان شهر پروژه</option>
                             {% for city in opportunity_form.fields.city.queryset %}
-                                <option value="{{ city.pk }}" {% if opportunity.city_id == city.pk %}selected{% endif %}>{{ city.title }}</option>
+                                <option value="{{ city.pk }}" {% if opportunity_form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
                             {% endfor %}
                         </select>
                     </label>
-                    <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit">ثبت شهر</button>
-                </form>
-                <div class="mt-4 grid gap-3">
-                    {% for application in opportunity.application_rows %}
-                        <div class="border-t border-border py-3">
-                            <p class="text-sm font-semibold leading-[22px]">{{ application.profile.name }}</p>
-                            <p class="mt-1 text-xs leading-[18px] text-muted-foreground">{{ application.status|application_label }}</p>
-                            {% if application.message %}
-                                <p class="mt-2 text-sm leading-[22px]">{{ application.message }}</p>
-                            {% endif %}
-                            <form class="mt-3 flex flex-wrap gap-2" method="post" action="{% url 'application-status' application.pk %}">
-                                {% csrf_token %}
-                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="shortlisted">فهرست کوتاه</button>
-                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="conversation">گفتگو</button>
-                                <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-3 text-xs font-semibold text-white" type="submit" name="status" value="matched">مچ</button>
-                                <button class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-3 text-xs font-semibold" type="submit" name="status" value="rejected">رد</button>
-                            </form>
+                    <label class="mb-4 block">
+                        <span class="field-label">نوع همکاری</span>
+                        <select class="field field-select" name="collaboration_type">
+                            {% for value, label in opportunity_form.fields.collaboration_type.choices %}
+                                <option value="{{ value }}" {% if opportunity_form.collaboration_type.value|default:"" == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="mb-4 block">
+                        <span class="field-label">سطح تجربه</span>
+                        <select class="field field-select" name="experience_level">
+                            {% for value, label in opportunity_form.fields.experience_level.choices %}
+                                <option value="{{ value }}" {% if opportunity_form.experience_level.value|default:"" == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <fieldset class="mb-4">
+                        <legend class="field-label">رنج سنی</legend>
+                        <div class="age-slider age-slider--form" dir="rtl" data-age-floor="16" data-age-ceiling="80">
+                            <p class="age-slider__readout"><span>از <b data-age="from">{{ opportunity_form.age_min.value|default:"16" }}</b></span><span>تا <b data-age="to">{{ opportunity_form.age_max.value|default:"80" }}</b></span></p>
+                            <div class="age-slider__track">
+                                <span class="age-slider__rail"></span>
+                                <span class="age-slider__fill"></span>
+                                <input type="range" name="age_min" min="16" max="80" value="{{ opportunity_form.age_min.value|default:'16' }}" step="1">
+                                <input type="range" name="age_max" min="16" max="80" value="{{ opportunity_form.age_max.value|default:'80' }}" step="1">
+                            </div>
+                            <p class="age-slider__hint" data-age-hint></p>
                         </div>
-                    {% empty %}
-                        <p class="text-sm leading-[22px] text-muted-foreground">هنوز درخواستی نیست.</p>
-                    {% endfor %}
+                        {% if opportunity_form.age_min.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.age_min.errors.0 }}</p>{% endif %}
+                    </fieldset>
+                    <fieldset class="mb-4">
+                        <legend class="field-label">شرایط ویژه</legend>
+                        <div class="check-row">
+                            {% for value, label in opportunity_form.fields.special_conditions.choices %}
+                                <label>
+                                    <input type="checkbox" name="special_conditions" value="{{ value }}" {% if opportunity_form.special_conditions.value and value in opportunity_form.special_conditions.value %}checked{% endif %}>
+                                    {{ label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                    <label class="mb-4 block">
+                        <span class="field-label">درباره نقش</span>
+                        <textarea class="field" style="min-height: 7rem" name="description" rows="4">{{ opportunity_form.description.value|default:'' }}</textarea>
+                    </label>
+                    <div class="mt-4">
+                        <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="submit" x-text="editing ? 'ذخیره' : 'افزودن'">افزودن</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% for opportunity in opportunities %}
+            <div class="report-modal" x-show="inviteFor === {{ opportunity.pk }}" x-cloak @click.self="inviteFor = null; inviteAdd = false">
+                <div class="report-modal__backdrop" @click="inviteFor = null; inviteAdd = false"></div>
+                <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="invite-modal-{{ opportunity.pk }}" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="invite-modal-{{ opportunity.pk }}">دعوت‌های {{ opportunity.title }}</h2>
+                        <button class="report-modal__close" type="button" @click="inviteFor = null; inviteAdd = false" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <div x-show="!inviteAdd">
+                        {% if opportunity.invite_rows %}
+                            <ul class="invite-rows">
+                                {% for invite in opportunity.invite_rows %}
+                                    <li>
+                                        <span>{{ invite.guest_name }}</span>
+                                        {% status_chip invite.status %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="invite-empty">دعوتی برای این فرصت نیست.</p>
+                        {% endif %}
+                        <div class="mt-4">
+                            <button class="pf-board__add" type="button" @click="inviteAdd = true">افزودن</button>
+                        </div>
+                    </div>
+                    <form x-show="inviteAdd" x-cloak method="post" action="{% url 'me-project' project.slug %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="invite">
+                        <input type="hidden" name="opportunity" value="{{ opportunity.pk }}">
+                        {% if invite_focus|stringformat:"s" == opportunity.pk|stringformat:"s" and invite_form.non_field_errors %}
+                            <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.non_field_errors.0 }}</p>
+                        {% endif %}
+                        {% if saved_artists %}
+                            <label class="mb-4 block">
+                                <span class="field-label">هنرمند نشان‌شده</span>
+                                <select class="field field-select" name="profile">
+                                    <option value="">انتخاب هنرمند</option>
+                                    {% for person in saved_artists %}
+                                        <option value="{{ person.pk }}" {% if invite_focus|stringformat:"s" == opportunity.pk|stringformat:"s" and invite_form.profile.value|stringformat:"s" == person.pk|stringformat:"s" %}selected{% endif %}>{{ person.invite_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if invite_focus|stringformat:"s" == opportunity.pk|stringformat:"s" and invite_form.profile.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.profile.errors.0 }}</p>{% endif %}
+                            </label>
+                            <label class="mb-4 block">
+                                <span class="field-label">پیام، اختیاری</span>
+                                <textarea class="field" style="min-height: 7rem" name="message" rows="3">{% if invite_focus|stringformat:"s" == opportunity.pk|stringformat:"s" %}{{ invite_form.message.value|default:'' }}{% endif %}</textarea>
+                            </label>
+                            <div class="invite-actions">
+                                <button class="pf-board__quiet" type="button" @click="inviteAdd = false">بازگشت</button>
+                                {% include "components/button.html" with label="دعوت" button_type="submit" %}
+                            </div>
+                        {% else %}
+                            <p class="invite-empty">برای دعوت، اول هنرمند را نشان کنید.</p>
+                            <div class="mt-4">
+                                <button class="pf-board__quiet" type="button" @click="inviteAdd = false">بازگشت</button>
+                            </div>
+                        {% endif %}
+                    </form>
                 </div>
-            </article>
-        {% empty %}
-            {% include "components/account/empty.html" with icon="projects" text="هنوز فرصتی برای این پروژه ثبت نشده." %}
+            </div>
         {% endfor %}
-    </section>
 
-    <section class="mt-10 max-w-lg">
-        <h2 class="text-[18px] font-semibold leading-[26px]">فرصت جدید</h2>
-        <form class="mt-4" method="post" action="{% url 'me-project' project.slug %}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="opportunity">
-            <label class="mb-4 block">
-                <span class="field-label">نام نقش</span>
-                <input class="field" type="text" name="title" value="{{ opportunity_form.title.value|default:'' }}" maxlength="160">
-                {% if opportunity_form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.title.errors.0 }}</p>{% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">نقش</span>
-                <select class="field field-select" name="role">
-                    <option value="">انتخاب نقش</option>
-                    {% for role in opportunity_form.fields.role.queryset %}
-                        <option value="{{ role.pk }}" {% if opportunity_form.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
-                    {% endfor %}
-                </select>
-                {% if opportunity_form.role.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.role.errors.0 }}</p>{% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">ددلاین</span>
-                <input class="field" style="direction: ltr; text-align: left" type="date" name="deadline" value="{{ opportunity_form.deadline.value|date:'Y-m-d' }}">
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">شهر فراخوان</span>
-                <select class="field field-select" name="city">
-                    <option value="">همان شهر پروژه</option>
-                    {% for city in opportunity_form.fields.city.queryset %}
-                        <option value="{{ city.pk }}" {% if opportunity_form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
-                    {% endfor %}
-                </select>
-                <p class="mt-2 text-xs leading-[18px] text-muted-foreground">پیش‌فرض، شهر پروژه است. می‌توانید شهر دیگری بگذارید.</p>
-            </label>
-            <div class="mt-4">
-                {% include "components/button.html" with label="افزودن فرصت" button_type="submit" %}
+        <div class="report-modal" x-show="deleteFor !== ''" x-cloak @click.self="deleteFor = ''">
+            <div class="report-modal__backdrop" @click="deleteFor = ''"></div>
+            <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="opp-delete-title" @click.stop>
+                <div class="report-modal__top">
+                    <h2 id="opp-delete-title">حذف فرصت</h2>
+                    <button class="report-modal__close" type="button" @click="deleteFor = ''" aria-label="بستن">
+                        {% include "components/icon.html" with name="x" size="20" %}
+                    </button>
+                </div>
+                <p class="ticket-detail__note">فرصت «<span x-text="deleteTitle"></span>» حذف شود؟ دعوت‌ها و درخواست‌هایش هم پاک می‌شوند.</p>
+                <form class="invite-actions" method="post" action="{% url 'me-project' project.slug %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="opportunity-delete">
+                    <input type="hidden" name="opportunity" :value="deleteFor">
+                    <button class="pf-board__quiet" type="button" @click="deleteFor = ''">انصراف</button>
+                    <button class="opp-delete" type="submit">حذف</button>
+                </form>
             </div>
-        </form>
-    </section>
-
-    <section class="mt-10 max-w-lg">
-        <h2 class="text-[18px] font-semibold leading-[26px]">دعوت</h2>
-        <p class="mt-2 text-sm leading-[22px] text-muted-foreground">یک نفر را برای یکی از فرصت‌های همین پروژه دعوت کنید.</p>
-        <form class="mt-4" method="post" action="{% url 'me-project' project.slug %}">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="invite">
-            {% if invite_form.non_field_errors %}
-                <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.non_field_errors.0 }}</p>
-            {% endif %}
-            <label class="mb-4 block">
-                <span class="field-label">فرصت</span>
-                <select class="field field-select" name="opportunity">
-                    <option value="">انتخاب فرصت</option>
-                    {% for item in invite_form.fields.opportunity.queryset %}
-                        <option value="{{ item.pk }}" {% if invite_form.opportunity.value|stringformat:"s" == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.title }}</option>
-                    {% endfor %}
-                </select>
-                {% if invite_form.opportunity.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.opportunity.errors.0 }}</p>{% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">هنرمند</span>
-                <select class="field field-select" name="profile">
-                    <option value="">انتخاب هنرمند</option>
-                    {% for person in invite_form.fields.profile.queryset %}
-                        <option value="{{ person.pk }}" {% if invite_form.profile.value|stringformat:"s" == person.pk|stringformat:"s" %}selected{% endif %}>{{ person.name }}</option>
-                    {% endfor %}
-                </select>
-                {% if invite_form.profile.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ invite_form.profile.errors.0 }}</p>{% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">پیام، اختیاری</span>
-                <textarea class="field" style="min-height: 7rem" name="message" rows="3">{{ invite_form.message.value|default:'' }}</textarea>
-            </label>
-            <div class="mt-4">
-                {% include "components/button.html" with label="فرستادن دعوت" button_type="submit" %}
-            </div>
-        </form>
-    </section>
+        </div>
     </div>
+    {{ opportunity_editor|json_script:"opp-edit" }}
+    <script>
+        (function () {
+            var root = document.querySelector(".age-slider--form");
+            if (!root) return;
+            var from = root.querySelector("[name=age_min]");
+            var to = root.querySelector("[name=age_max]");
+            function fa(value) {
+                return String(value).replace(/[0-9]/g, function (digit) {
+                    return "۰۱۲۳۴۵۶۷۸۹"[digit];
+                });
+            }
+            function paint(input) {
+                if (Number(from.value) > Number(to.value)) {
+                    if (input === from) to.value = from.value;
+                    else from.value = to.value;
+                }
+                from.style.zIndex = input === from ? "2" : "1";
+                to.style.zIndex = input === to ? "2" : "1";
+                var span = Number(from.max) - Number(from.min) || 1;
+                var fill = root.querySelector(".age-slider__fill");
+                fill.style.insetInlineStart = ((Number(from.value) - Number(from.min)) / span * 100) + "%";
+                fill.style.width = ((Number(to.value) - Number(from.value)) / span * 100) + "%";
+                root.querySelector("[data-age=from]").textContent = fa(from.value);
+                root.querySelector("[data-age=to]").textContent = fa(to.value);
+                var open = from.value === from.min && to.value === to.max;
+                root.querySelector("[data-age-hint]").textContent = open ? "اگر دو سر را تکان ندهید، محدودیت سنی ندارد." : "";
+            }
+            from.addEventListener("input", function () { paint(from); });
+            to.addEventListener("input", function () { paint(to); });
+            paint(from);
+            window.fillOpportunity = function (id) {
+                var form = document.querySelector("[data-opp-form]");
+                var rows = JSON.parse(document.getElementById("opp-edit").textContent);
+                var record = null;
+                rows.forEach(function (item) {
+                    if (String(item.id) === String(id)) record = item;
+                });
+                var blank = {
+                    title: "",
+                    role: "",
+                    city: form.getAttribute("data-default-city") || "",
+                    deadline: "",
+                    description: "",
+                    collaboration_type: "",
+                    experience_level: "",
+                    special_conditions: [],
+                    age_min: from.min,
+                    age_max: to.max,
+                };
+                var data = record || blank;
+                form.querySelector("[name=title]").value = data.title;
+                form.querySelector("[name=role]").value = data.role;
+                form.querySelector("[name=city]").value = data.city;
+                form.querySelector("[name=collaboration_type]").value = data.collaboration_type;
+                form.querySelector("[name=experience_level]").value = data.experience_level;
+                form.querySelector("[name=description]").value = data.description;
+                form.querySelectorAll("[name=special_conditions]").forEach(function (box) {
+                    box.checked = data.special_conditions.indexOf(box.value) !== -1;
+                });
+                var date = form.querySelector(".jalali-date__text");
+                date.value = data.deadline;
+                date.dispatchEvent(new Event("change", { bubbles: true }));
+                from.value = data.age_min;
+                to.value = data.age_max;
+                paint(from);
+            };
+        })();
+    </script>
 {% endblock %}

@@ -11,14 +11,25 @@
 {% endblock %}
 
 {% block account_main %}
-    {% if editing %}
+    {% if not profile %}
+        <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
+        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">این حساب پروفایل هنری ندارد.</p>
+    {% elif editing %}
         <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
         <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">هر بخشی را که خواستید پر کنید. خالی گذاشتن هم ممکن است.</p>
-        <form class="mt-8" method="post" action="{% url 'me-profile' %}">
+        <form class="profile-edit mt-6" method="post" action="{% url 'me-profile' %}" x-data="{ tab: '{{ edit_tab }}' }">
             {% csrf_token %}
             {{ role_formset.management_form }}
             {{ credit_formset.management_form }}
             {{ media_formset.management_form }}
+            <div class="profile-tabs" role="tablist" aria-label="بخش‌های پروفایل">
+                <button class="profile-tabs__tab{% if edit_tab == 'identity' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'identity' }" :aria-selected="tab === 'identity'" @click="tab = 'identity'">مشخصات</button>
+                <button class="profile-tabs__tab{% if edit_tab == 'skills' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'skills' }" :aria-selected="tab === 'skills'" @click="tab = 'skills'">مهارت‌ها</button>
+                <button class="profile-tabs__tab{% if edit_tab == 'roles' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'roles' }" :aria-selected="tab === 'roles'" @click="tab = 'roles'">نقش‌ها</button>
+                <button class="profile-tabs__tab{% if edit_tab == 'credits' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'credits' }" :aria-selected="tab === 'credits'" @click="tab = 'credits'">سوابق</button>
+                <button class="profile-tabs__tab{% if edit_tab == 'media' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
+            </div>
+            <div class="profile-pane{% if edit_tab == 'identity' %} is-on{% endif %}" :class="{ 'is-on': tab === 'identity' }">
             <label class="mb-4 block">
                 <span class="field-label">نام</span>
                 <input class="field" type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" maxlength="60">
@@ -34,11 +45,33 @@
                 {% endif %}
             </label>
             <label class="mb-4 block">
+                <span class="field-label">نام هنری</span>
+                <input class="field" type="text" name="name" value="{{ form.name.value|default:'' }}" maxlength="120">
+                {% if form.name.errors %}
+                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </label>
+            <label class="mb-4 block">
                 <span class="field-label">شهر</span>
                 <select class="field field-select" name="city">
                     <option value="">انتخاب شهر</option>
                     {% for city in form.fields.city.queryset %}
                         <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">تاریخ تولد</span>
+                {{ form.birth_date }}
+                {% if form.birth_date.errors %}
+                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.birth_date.errors.0 }}</p>
+                {% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">جنسیت</span>
+                <select class="field field-select" name="gender">
+                    {% for value, label in form.fields.gender.choices %}
+                        <option value="{{ value }}" {% if form.gender.value|default:"" == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -49,21 +82,18 @@
             <fieldset class="mb-4">
                 <legend class="field-label">هنرها</legend>
                 <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هنرهایی که در آن‌ها کار می‌کنید یا به آن‌ها علاقه دارید. چند مورد می‌تواند باشد.</p>
-                <div class="grid gap-2">
-                    {% for value, label in form.fields.arts.choices %}
-                        <label class="flex items-center gap-2 text-sm leading-[22px]">
-                            <input type="checkbox" name="arts" value="{{ value }}" {% if value in form.arts.value %}checked{% endif %}>
-                            {{ label }}
-                        </label>
-                    {% endfor %}
+                <div class="art-picker-wrap">
+                    {{ form.arts }}
                 </div>
             </fieldset>
 
             <div class="mb-4 border-y border-border py-3">
                 <p class="text-xs leading-[18px] text-muted-foreground">وضعیت</p>
-                <p class="mt-1 text-sm leading-[22px]">{{ profile.status|status_label }}</p>
+                <div class="mt-1">{% status_chip profile.status profile.status|status_label %}</div>
+            </div>
             </div>
 
+            <div class="profile-pane{% if edit_tab == 'skills' %} is-on{% endif %}" :class="{ 'is-on': tab === 'skills' }">
             <fieldset class="mb-6">
                 <legend class="field-label">مهارت‌ها</legend>
                 <p class="mb-3 text-xs leading-[18px] text-muted-foreground">مهارت را از فهرست انتخاب کنید. یک نقطه مبتدی، دو نقطه متوسط و سه نقطه پیشرفته است.</p>
@@ -103,7 +133,9 @@
                     </details>
                 {% endfor %}
             </fieldset>
+            </div>
 
+            <div class="profile-pane{% if edit_tab == 'roles' %} is-on{% endif %}" :class="{ 'is-on': tab === 'roles' }">
             <fieldset class="mb-6">
                 <legend class="field-label">نقش‌ها</legend>
                 <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هر نقش یک ردیف است. یکی را اصلی بگذارید. با انتخاب نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
@@ -122,9 +154,7 @@
                                     <td>
                                         <select class="field field-select" name="{{ row.role.html_name }}">
                                             <option value="">انتخاب نقش</option>
-                                            {% for role in roles %}
-                                                <option value="{{ role.pk }}" {% if row.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
-                                            {% endfor %}
+                                            {% include "components/account/role_options.html" with selected=row.role.value %}
                                         </select>
                                         {% for error in row.role.errors %}
                                             <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
@@ -148,9 +178,7 @@
                         <td>
                             <select class="field field-select" name="{{ role_formset.empty_form.role.html_name }}">
                                 <option value="">انتخاب نقش</option>
-                                {% for role in roles %}
-                                    <option value="{{ role.pk }}">{{ role.title }}</option>
-                                {% endfor %}
+                                {% include "components/account/role_options.html" with selected="" %}
                             </select>
                         </td>
                         <td>
@@ -163,7 +191,9 @@
                     </tr>
                 </template>
             </fieldset>
+            </div>
 
+            <div class="profile-pane{% if edit_tab == 'credits' %} is-on{% endif %}" :class="{ 'is-on': tab === 'credits' }">
             <fieldset class="mb-6">
                 <legend class="field-label">سوابق</legend>
                 <p class="mb-3 text-xs leading-[18px] text-muted-foreground">عنوان کار، نقش از فهرست، و نام نقش در همان کار را بنویسید. سال اختیاری است.</p>
@@ -191,9 +221,7 @@
                                     <td>
                                         <select class="field field-select" name="{{ row.role.html_name }}">
                                             <option value="">انتخاب نقش</option>
-                                            {% for role in roles %}
-                                                <option value="{{ role.pk }}" {% if row.role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
-                                            {% endfor %}
+                                            {% include "components/account/role_options.html" with selected=row.role.value %}
                                         </select>
                                     </td>
                                     <td>
@@ -221,9 +249,7 @@
                         <td>
                             <select class="field field-select" name="{{ credit_formset.empty_form.role.html_name }}">
                                 <option value="">انتخاب نقش</option>
-                                {% for role in roles %}
-                                    <option value="{{ role.pk }}">{{ role.title }}</option>
-                                {% endfor %}
+                                {% include "components/account/role_options.html" with selected="" %}
                             </select>
                         </td>
                         <td>
@@ -239,7 +265,9 @@
                     </tr>
                 </template>
             </fieldset>
+            </div>
 
+            <div class="profile-pane{% if edit_tab == 'media' %} is-on{% endif %}" :class="{ 'is-on': tab === 'media' }">
             <fieldset class="mb-6">
                 <legend class="field-label">مدیای پروفایل</legend>
                 <p class="mb-3 text-xs leading-[18px] text-muted-foreground">نوع و عنوان را ثبت کنید.</p>
@@ -296,6 +324,7 @@
                     </tr>
                 </template>
             </fieldset>
+            </div>
             <script>
                 document.addEventListener("click", function (event) {
                     var remove = event.target.closest("[data-repeat-remove]");
@@ -319,38 +348,136 @@
                 });
             </script>
 
-            <div class="mt-6">
+            <div class="profile-edit__save">
                 {% include "components/button.html" with label="ذخیره" button_type="submit" extra="w-full" %}
             </div>
         </form>
     {% else %}
-        <div class="pf-plp" dir="rtl">
+        <div class="pf-plp" dir="rtl" x-data="{ tab: 'identity' }">
             <div class="pf-board__head">
                 <h1>پروفایل</h1>
-                <a class="pf-board__quiet" href="{% url 'me-profile' %}?edit=1">ویرایش</a>
+                <div class="pf-board__actions">
+                    <a class="pf-board__quiet" href="{% url 'artist' profile.slug %}">پروفایل عمومی</a>
+                    <a class="pf-board__quiet" href="{% url 'me-profile' %}?edit=1">ویرایش</a>
+                </div>
             </div>
-            <dl class="pf-record">
-                <div>
-                    <dt>نام</dt>
-                    <dd>{% if profile.name %}{{ profile.name }}{% else %}ثبت نشده{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>موبایل</dt>
-                    <dd dir="ltr">{{ request.user.username|phone_fa }}</dd>
-                </div>
-                <div>
-                    <dt>شهر</dt>
-                    <dd>{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>درباره</dt>
-                    <dd>{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
-                </div>
-                <div>
-                    <dt>هنرها</dt>
-                    <dd>{% if profile.arts %}{% for slug in profile.arts %}{{ slug|art_title }}{% if not forloop.last %}، {% endif %}{% endfor %}{% else %}ثبت نشده{% endif %}</dd>
-                </div>
-            </dl>
+            <div class="profile-tabs" role="tablist" aria-label="بخش‌های پروفایل">
+                <button class="profile-tabs__tab is-on" type="button" role="tab" :class="{ 'is-on': tab === 'identity' }" :aria-selected="tab === 'identity'" @click="tab = 'identity'">مشخصات</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'skills' }" :aria-selected="tab === 'skills'" @click="tab = 'skills'">مهارت‌ها</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'roles' }" :aria-selected="tab === 'roles'" @click="tab = 'roles'">نقش‌ها</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'credits' }" :aria-selected="tab === 'credits'" @click="tab = 'credits'">سوابق</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
+            </div>
+            <div class="profile-pane is-on" :class="{ 'is-on': tab === 'identity' }">
+                <dl class="pf-record">
+                    <div>
+                        <dt>نام</dt>
+                        <dd>{% if profile.user.first_name %}{{ profile.user.first_name }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>نام خانوادگی</dt>
+                        <dd>{% if profile.user.last_name %}{{ profile.user.last_name }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>نام هنری</dt>
+                        <dd>{% if profile.name %}{{ profile.name }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>موبایل</dt>
+                        <dd dir="ltr">{{ request.user.username|phone_fa }}</dd>
+                    </div>
+                    <div>
+                        <dt>شهر</dt>
+                        <dd>{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>تاریخ تولد</dt>
+                        <dd>{% if profile.birth_date %}{{ profile.birth_date|jalali }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>جنسیت</dt>
+                        <dd>{% if profile.gender %}{{ profile.gender|gender_label }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>درباره</dt>
+                        <dd>{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>هنرها</dt>
+                        <dd>{% if profile.arts %}{% for slug in profile.arts %}{{ slug|art_title }}{% if not forloop.last %}، {% endif %}{% endfor %}{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>وضعیت</dt>
+                        <dd>{% status_chip profile.status profile.status|status_label %}</dd>
+                    </div>
+                </dl>
+            </div>
+            <div class="profile-pane" :class="{ 'is-on': tab === 'skills' }">
+                {% if skill_links %}
+                    <ul class="support-list">
+                        {% for link in skill_links %}
+                            <li class="support-item">
+                                <div class="support-item__head">
+                                    <h2>{{ link.skill.label }}</h2>
+                                    <span>{{ link.level|skill_level_label }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز مهارتی ثبت نشده.</p>
+                {% endif %}
+            </div>
+            <div class="profile-pane" :class="{ 'is-on': tab === 'roles' }">
+                {% if role_links %}
+                    <ul class="support-list">
+                        {% for link in role_links %}
+                            <li class="support-item">
+                                <div class="support-item__head">
+                                    <h2>{{ link.role.title }}</h2>
+                                    {% if link.is_primary %}<span>اصلی</span>{% endif %}
+                                </div>
+                                <p>{{ link.role.group }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز نقشی ثبت نشده. با افزودن نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
+                {% endif %}
+            </div>
+            <div class="profile-pane" :class="{ 'is-on': tab === 'credits' }">
+                {% if profile.credits.all %}
+                    <ul class="support-list">
+                        {% for credit in profile.credits.all %}
+                            <li class="support-item">
+                                <div class="support-item__head">
+                                    <h2>{{ credit.title }}</h2>
+                                    {% if credit.year %}<span>{{ credit.year }}</span>{% endif %}
+                                </div>
+                                {% if credit.role_name %}<p>{{ credit.role_name }}</p>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز سابقه‌ای ثبت نشده.</p>
+                {% endif %}
+            </div>
+            <div class="profile-pane" :class="{ 'is-on': tab === 'media' }">
+                {% if profile.media_items.all %}
+                    <ul class="support-list">
+                        {% for item in profile.media_items.all %}
+                            <li class="support-item">
+                                <div class="support-item__head">
+                                    <h2>{% if item.label %}{{ item.label }}{% else %}بدون عنوان{% endif %}</h2>
+                                    <span>{{ item.kind|media_label }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز مدیایی ثبت نشده.</p>
+                {% endif %}
+            </div>
         </div>
     {% endif %}
 {% endblock %}

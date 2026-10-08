@@ -12,7 +12,7 @@
             {% for row in rows %}
                 <div>
                     <dt>{{ row.label }}</dt>
-                    <dd>{{ row.value }}</dd>
+                    <dd>{% if row.status %}{% status_chip row.status %}{% else %}{{ row.value }}{% endif %}</dd>
                 </div>
             {% endfor %}
         </dl>

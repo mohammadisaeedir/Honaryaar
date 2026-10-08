@@ -1,15 +1,19 @@
 import secrets
 from collections import defaultdict
+from urllib.parse import urlencode
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from ejranow.accounts import ensure_profile
-from ejranow.forms import ApplyForm, InviteForm, OpportunityForm, ProjectOpportunityForm
-from ejranow.labels import APPLICATION_LABELS, INVITE_LABELS, MATCH_LABELS
+from ejranow.catalog import format_jalali_numeric
+from ejranow.forms import ApplyForm, InviteForm, OpportunityForm, ProjectCreateForm
+from ejranow.labels import APPLICATION_LABELS
 from ejranow.models import (
     Application,
     ApplicationStatus,
@@ -20,14 +24,15 @@ from ejranow.models import (
     MatchStatus,
     Opportunity,
     OpportunityStatus,
-    ArtCategory,
     Project,
-    ProjectStatus,
 )
 
 
 def _profile_or_redirect(request):
-    return ensure_profile(request.user), None
+    profile = ensure_profile(request.user)
+    if profile is None:
+        return None, redirect("me-profile")
+    return profile, None
 
 
 def _slug(model, prefix):
@@ -38,8 +43,30 @@ def _slug(model, prefix):
     return f"{prefix}-{secrets.token_hex(8)}"
 
 
-def _stage_art():
-    return ArtCategory.objects.filter(slug="stage-play").first()
+def _manager_name(profile):
+    full = f"{profile.user.first_name} {profile.user.last_name}".strip()
+    return full or profile.public_name()
+
+
+def _apply_opportunity(opportunity, cleaned, project):
+    opportunity.title = cleaned["title"]
+    opportunity.role = cleaned["role"]
+    opportunity.city = cleaned["city"] or project.city
+    opportunity.deadline = cleaned["deadline"]
+    opportunity.description = cleaned["description"]
+    opportunity.art_category = project.art_category
+    opportunity.collaboration_type = cleaned["collaboration_type"]
+    opportunity.experience_level = cleaned["experience_level"]
+    opportunity.special_conditions = cleaned["special_conditions"]
+    opportunity.age_min = cleaned["age_min"]
+    opportunity.age_max = cleaned["age_max"]
+
+
+def _project_step(slug, invite=""):
+    params = {"step": "opportunities"}
+    if invite:
+        params["invite"] = invite
+    return f"{reverse('me-project', args=[slug])}?{urlencode(params)}"
 
 
 def _ensure_match(profile, opportunity, application=None, invite=None):
@@ -63,7 +90,7 @@ def _ensure_match(profile, opportunity, application=None, invite=None):
     return match
 
 
-def _list(request, page_title, items, empty_icon, empty_text, add_url="", add_label="", pin_action=False):
+def _list(request, page_title, items, empty_icon, empty_text, add_url="", add_label="", pin_action=False, bookmarks=None, saved_tab=False):
     return render(
         request,
         "pages/me_list.html",
@@ -75,6 +102,8 @@ def _list(request, page_title, items, empty_icon, empty_text, add_url="", add_la
             "add_url": add_url,
             "add_label": add_label,
             "pin_action": pin_action,
+            "bookmarks": bookmarks or [],
+            "saved_tab": saved_tab,
         },
     )
 
@@ -115,34 +144,24 @@ def project_new(request):
     profile, bounce = _profile_or_redirect(request)
     if bounce:
         return bounce
-    form = ProjectOpportunityForm(request.POST or None)
+    form = ProjectCreateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        art_category = _stage_art()
-        if art_category is None:
-            form.add_error(None, "نوع اجرایی برای پروژه ثبت نشده است.")
-        else:
-            project = Project.objects.create(
-                slug=_slug(Project, "p"),
-                title=form.cleaned_data["title"],
-                owner=profile,
-                city=form.cleaned_data["city"],
-                art_category=art_category,
-                summary=form.cleaned_data["summary"],
-                status=ProjectStatus.CASTING,
-            )
-            Opportunity.objects.create(
-                slug=_slug(Opportunity, "o"),
-                title=form.cleaned_data["opportunity_title"],
-                project=project,
-                role=form.cleaned_data["role"],
-                city=form.cleaned_data["opportunity_city"] or project.city,
-                deadline=form.cleaned_data["deadline"],
-                description=form.cleaned_data["description"],
-                art_category=art_category,
-                status=OpportunityStatus.OPEN,
-            )
-            return redirect("me-project", slug=project.slug)
-    return render(request, "pages/me_project_new.html", {"form": form})
+        project = Project.objects.create(
+            slug=_slug(Project, "p"),
+            title=form.cleaned_data["title"],
+            owner=profile,
+            city=form.cleaned_data["city"],
+            art_category=form.cleaned_data["art_category"],
+            summary=form.cleaned_data["summary"],
+            status=form.cleaned_data["status"],
+        )
+        messages.success(request, f"پروژه «{project.title}» ساخته شد.")
+        return redirect(_project_step(project.slug))
+    return render(
+        request,
+        "pages/me_project_new.html",
+        {"form": form, "owner_name": _manager_name(profile)},
+    )
 
 
 @login_required
@@ -151,11 +170,21 @@ def project_manage(request, slug):
     if bounce:
         return bounce
     project = get_object_or_404(
-        Project.objects.select_related("city", "art_category"),
+        Project.objects.select_related("city", "art_category", "owner", "owner__user"),
         slug=slug,
         owner=profile,
     )
     action = request.POST.get("action") if request.method == "POST" else ""
+    project_form = ProjectCreateForm(
+        request.POST if action == "project" else None,
+        initial={
+            "title": project.title,
+            "city": project.city_id,
+            "art_category": project.art_category_id,
+            "summary": project.summary,
+            "status": project.status,
+        },
+    )
     opportunity_initial = {"city": project.city_id} if project.city_id else None
     opportunity_form = OpportunityForm(
         request.POST if action == "opportunity" else None,
@@ -164,35 +193,58 @@ def project_manage(request, slug):
     invite_form = InviteForm(project, profile, request.POST if action == "invite" else None)
     if request.method == "POST":
         action = request.POST.get("action")
+        if action == "project" and project_form.is_valid():
+            project.title = project_form.cleaned_data["title"]
+            project.city = project_form.cleaned_data["city"]
+            project.art_category = project_form.cleaned_data["art_category"]
+            project.summary = project_form.cleaned_data["summary"]
+            project.status = project_form.cleaned_data["status"]
+            project.save(update_fields=["title", "city", "art_category", "summary", "status"])
+            messages.success(request, "پروژه ذخیره شد.")
+            return redirect(_project_step(project.slug))
         if action == "opportunity-city":
             opportunity = get_object_or_404(project.opportunities, pk=request.POST.get("opportunity"))
             city_id = request.POST.get("city") or None
             opportunity.city = City.objects.filter(pk=city_id).first() if city_id else None
             opportunity.save(update_fields=["city"])
-            return redirect("me-project", slug=project.slug)
+            messages.success(request, "شهر فرصت ذخیره شد.")
+            return redirect(_project_step(project.slug))
+        if action == "opportunity-delete":
+            opportunity = get_object_or_404(project.opportunities, pk=request.POST.get("opportunity"))
+            title = opportunity.title
+            opportunity.delete()
+            messages.success(request, f"فرصت «{title}» حذف شد.")
+            return redirect(_project_step(project.slug))
         if action == "opportunity" and opportunity_form.is_valid():
-            Opportunity.objects.create(
-                slug=_slug(Opportunity, "o"),
-                title=opportunity_form.cleaned_data["title"],
-                project=project,
-                role=opportunity_form.cleaned_data["role"],
-                city=opportunity_form.cleaned_data["city"] or project.city,
-                deadline=opportunity_form.cleaned_data["deadline"],
-                description=opportunity_form.cleaned_data["description"],
-                art_category=project.art_category,
-                status=OpportunityStatus.OPEN,
-            )
-            return redirect("me-project", slug=project.slug)
+            cleaned = opportunity_form.cleaned_data
+            existing_id = request.POST.get("opportunity")
+            if existing_id:
+                opportunity = get_object_or_404(project.opportunities, pk=existing_id)
+                _apply_opportunity(opportunity, cleaned, project)
+                opportunity.save()
+                messages.success(request, f"فرصت «{cleaned['title']}» ذخیره شد.")
+            else:
+                opportunity = Opportunity(
+                    slug=_slug(Opportunity, "o"),
+                    project=project,
+                    status=OpportunityStatus.OPEN,
+                )
+                _apply_opportunity(opportunity, cleaned, project)
+                opportunity.save()
+                messages.success(request, f"فرصت «{cleaned['title']}» اضافه شد.")
+            return redirect(_project_step(project.slug))
         if action == "invite" and invite_form.is_valid():
+            invited = invite_form.cleaned_data["opportunity"]
             _invite, created = Invite.objects.get_or_create(
                 profile=invite_form.cleaned_data["profile"],
-                opportunity=invite_form.cleaned_data["opportunity"],
+                opportunity=invited,
                 defaults={"message": invite_form.cleaned_data["message"]},
             )
             if not created:
                 invite_form.add_error(None, "این دعوت قبلاً فرستاده شده.")
             else:
-                return redirect("me-project", slug=project.slug)
+                messages.success(request, "دعوت فرستاده شد.")
+                return redirect(_project_step(project.slug, invite=invited.pk))
     applications = Application.objects.filter(opportunity__project=project).select_related(
         "profile",
         "opportunity",
@@ -201,17 +253,61 @@ def project_manage(request, slug):
     grouped = defaultdict(list)
     for application in applications:
         grouped[application.opportunity_id].append(application)
-    opportunities = list(project.opportunities.select_related("role", "city"))
+    opportunities = list(
+        project.opportunities.select_related("role", "city").prefetch_related(
+            Prefetch(
+                "invites",
+                queryset=Invite.objects.select_related("profile", "profile__user"),
+            )
+        )
+    )
     for opportunity in opportunities:
         opportunity.application_rows = grouped[opportunity.id]
+        opportunity.invite_rows = list(opportunity.invites.all())
+        for invite in opportunity.invite_rows:
+            invite.guest_name = _manager_name(invite.profile)
+    saved_artists = list(invite_form.fields["profile"].queryset)
+    for person in saved_artists:
+        person.invite_name = _manager_name(person)
+    invite_focus = ""
+    if invite_form.errors:
+        posted = request.POST.get("opportunity") or ""
+        if posted.isdigit() and project.opportunities.filter(pk=posted).exists():
+            invite_focus = posted
+    elif request.GET.get("invite", "").isdigit() and project.opportunities.filter(pk=request.GET["invite"]).exists():
+        invite_focus = request.GET["invite"]
+    step = "general"
+    if request.GET.get("step") == "opportunities" or opportunity_form.errors or invite_form.errors:
+        step = "opportunities"
     return render(
         request,
         "pages/me_project.html",
         {
             "project": project,
+            "owner_name": _manager_name(project.owner) if project.owner_id else "",
+            "project_form": project_form,
             "opportunities": opportunities,
             "opportunity_form": opportunity_form,
             "invite_form": invite_form,
+            "saved_artists": saved_artists,
+            "step": step,
+            "invite_focus": invite_focus,
+            "opportunity_editor": [
+                {
+                    "id": item.pk,
+                    "title": item.title,
+                    "role": item.role_id,
+                    "city": item.city_id or "",
+                    "deadline": format_jalali_numeric(item.deadline) if item.deadline else "",
+                    "description": item.description,
+                    "collaboration_type": item.collaboration_type,
+                    "experience_level": item.experience_level,
+                    "special_conditions": item.special_conditions or [],
+                    "age_min": item.age_min or 16,
+                    "age_max": item.age_max or 80,
+                }
+                for item in opportunities
+            ],
         },
     )
 
@@ -238,7 +334,9 @@ def application_status(request, pk):
         Match.objects.filter(application=application, status=MatchStatus.ACTIVE).update(
             status=MatchStatus.CLOSED
         )
-    return redirect("me-project", slug=application.opportunity.project.slug)
+    label = APPLICATION_LABELS.get(status, status)
+    messages.success(request, f"وضعیت درخواست به «{label}» تغییر کرد.")
+    return redirect(_project_step(application.opportunity.project.slug))
 
 
 @login_required
@@ -256,11 +354,15 @@ def apply(request, slug):
         return redirect("me-project", slug=opportunity.project.slug)
     form = ApplyForm(request.POST)
     message = form.cleaned_data["message"] if form.is_valid() else ""
-    Application.objects.get_or_create(
+    _application, created = Application.objects.get_or_create(
         profile=profile,
         opportunity=opportunity,
         defaults={"message": message},
     )
+    if created:
+        messages.success(request, "درخواست شما ثبت شد.")
+    else:
+        messages.success(request, "این درخواست را قبلاً فرستاده‌اید.")
     return redirect("opportunity", slug=slug)
 
 
@@ -289,7 +391,7 @@ def my_applications(request):
         {
             "url": reverse("me-application", args=[item.pk]),
             "title": item.opportunity.title,
-            "meta": f"{item.opportunity.project.title} · {APPLICATION_LABELS.get(item.status, item.status)}",
+            "meta": item.opportunity.project.title,
             "tone": item.status,
         }
         for item in applications
@@ -322,7 +424,7 @@ def application_detail(request, pk):
         [
             {"label": "پروژه", "value": opportunity.project.title},
             {"label": "نقش", "value": opportunity.role.title},
-            {"label": "وضعیت", "value": APPLICATION_LABELS.get(application.status, application.status)},
+            {"label": "وضعیت", "status": application.status},
         ],
         subtitle="درخواست شما",
         body=application.message,
@@ -340,7 +442,7 @@ def my_invites(request):
         {
             "url": reverse("me-invite", args=[item.pk]),
             "title": item.opportunity.title,
-            "meta": f"{item.opportunity.project.title} · {INVITE_LABELS.get(item.status, item.status)}",
+            "meta": item.opportunity.project.title,
             "tone": item.status,
         }
         for item in invites
@@ -365,10 +467,12 @@ def invite_detail(request, pk):
             invite.status = InviteStatus.ACCEPTED
             invite.save(update_fields=["status"])
             _ensure_match(profile, invite.opportunity, invite=invite)
+            messages.success(request, "دعوت را قبول کردید.")
         elif decision == "decline":
             invite.status = InviteStatus.DECLINED
             invite.save(update_fields=["status"])
             Match.objects.filter(invite=invite, status=MatchStatus.ACTIVE).update(status=MatchStatus.CLOSED)
+            messages.success(request, "دعوت را رد کردید.")
         return redirect("me-invite", pk=invite.pk)
     invite = get_object_or_404(
         Invite.objects.select_related("opportunity", "opportunity__project", "opportunity__role"),
@@ -382,7 +486,7 @@ def invite_detail(request, pk):
         [
             {"label": "پروژه", "value": opportunity.project.title},
             {"label": "نقش", "value": opportunity.role.title},
-            {"label": "وضعیت", "value": INVITE_LABELS.get(invite.status, invite.status)},
+            {"label": "وضعیت", "status": invite.status},
         ],
         subtitle="دعوت برای شما",
         body=invite.message,
@@ -396,12 +500,14 @@ def my_collaborations(request):
     profile, bounce = _profile_or_redirect(request)
     if bounce:
         return bounce
+    from ejranow.views import bookmark_rows
+
     matches = profile.matches.select_related("opportunity", "opportunity__project")
     items = [
         {
             "url": reverse("me-collaboration", args=[item.pk]),
             "title": item.opportunity.title,
-            "meta": f"{item.opportunity.project.title} · {MATCH_LABELS.get(item.status, item.status)}",
+            "meta": item.opportunity.project.title,
             "tone": item.status,
         }
         for item in matches
@@ -412,6 +518,8 @@ def my_collaborations(request):
         items,
         "collaborations",
         "همکاری وقتی ساخته می‌شود که درخواستی به نتیجه برسد یا دعوتی را قبول کنید.",
+        bookmarks=bookmark_rows(request.user),
+        saved_tab=True,
     )
 
 
@@ -432,7 +540,7 @@ def collaboration_detail(request, pk):
         [
             {"label": "پروژه", "value": opportunity.project.title},
             {"label": "نقش", "value": opportunity.role.title},
-            {"label": "وضعیت", "value": MATCH_LABELS.get(match.status, match.status)},
+            {"label": "وضعیت", "status": match.status},
         ],
         subtitle="همکاری",
         public_url=reverse("opportunity", args=[opportunity.slug]),

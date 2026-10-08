@@ -8,5 +8,7 @@ class EjranowConfig(AppConfig):
     def ready(self):
         from . import admin  # noqa: F401
         from .admin_dates import install
+        from .error_pages import install as install_error_pages
 
         install()
+        install_error_pages()

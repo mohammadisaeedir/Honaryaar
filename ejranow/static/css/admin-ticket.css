@@ -1,0 +1,124 @@
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 16px;
+    white-space: nowrap;
+}
+
+.status-chip--muted { background: #eef0f3; color: #5c6570; }
+.status-chip--progress { background: #e7f2fc; color: #2a6fad; }
+.status-chip--done { background: #e6f6ee; color: #1e7a4c; }
+
+.ticket-thread {
+    margin-bottom: 24px;
+    border: 1px solid #e6e1da;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.ticket-thread__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid #eeeae4;
+}
+
+.ticket-thread__head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.ticket-thread__scroll {
+    overflow-x: auto;
+}
+
+.ticket-thread__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ticket-thread__table th,
+.ticket-thread__table td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f0ece6;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.ticket-thread__table th {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6f6863;
+}
+
+.ticket-thread__body {
+    white-space: pre-wrap;
+}
+
+.ticket-thread__note {
+    margin: 0;
+    padding: 16px 18px;
+    color: #6f6863;
+}
+
+.ticket-thread__reply {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px 18px;
+}
+
+.ticket-thread__reply span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ticket-thread__reply textarea {
+    width: 100%;
+    min-height: 96px;
+    padding: 10px 12px;
+    border: 1px solid #e6e1da;
+    border-radius: 8px;
+    font: inherit;
+    resize: vertical;
+}
+
+.ticket-thread__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ticket-thread__actions button {
+    min-height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.ticket-thread__actions button[type="submit"]:first-child {
+    border: 0;
+    background: #c13281;
+    color: #fff;
+}
+
+.ticket-thread__actions button[name="action"] {
+    border: 1px solid #e6e1da;
+    background: #fff;
+    color: #252b32;
+}

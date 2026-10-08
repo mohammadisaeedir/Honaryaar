@@ -80,7 +80,7 @@
     <p>نقش سه جای جدا دارد و هر سه درست‌اند. <code>Opportunity.role</code> نقش درخواستی فراخوان است. <code>Project.lead_role</code> نقش مسئول پروژه است. پروفایل از <code>ProfileRole</code> چند نقش دارد.</p>
     <p>گروه مهارت جدول جدا نیست. روی <code>Skill.group</code> یک فهرست ثابت است. «تولید» در این فهرست گروه مهارت است، نه نوع اجرا.</p>
     <p><code>Role</code> به یک <code>ArtCategory</code> وصل است و هنر را از فهرست همان نوع اجرا می‌گیرد. <code>Profile.arts</code> چند هنر از همان فهرست است. مهارت به هنر وصل نیست.</p>
-    <p>وضعیت پروژه و وضعیت فراخوان جدا هستند و همین‌طور می‌مانند. پروژه <code>casting</code> یا <code>open_call</code> است. فراخوان <code>open</code> یا <code>closed</code> است.</p>
+    <p>وضعیت پروژه و وضعیت فراخوان جدا هستند. پروژه <code>draft</code>، <code>casting</code> یا <code>completed</code> است. پیش‌نویس در سایت دیده نمی‌شود. فراخوان <code>open</code> یا <code>closed</code> است.</p>
   </div>
 
   <h2>نمودار فعلی</h2>
@@ -116,6 +116,10 @@ erDiagram
     Opportunity ||--o{ Match : "matches"
     Application ||--o{ Match : "matches"
     Invite ||--o{ Match : "matches"
+    User |o--o{ SupportTicket : "support tickets"
+    SupportTicket ||--o{ TicketMessage : "messages"
+    User |o--o{ TicketMessage : "author"
+    User ||--o{ Bookmark : "bookmarks"
   </div>
 
   <h2>مدل‌ها</h2>
@@ -124,17 +128,19 @@ erDiagram
       <header><h3>User</h3><span>جنگو، نه مدل خودمان</span></header>
       <ul>
         <li><code>username</code> شمارهٔ موبایل است</li>
-        <li><code>first_name</code> و <code>last_name</code> موقع ذخیرهٔ پروفایل کپی می‌شوند</li>
+        <li><code>first_name</code> و <code>last_name</code> فقط اینجا ذخیره می‌شوند</li>
       </ul>
     </article>
     <article class="ent">
       <header><h3>Profile</h3><span>هنرمند</span></header>
       <ul>
-        <li><code>user</code> یک‌به‌یک، اختیاری. پروفایل بدون کاربر هم هست</li>
+        <li><code>user</code> یک‌به‌یک و اجباری. کاربر بدون پروفایل ممکن است، مثل کارمند و اپراتور</li>
         <li><code>slug</code> یکتا</li>
-        <li><code>first_name</code>، <code>last_name</code>، <code>name</code></li>
+        <li><code>name</code> نام هنری. نام و نام خانوادگی از کاربر خوانده می‌شود و اینجا ذخیره نمی‌شود</li>
         <li><code>city</code> → City، اختیاری</li>
         <li><code>about</code></li>
+        <li><code>birth_date</code> تاریخ تولد، اختیاری. سن فهرست هنرمندان از همین تاریخ حساب می‌شود</li>
+        <li><code>gender</code> مرد یا زن، اختیاری</li>
         <li><code>arts</code> چند انتخاب از فهرست ثابت هفت هنر، اختیاری</li>
         <li><code>status</code>: indexed یا claimed</li>
         <li>نقش‌های خود هنرمند از جدول <code>ProfileRole</code>، چند نقش</li>
@@ -153,8 +159,9 @@ erDiagram
       <header><h3>Role</h3><span>فهرست نقش</span></header>
       <ul>
         <li><code>slug</code>، <code>title</code></li>
+        <li><code>group</code> گروه شغلی نقش، مثل کارگردانی یا بازیگری و اجرا. عنوان یکسان در دو گروه، دو نقش است</li>
         <li><code>art_category</code> → ArtCategory، اجباری. هنر از فهرست همین نوع اجرا خوانده می‌شود</li>
-        <li>نمونه: بازیگر، کارگردان، آهنگساز</li>
+        <li>فهرست نقش از گروه‌های کستیاد آمده است</li>
       </ul>
     </article>
     <article class="ent">
@@ -214,11 +221,11 @@ erDiagram
       <header><h3>Project</h3><span>پروژه</span></header>
       <ul>
         <li><code>slug</code>، <code>title</code>، <code>summary</code></li>
-        <li><code>owner</code> → Profile، اختیاری. نام مسئول از نام و نام خانوادگی همین پروفایل است</li>
+        <li><code>owner</code> → Profile، اختیاری. نام مسئول نام هنری است، و اگر خالی باشد نام و نام خانوادگی کاربر</li>
         <li><code>city</code> → City، اختیاری</li>
         <li><code>art_category</code> → ArtCategory، اجباری. هنر از فهرست همین نوع اجرا خوانده می‌شود</li>
         <li><code>lead_role</code> → Role، اختیاری. نقش مسئول پروژه، جدا از نقش‌های پروفایل</li>
-        <li><code>status</code>: casting یا open_call</li>
+        <li><code>status</code>: draft، casting یا completed. پیش‌نویس در سایت نیست</li>
       </ul>
     </article>
     <article class="ent hot">
@@ -231,6 +238,9 @@ erDiagram
         <li><code>city</code> → City، اختیاری. موقع ساخت، شهر پروژه پیش‌فرض است و بعد جدا عوض می‌شود</li>
         <li><code>age_min</code>، <code>age_max</code>، <code>gender</code>، <code>count</code></li>
         <li><code>paid</code>، <code>pay_note</code>، <code>featured</code></li>
+        <li><code>collaboration_type</code> نوع همکاری، اختیاری</li>
+        <li><code>experience_level</code> سطح تجربه، اختیاری</li>
+        <li><code>special_conditions</code> شرایط ویژه، فهرست JSON</li>
         <li><code>start_date</code>، <code>end_date</code>، <code>deadline</code></li>
         <li><code>requirements</code> فهرست JSON، نه رابطه</li>
         <li><code>status</code>: open یا closed</li>
@@ -279,6 +289,36 @@ erDiagram
         <li>از درخواستِ matched یا دعوتِ accepted ساخته می‌شود</li>
       </ul>
     </article>
+    <article class="ent">
+      <header><h3>Bookmark</h3><span>نشان‌شده‌ها</span></header>
+      <ul>
+        <li><code>user</code> → User، اجباری</li>
+        <li><code>content_type</code> + <code>object_id</code>: Profile، Project یا Opportunity</li>
+        <li><code>created_at</code></li>
+        <li>هر کاربر هر هدف را یک بار ذخیره می‌کند</li>
+      </ul>
+    </article>
+    <article class="ent">
+      <header><h3>SupportTicket</h3><span>پشتیبانی</span></header>
+      <ul>
+        <li><code>user</code> → User، اختیاری. تیکت حتماً کاربر دارد</li>
+        <li><code>kind</code>: contact، report، ticket</li>
+        <li><code>kind_reason</code> تماس: عمومی، همکاری، انتقاد و شکایت، سایر. تیکت و گزارش فهرست جدا دارند</li>
+        <li><code>content_type</code> + <code>object_id</code> فقط برای گزارش: Profile، Project یا Opportunity</li>
+        <li><code>status</code>، <code>body</code>، <code>created_at</code>، <code>updated_at</code></li>
+        <li>گفتگو تا وقتی وضعیت بسته شود ادامه دارد</li>
+      </ul>
+    </article>
+    <article class="ent">
+      <header><h3>TicketMessage</h3><span>پاسخ تیکت</span></header>
+      <ul>
+        <li><code>ticket</code> → SupportTicket</li>
+        <li><code>author</code> → User، اختیاری</li>
+        <li><code>from_staff</code> پیام پشتیبانی یا کاربر</li>
+        <li><code>body</code>، <code>created_at</code></li>
+        <li>اولین ردیف همان متن اولیه است. بعد از بسته شدن ردیف تازه ساخته نمی‌شود</li>
+      </ul>
+    </article>
   </div>
 
   <h2>همهٔ رابطه‌ها</h2>
@@ -287,7 +327,7 @@ erDiagram
       <tr><th>از</th><th>به</th><th>نوع</th><th>حذف</th><th>اجباری</th></tr>
     </thead>
     <tbody>
-      <tr><td>Profile.user</td><td>User</td><td>یک‌به‌یک</td><td>SET NULL</td><td>خیر</td></tr>
+      <tr><td>Profile.user</td><td>User</td><td>یک‌به‌یک</td><td>PROTECT</td><td>بله</td></tr>
       <tr><td>Profile.city</td><td>City</td><td>چندبه‌یک</td><td>PROTECT</td><td>خیر</td></tr>
       <tr><td>Profile.arts</td><td>فهرست ثابت هفت هنر</td><td>چند مقدار روی پروفایل</td><td>—</td><td>خیر</td></tr>
       <tr><td>ProfileRole</td><td>Profile و Role</td><td>چندبه‌چند</td><td>CASCADE / PROTECT</td><td>بله</td></tr>
@@ -312,6 +352,12 @@ erDiagram
       <tr><td>Application</td><td>Profile و Opportunity</td><td>چندبه‌یک</td><td>CASCADE</td><td>بله</td></tr>
       <tr><td>Invite</td><td>Profile و Opportunity</td><td>چندبه‌یک</td><td>CASCADE</td><td>بله</td></tr>
       <tr><td>Match</td><td>Profile، Opportunity، و در صورت وجود Application و Invite</td><td>چندبه‌یک</td><td>CASCADE / SET NULL</td><td>دو تای اول بله</td></tr>
+      <tr><td>Bookmark.user</td><td>User</td><td>چندبه‌یک</td><td>CASCADE</td><td>بله</td></tr>
+      <tr><td>Bookmark.content_type + object_id</td><td>Profile یا Project یا Opportunity</td><td>کلید عمومی</td><td>PROTECT روی نوع</td><td>بله</td></tr>
+      <tr><td>SupportTicket.user</td><td>User</td><td>چندبه‌یک</td><td>PROTECT</td><td>فقط تیکت</td></tr>
+      <tr><td>SupportTicket.content_type + object_id</td><td>Profile یا Project یا Opportunity</td><td>کلید عمومی</td><td>PROTECT روی نوع</td><td>فقط گزارش</td></tr>
+      <tr><td>TicketMessage.ticket</td><td>SupportTicket</td><td>چندبه‌یک</td><td>CASCADE</td><td>بله</td></tr>
+      <tr><td>TicketMessage.author</td><td>User</td><td>چندبه‌یک</td><td>PROTECT</td><td>خیر</td></tr>
     </tbody>
   </table>
 
@@ -337,7 +383,6 @@ erDiagram
   <h2>جاهای دیگری که رابطه ندارند</h2>
   <p class="lead">این‌ها تصمیم نیستند. اگر باید عوض شوند، کنار هر کدام بنویسید.</p>
   <div class="q"><strong>مهارت به هنر وصل نیست.</strong> پروفایل هنرهایش را چندانتخابی نگه می‌دارد. Skill هنوز آن فهرست را ندارد.</div>
-  <div class="q"><strong>Profile.name کنار نام و نام خانوادگی است.</strong> موقع ذخیره از آن دو ساخته می‌شود، ولی ستون جدا مانده.</div>
 
   <div class="note">
     <p>بخش زرد هنوز باز است. اگر چیزی از آن را عوض کنید، بگویید تا روی مدل اعمال شود.</p>

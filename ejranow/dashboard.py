@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from ejranow.catalog import format_date, format_datetime
+from ejranow.labels import status_chip_html
 from ejranow.models import Application, Invite, Match, Opportunity, Profile, Project
 
 
@@ -112,18 +113,19 @@ def dashboard_callback(request, context):
                         [
                             _link(_change("profile", item.profile_id), str(item.profile)),
                             _link(_change("opportunity", item.opportunity_id), item.opportunity.title),
-                            item.get_status_display(),
+                            status_chip_html(item.status, item.get_status_display()),
                             format_datetime(timezone.localtime(item.created_at)),
                         ]
                         for item in applications
                     ],
                 ),
                 "invites": _table(
-                    ["Profile", "Opportunity", "Sent"],
+                    ["Profile", "Opportunity", "Status", "Sent"],
                     [
                         [
                             _link(_change("profile", item.profile_id), str(item.profile)),
                             _link(_change("opportunity", item.opportunity_id), item.opportunity.title),
+                            status_chip_html(item.status, item.get_status_display()),
                             format_datetime(timezone.localtime(item.created_at)),
                         ]
                         for item in waiting_invites

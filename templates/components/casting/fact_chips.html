@@ -15,6 +15,15 @@
         {% endif %}
         {{ opportunity.gender|gender_label }}
     </span>
+    {% if opportunity.collaboration_type %}
+        <span class="fact-chip">{{ opportunity.collaboration_type|collaboration_label }}</span>
+    {% endif %}
+    {% if opportunity.experience_level %}
+        <span class="fact-chip">{{ opportunity.experience_level|experience_label }}</span>
+    {% endif %}
+    {% for code in opportunity.special_conditions %}
+        <span class="fact-chip">{{ code|special_label }}</span>
+    {% endfor %}
     {% if opportunity.city %}
         <span class="fact-chip">{% include "components/icon.html" with name="map-pin" size="16" %}{{ opportunity.city }}</span>
     {% endif %}

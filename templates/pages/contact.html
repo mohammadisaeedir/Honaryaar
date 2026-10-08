@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}تماس با ما · هنریار{% endblock %}
+{% block og_title %}تماس با ما · هنریار{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4 text-[28px] font-semibold leading-9">تماس با ما</h1>
+    {% if sent %}
+        <p class="plain-copy">پیام شما ثبت شد.</p>
+    {% else %}
+        <p class="plain-copy">برای همکاری، پرسش عمومی، یا هر حرف دیگری بنویسید.</p>
+        <form class="support-form" method="post" action="{% url 'contact' %}">
+            {% csrf_token %}
+            <fieldset class="mb-4">
+                <legend class="field-label">موضوع</legend>
+                {{ form.kind_reason }}
+                {% if form.kind_reason.errors %}<p class="support-error">{{ form.kind_reason.errors.0 }}</p>{% endif %}
+            </fieldset>
+            <label class="mb-4 block">
+                <span class="field-label">پیام</span>
+                <textarea class="field" name="body" rows="5">{{ form.body.value|default:'' }}</textarea>
+                {% if form.body.errors %}<p class="support-error">{{ form.body.errors.0 }}</p>{% endif %}
+            </label>
+            <div class="mt-4">
+                {% include "components/button.html" with label="ارسال" button_type="submit" %}
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

@@ -1,14 +1,18 @@
 import json
 
 from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
 from ejranow import catalog
 from ejranow.accounts import professional_profile_ready
+from ejranow.support_views import report_page_state
 
 
 def _join_cta(user):
@@ -79,15 +83,130 @@ def about(request):
     return render(request, "about.html")
 
 
+def _bookmark_name(target, kind):
+    if target is None:
+        return "این مورد"
+    if kind == "profile":
+        full = f"{target.user.first_name} {target.user.last_name}".strip()
+        return full or target.public_name()
+    return getattr(target, "title", "") or "این مورد"
+
+
+def _picked(request, key):
+    return [value for value in request.GET.getlist(key) if value]
+
+
+def bookmark_rows(user):
+    if not getattr(user, "is_authenticated", False):
+        return []
+    from django.contrib.contenttypes.models import ContentType
+
+    from ejranow.models import Bookmark, Opportunity, Profile, Project
+
+    bookmarks = list(Bookmark.objects.filter(user=user).select_related("content_type"))
+    profile_ids = [row.object_id for row in bookmarks if row.content_type.model == "profile"]
+    project_ids = [row.object_id for row in bookmarks if row.content_type.model == "project"]
+    opportunity_ids = [row.object_id for row in bookmarks if row.content_type.model == "opportunity"]
+    profiles = {
+        item.pk: item
+        for item in Profile.objects.filter(pk__in=profile_ids).select_related("user").prefetch_related("profile_roles__role")
+    }
+    projects = {item.pk: item for item in Project.objects.filter(pk__in=project_ids)}
+    opportunities = {item.pk: item for item in Opportunity.objects.filter(pk__in=opportunity_ids)}
+    rows = []
+    for bookmark in bookmarks:
+        kind = bookmark.content_type.model
+        target = {"profile": profiles, "project": projects, "opportunity": opportunities}.get(kind, {}).get(bookmark.object_id)
+        if target is None:
+            continue
+        if kind == "profile":
+            full = f"{target.user.first_name} {target.user.last_name}".strip()
+            title = full or target.public_name()
+            meta = " · ".join(link.role.title for link in target.profile_roles.all())
+            url = reverse("artist", args=[target.slug])
+        elif kind == "project":
+            title = target.title
+            meta = "پروژه"
+            url = reverse("project", args=[target.slug])
+        else:
+            title = target.title
+            meta = "فراخوان"
+            url = reverse("opportunity", args=[target.slug])
+        rows.append(
+            {
+                "title": title,
+                "meta": meta,
+                "status_code": target.status,
+                "url": url,
+                "slug": target.slug,
+                "kind": kind,
+                "remove": reverse("bookmark-remove", args=[bookmark.pk]),
+            }
+        )
+    return rows
+
+
+def _bookmarked_slugs(user):
+    return [row["slug"] for row in bookmark_rows(user) if row["kind"] == "profile"]
+
+
+def _age_filter(request, bounds):
+    if not bounds:
+        return None, None, None
+    floor, ceiling = bounds
+    start = _age(request.GET.get("age_from", ""))
+    end = _age(request.GET.get("age_to", ""))
+    start = floor if start is None else min(max(start, floor), ceiling)
+    end = ceiling if end is None else min(max(end, floor), ceiling)
+    if start > end:
+        start, end = end, start
+    active = start > floor or end < ceiling
+    return (
+        start if active else None,
+        end if active else None,
+        catalog.age_group(floor, ceiling, start, end, active),
+    )
+
+
 def artist_list(request):
+    age_from, age_to, age = _age_filter(request, catalog.artist_age_bounds())
+    saved = [row for row in bookmark_rows(request.user) if row["kind"] == "profile"]
     filters = {
         "q": request.GET.get("q", "").strip(),
-        "city": request.GET.get("city", ""),
-        "role": request.GET.get("role", ""),
-        "art": request.GET.get("art", ""),
+        "city": _picked(request, "city"),
+        "role": _picked(request, "role"),
+        "art": _picked(request, "art"),
+        "gender": _picked(request, "gender"),
+        "bookmark": _picked(request, "bookmark"),
+        "age_from": age_from,
+        "age_to": age_to,
     }
-    groups = [
+    groups = []
+    if saved:
+        picked = set(filters["bookmark"])
+        groups.append(
+            {
+                "name": "bookmark",
+                "label": "نشان‌شده‌ها",
+                "kind": "saved",
+                "open": bool(picked),
+                "more": False,
+                "selected": sum(1 for row in saved if row["slug"] in picked),
+                "options": [
+                    {
+                        "value": row["slug"],
+                        "label": row["title"],
+                        "status_code": row["status_code"],
+                        "selected": row["slug"] in picked,
+                    }
+                    for row in saved
+                ],
+            }
+        )
+    groups.extend(
+        [
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
+        catalog.choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], filters["gender"]),
         catalog.choice_group(
             "art",
             "هنر",
@@ -95,25 +214,80 @@ def artist_list(request):
             filters["art"],
         ),
         catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in catalog.roles()], filters["role"]),
-    ]
+        ]
+    )
+    if age:
+        groups.append(age)
     return render(
         request,
         "pages/artists.html",
         {
             "artists": catalog.list_artists(**filters),
             "filters": filters,
-            "groups": [group for group in groups if group["kind"] == "text" or len(group["options"]) > 1],
+            "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
             "quick": catalog.filter_chips(request, catalog.artist_quick()),
             "clear_href": catalog.clear_filters_href(request),
+            "bookmarked": _bookmarked_slugs(request.user),
         },
     )
+
+
+@login_required
+@require_POST
+def bookmark_artist(request, slug):
+    from django.contrib.contenttypes.models import ContentType
+
+    from ejranow.models import Bookmark, Profile
+
+    profile = get_object_or_404(Profile, slug=slug)
+    profile_type = ContentType.objects.get_for_model(Profile)
+    bookmark = Bookmark.objects.filter(
+        user=request.user,
+        content_type=profile_type,
+        object_id=profile.pk,
+    ).first()
+    name = _bookmark_name(profile, "profile")
+    if bookmark:
+        bookmark.delete()
+        messages.success(request, f"{name} از نشان‌شده‌ها حذف شد.")
+    else:
+        Bookmark.objects.create(user=request.user, content_type=profile_type, object_id=profile.pk)
+        messages.success(request, f"{name} به نشان‌شده‌ها اضافه شد.")
+    nxt = request.POST.get("next", "")
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        nxt = reverse("artists")
+    return redirect(nxt)
+
+
+@login_required
+@require_POST
+def bookmark_remove(request, pk):
+    from ejranow.models import Bookmark
+
+    bookmark = get_object_or_404(Bookmark, pk=pk, user=request.user)
+    name = _bookmark_name(bookmark.target, bookmark.content_type.model)
+    bookmark.delete()
+    messages.success(request, f"{name} از نشان‌شده‌ها حذف شد.")
+    nxt = request.POST.get("next", "")
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        nxt = reverse("me-collaborations")
+    return redirect(nxt)
 
 
 def artist_detail(request, slug):
     artist = catalog.artist_by_slug(slug)
     if artist is None:
         raise Http404
-    return render(request, "pages/artist.html", {"artist": artist})
+    return render(
+        request,
+        "pages/artist.html",
+        {
+            "artist": artist,
+            "report_title": artist["name"],
+            "report_action": reverse("report-artist", args=[slug]),
+            **report_page_state(request, f"artist:{slug}"),
+        },
+    )
 
 
 def _age(raw):
@@ -122,34 +296,49 @@ def _age(raw):
 
 
 def opportunity_list(request):
-    age_raw = request.GET.get("age", "").strip()
+    bounds = catalog.age_bounds()
+    floor, ceiling = bounds if bounds else (None, None)
+    start = _age(request.GET.get("age_from", ""))
+    end = _age(request.GET.get("age_to", ""))
+    if bounds:
+        start = floor if start is None else min(max(start, floor), ceiling)
+        end = ceiling if end is None else min(max(end, floor), ceiling)
+        if start > end:
+            start, end = end, start
+        age_active = start > floor or end < ceiling
+    else:
+        age_active = False
     filters = {
         "q": request.GET.get("q", "").strip(),
-        "city": request.GET.get("city", ""),
-        "paid": request.GET.get("paid", ""),
-        "gender": request.GET.get("gender", ""),
-        "production": request.GET.get("production", ""),
-        "role": request.GET.get("role", ""),
-        "art": request.GET.get("art", ""),
-        "age": _age(age_raw),
+        "city": _picked(request, "city"),
+        "paid": _picked(request, "paid"),
+        "gender": _picked(request, "gender"),
+        "production": _picked(request, "production"),
+        "role": _picked(request, "role"),
+        "art": _picked(request, "art"),
+        "status": _picked(request, "status"),
+        "age_from": start if age_active else None,
+        "age_to": end if age_active else None,
     }
     facets = catalog.opportunity_facets()
     groups = [
+        catalog.choice_group("status", "وضعیت", [("open", "باز"), ("closed", "بسته")], filters["status"]),
         catalog.choice_group("city", "شهر", [(city, city) for city in facets["cities"]], filters["city"]),
         catalog.choice_group("art", "هنر", [(item["slug"], item["title"]) for item in facets["arts"]], filters["art"]),
         catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in facets["roles"]], filters["role"]),
         catalog.choice_group("production", "نوع", [(item, item) for item in facets["productions"]], filters["production"]),
         catalog.choice_group("gender", "جنسیت", [(item["value"], item["label"]) for item in facets["genders"]], filters["gender"]),
         catalog.choice_group("paid", "پرداخت", facets["paid"], filters["paid"]),
-        catalog.text_group("age", "سن", age_raw, "مثلاً ۲۸"),
     ]
+    if bounds:
+        groups.append(catalog.age_group(floor, ceiling, start, end, age_active))
     return render(
         request,
         "pages/opportunities.html",
         {
             "opportunities": catalog.list_opportunities(**filters),
-            "filters": {**filters, "age": age_raw},
-            "groups": [group for group in groups if group["kind"] == "text" or len(group["options"]) > 1],
+            "filters": filters,
+            "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
             "quick": catalog.filter_chips(request, catalog.opportunity_quick(facets)),
             "clear_href": catalog.clear_filters_href(request),
         },
@@ -179,6 +368,9 @@ def opportunity_detail(request, slug):
             "project": project,
             "application": application,
             "is_owner": is_owner,
+            "report_title": opportunity["title"],
+            "report_action": reverse("report-opportunity", args=[slug]),
+            **report_page_state(request, f"opportunity:{slug}"),
         },
     )
 
@@ -186,8 +378,9 @@ def opportunity_detail(request, slug):
 def project_list(request):
     filters = {
         "q": request.GET.get("q", "").strip(),
-        "city": request.GET.get("city", ""),
-        "art": request.GET.get("art", ""),
+        "city": _picked(request, "city"),
+        "art": _picked(request, "art"),
+        "status": _picked(request, "status"),
     }
     return render(
         request,
@@ -196,6 +389,7 @@ def project_list(request):
             "projects": catalog.list_projects(**filters),
             "filters": filters,
             "groups": [
+                catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
                 catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
                 catalog.choice_group(
                     "art",
@@ -224,6 +418,9 @@ def project_detail(request, slug):
         {
             "project": project,
             "opportunities": catalog.opportunities_for_project(slug),
+            "report_title": project["title"],
+            "report_action": reverse("report-project", args=[slug]),
+            **report_page_state(request, f"project:{slug}"),
         },
     )
 
@@ -338,6 +535,7 @@ def search(request):
             "artists": artists,
             "opportunities": opportunities,
             "projects": projects,
+            "bookmarked": _bookmarked_slugs(request.user),
         },
     )
 

@@ -18,6 +18,10 @@
         <span class="pf-mobile-menu__label">همکاری‌ها</span>
     </a>
     <hr class="pf-rule" aria-hidden="true">
+    <a class="pf-mobile-menu__row {% if name == 'me-tickets' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-tickets' %}">
+        {% include "components/icon.html" with name="bell" %}
+        <span class="pf-mobile-menu__label">پشتیبانی</span>
+    </a>
     <button class="pf-mobile-menu__row" type="button" @click="logoutOpen = true; logoutStep = 1">
         {% include "components/icon.html" with name="log-out" class="icon--danger" %}
         <span class="pf-mobile-menu__label pf-label--danger">خروج از حساب</span>

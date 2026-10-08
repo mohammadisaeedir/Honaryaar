@@ -1,0 +1,10 @@
+<div class="reason-picker" dir="rtl" role="radiogroup">
+    {% for option in widget.optgroups %}
+        {% for item in option.1 %}
+            <label class="reason-picker__btn">
+                <input type="radio" name="{{ item.name }}" value="{{ item.value }}" {% if item.selected %}checked{% endif %}>
+                <span>{{ item.label }}</span>
+            </label>
+        {% endfor %}
+    {% endfor %}
+</div>

@@ -27,11 +27,34 @@
                     <div class="filter-acc__body" x-cloak x-show="open">
                         {% if group.kind == "text" %}
                             <input class="field" type="text" inputmode="numeric" name="{{ group.name }}" value="{{ group.value }}" placeholder="{{ group.placeholder }}">
-                        {% else %}
-                            <div class="filter-boxes">
+                        {% elif group.kind == "saved" %}
+                            <ul class="saved-list">
                                 {% for option in group.options %}
-                                    <label class="filter-box{% if option.selected %} is-on{% endif %}{% if forloop.counter > 6 %} is-extra{% endif %}" {% if forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
-                                        <input type="radio" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                    <li>
+                                        <label>
+                                            <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                            <span class="saved-list__name">{{ option.label }}</span>
+                                            <span class="saved-list__status">{% status_chip option.status_code %}</span>
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% elif group.kind == "age" %}
+                            <div class="age-slider" dir="rtl">
+                                <p class="age-slider__readout"><span>از <b data-age="from">{{ group.start }}</b></span><span>تا <b data-age="to">{{ group.end }}</b></span></p>
+                                <div class="age-slider__track">
+                                    <span class="age-slider__rail"></span>
+                                    <span class="age-slider__fill"></span>
+                                    <input type="range" name="age_from" min="{{ group.floor }}" max="{{ group.ceiling }}" value="{{ group.start }}" step="1" oninput="ageSlide(this)">
+                                    <input type="range" name="age_to" min="{{ group.floor }}" max="{{ group.ceiling }}" value="{{ group.end }}" step="1" oninput="ageSlide(this)">
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="filter-boxes" x-data="{ all: {% if group.selected %}false{% else %}true{% endif %} }" @change="all = !$event.target.closest('.filter-boxes').querySelector('input:checked')">
+                                <button class="filter-box{% if not group.selected %} is-on{% endif %}" type="button" :class="{ 'is-on': all }" @click="all = true; $el.parentElement.querySelectorAll('input').forEach(function (input) { input.checked = false })">همه</button>
+                                {% for option in group.options %}
+                                    <label class="filter-box{% if forloop.counter > 6 %} is-extra{% endif %}" {% if forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
+                                        <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
                                         {{ option.label }}
                                     </label>
                                 {% endfor %}
@@ -50,3 +73,42 @@
         </div>
     </form>
 </aside>
+<script>
+    function faAge(value) {
+        return String(value).replace(/[0-9]/g, function (digit) {
+            return "۰۱۲۳۴۵۶۷۸۹"[digit];
+        });
+    }
+    function ageSlide(input) {
+        var root = input.closest(".age-slider");
+        var from = root.querySelector("[name=age_from]");
+        var to = root.querySelector("[name=age_to]");
+        if (Number(from.value) > Number(to.value)) {
+            if (input === from) to.value = from.value;
+            else from.value = to.value;
+        }
+        from.style.zIndex = input === from ? "2" : "1";
+        to.style.zIndex = input === to ? "2" : "1";
+        var span = Number(from.max) - Number(from.min) || 1;
+        var fill = root.querySelector(".age-slider__fill");
+        fill.style.insetInlineStart = ((Number(from.value) - Number(from.min)) / span * 100) + "%";
+        fill.style.width = ((Number(to.value) - Number(from.value)) / span * 100) + "%";
+        root.querySelector("[data-age=from]").textContent = faAge(from.value);
+        root.querySelector("[data-age=to]").textContent = faAge(to.value);
+    }
+    document.querySelectorAll(".age-slider [name=age_from]").forEach(function (input) {
+        ageSlide(input);
+    });
+    document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form.querySelectorAll) return;
+        form.querySelectorAll(".age-slider").forEach(function (root) {
+            var from = root.querySelector("[name=age_from]");
+            var to = root.querySelector("[name=age_to]");
+            if (from.value === from.min && to.value === to.max) {
+                from.disabled = true;
+                to.disabled = true;
+            }
+        });
+    });
+</script>

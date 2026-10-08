@@ -71,7 +71,7 @@ CITIES = [
 GENDER_FA = {
     "male": "مرد",
     "female": "زن",
-    "any": "بدون تفاوت",
+    "any": "مرد/زن",
 }
 # Migration 0008 still reads this list. New skills use SkillArea on Skill.group.
 SKILL_GROUPS = [
@@ -190,6 +190,8 @@ ARTISTS = [
         "name": "سارا محمدی",
         "role": "actor",
         "city": "تهران",
+        "born": date(1994, 9, 1),
+        "gender": "female",
         "about": "بازیگر تئاتر. ده سال روی صحنه، بیشتر در نقش‌های معاصر و متن‌های ایرانی. دنبال پروژه‌ای است که تمرین جدی و زمان‌بندی روشن داشته باشد.",
         "skills": ["بازیگری دوربین", "بدن", "لهجهٔ تهرانی"],
         "credits": [
@@ -208,6 +210,8 @@ ARTISTS = [
         "name": "کیان رضایی",
         "role": "actor",
         "city": "تهران",
+        "born": date(1998, 1, 20),
+        "gender": "male",
         "about": "اطلاعات این صفحه از برنامهٔ جشنواره و معرفی گروه‌ها جمع شده است. صاحب پروفایل هنوز آن را در اختیار نگرفته.",
         "skills": ["بازیگری صحنه", "آواز"],
         "credits": [
@@ -222,6 +226,8 @@ ARTISTS = [
         "name": "نیلوفر احمدی",
         "role": "actor",
         "city": "اصفهان",
+        "born": date(1991, 4, 15),
+        "gender": "female",
         "about": "بازیگر و مدرس بازیگری. بین اصفهان و تهران کار می‌کند و برای نقش‌های زن معاصر نمونهٔ اجرا دارد.",
         "skills": ["تدریس", "بداهه", "انگلیسی مکالمه"],
         "credits": [
@@ -239,6 +245,8 @@ ARTISTS = [
         "name": "آرمین کاظمی",
         "role": "actor",
         "city": "تهران",
+        "born": date(1990, 8, 9),
+        "gender": "male",
         "about": "بازیگر مرد، محدودهٔ سنی نقش‌ها حدود سی تا چهل. سابقهٔ همکاری با گروه‌های مستقل تهران.",
         "skills": ["مبارزهٔ صحنه‌ای", "موتورسواری"],
         "credits": [
@@ -253,6 +261,8 @@ ARTISTS = [
         "name": "هستی مرادی",
         "role": "actor",
         "city": "شیراز",
+        "born": date(2004, 11, 2),
+        "gender": "female",
         "about": "بازیگر جوان. بیشتر در نمایش‌های دانشجویی و گروه‌های شیراز دیده شده و برای کار در تهران آمادهٔ رفت‌وآمد است.",
         "skills": ["حرکت", "کودک و نوجوان"],
         "credits": [{"title": "خط سفید", "role": "دختر", "year": "۱۴۰۴"}],
@@ -264,6 +274,8 @@ ARTISTS = [
         "name": "پوریا نعمتی",
         "role": "actor",
         "city": "کرج",
+        "born": date(1996, 6, 18),
+        "gender": "male",
         "about": "بازیگر مکمل. به نقش‌های کوتاه با متن دقیق علاقه دارد و می‌تواند در کرج و تهران تمرین کند.",
         "skills": ["گویش کرجی", "رانندگی"],
         "credits": [
@@ -278,6 +290,8 @@ ARTISTS = [
         "name": "مریم سلیمانی",
         "role": "director",
         "city": "تهران",
+        "born": date(1984, 12, 1),
+        "gender": "female",
         "about": "کارگردان تئاتر. پروژهٔ جاری‌اش «اتاق شماره شش» است و برای دو نقش هنوز بازیگر می‌گردد.",
         "skills": ["کارگردانی", "انتخاب بازیگر", "متن معاصر"],
         "credits": [
@@ -292,6 +306,8 @@ ARTISTS = [
         "name": "رضا قاسمی",
         "role": "actor",
         "city": "مشهد",
+        "born": date(2007, 3, 12),
+        "gender": "male",
         "about": "بازیگر نوجوان و جوان. برای نقش‌های ۱۶ تا ۲۲ سال نمونه دارد.",
         "skills": ["بازیگری نوجوان", "ورزش"],
         "credits": [{"title": "زمستان طولانی", "role": "پسر", "year": "۱۴۰۳"}],
@@ -309,7 +325,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "نمایش صحنه‌ای",
         "summary": "نمایش صحنه‌ای معاصر. تمرین‌ها از آذر شروع می‌شود و اجرا برای بهمن در یک سالن کوچک تهران برنامه‌ریزی شده.",
-        "status": "در حال جذب بازیگر",
+        "status": "در حال جذب",
     },
     {
         "slug": "passengers",
@@ -319,7 +335,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "نمایش صحنه‌ای",
         "summary": "نمایشی دربارهٔ انتظار و سفر. یک نقش مرد جوان هنوز باز است.",
-        "status": "در حال جذب بازیگر",
+        "status": "در حال جذب",
     },
     {
         "slug": "shadows",
@@ -329,7 +345,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "تئاتر دانشجویی",
         "summary": "خوانش و اجرای دانشجویی. دستمزد ندارد و تمرکز روی تمرین بازیگری است.",
-        "status": "فراخوان باز",
+        "status": "در حال جذب",
     },
     {
         "slug": "last-rehearsal",
@@ -339,7 +355,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "نمایش صحنه‌ای",
         "summary": "نمایش خانوادگی با دو نقش نسل قبل. به دنبال بازیگر زن ۴۰ تا ۵۵ سال.",
-        "status": "در حال جذب بازیگر",
+        "status": "در حال جذب",
     },
     {
         "slug": "white-line",
@@ -349,7 +365,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "خوانش",
         "summary": "خوانش یک متن کوتاه در کرج. اگر گروه جور شود، دربارهٔ اجرای کامل جداگانه حرف می‌زنند.",
-        "status": "فراخوان باز",
+        "status": "در حال جذب",
     },
     {
         "slug": "long-winter",
@@ -359,7 +375,7 @@ PROJECTS = [
         "art": "theatre",
         "production": "نمایش صحنه‌ای",
         "summary": "نمایش نوروزی با یک نقش اصلی نوجوان. انتخاب بازیگر هنوز باز است.",
-        "status": "در حال جذب بازیگر",
+        "status": "در حال جذب",
     },
 ]
 
@@ -495,7 +511,7 @@ OPPORTUNITIES = [
 
 MEDIA_KIND = {"عکس": "photo", "ویدیو": "video", "صوت": "audio"}
 MEDIA_LABEL = {"photo": "عکس", "video": "ویدیو", "audio": "صوت"}
-PROJECT_STATUS = {"در حال جذب بازیگر": "casting", "فراخوان باز": "open_call"}
+PROJECT_STATUS = {"در حال جذب": "casting", "پیش‌نویس": "draft", "اتمام": "completed"}
 _JALALI_MONTHS = (
     "فروردین",
     "اردیبهشت",
@@ -533,11 +549,79 @@ def _to_jalali(year, month, day):
     if day_number >= 366:
         jalali_year += (day_number - 1) // 365
         day_number = (day_number - 1) % 365
-    for index, length in enumerate(jalali_month_lengths):
+    month_lengths = jalali_month_lengths[:]
+    if jalali_year % 33 in {1, 5, 9, 13, 17, 22, 26, 30}:
+        month_lengths[11] = 30
+    for index, length in enumerate(month_lengths):
         if day_number < length:
             return jalali_year, index + 1, day_number + 1
         day_number -= length
     return jalali_year, 12, day_number + 1
+
+
+def _to_gregorian(jalali_year, jalali_month, jalali_day):
+    year = jalali_year + 1595
+    days = -355668 + (365 * year) + (year // 33) * 8 + ((year % 33) + 3) // 4 + jalali_day
+    if jalali_month < 7:
+        days += (jalali_month - 1) * 31
+    else:
+        days += (jalali_month - 7) * 30 + 186
+    gregorian_year = 400 * (days // 146097)
+    days %= 146097
+    if days > 36524:
+        days -= 1
+        gregorian_year += 100 * (days // 36524)
+        days %= 36524
+        if days >= 365:
+            days += 1
+    gregorian_year += 4 * (days // 1461)
+    days %= 1461
+    if days > 365:
+        gregorian_year += (days - 1) // 365
+        days = (days - 1) % 365
+    gregorian_day = days + 1
+    leap = gregorian_year % 4 == 0 and (gregorian_year % 100 != 0 or gregorian_year % 400 == 0)
+    month_lengths = [0, 31, 29 if leap else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    gregorian_month = 1
+    while gregorian_month <= 12 and gregorian_day > month_lengths[gregorian_month]:
+        gregorian_day -= month_lengths[gregorian_month]
+        gregorian_month += 1
+    return gregorian_year, gregorian_month, gregorian_day
+
+
+_ARABIC_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
+
+
+def parse_user_date(value):
+    import datetime
+
+    if isinstance(value, datetime.date):
+        return value
+    text = str(value or "").strip().translate(_ARABIC_DIGITS).replace("-", "/").replace(".", "/")
+    parts = [part for part in text.split("/") if part != ""]
+    if len(parts) != 3:
+        return None
+    try:
+        year, month, day = (int(part) for part in parts)
+    except ValueError:
+        return None
+    if not 1 <= month <= 12 or not 1 <= day <= 31:
+        return None
+    if year < 1700:
+        year, month, day = _to_gregorian(year, month, day)
+        if _to_jalali(year, month, day) != (int(parts[0]), int(parts[1]), int(parts[2])):
+            return None
+    try:
+        return datetime.date(year, month, day)
+    except ValueError:
+        return None
+
+
+def format_jalali_numeric(value):
+    if not value:
+        return ""
+    year, month, day = _to_jalali(value.year, value.month, value.day)
+    return f"{year:04d}/{month:02d}/{day:02d}".translate(_PERSIAN_DIGITS)
 
 
 def format_date(value):
@@ -589,10 +673,77 @@ def gender_label(value):
     return GENDER_FA.get(value, value)
 
 
+def collaboration_label(value):
+    from ejranow.labels import COLLABORATION_TYPES
+
+    return dict(COLLABORATION_TYPES).get(value, "")
+
+
+def experience_label(value):
+    from ejranow.labels import EXPERIENCE_LEVELS
+
+    return dict(EXPERIENCE_LEVELS).get(value, "")
+
+
+def special_label(value):
+    from ejranow.labels import SPECIAL_CONDITIONS
+
+    return dict(SPECIAL_CONDITIONS).get(value, "")
+
+
 def genders():
     from ejranow.models import Gender
 
     return [{"value": value, "label": gender_label(value)} for value, _title in Gender.choices]
+
+
+def _role_key(value):
+    value = value.replace("\u200c", "").replace("\u200d", "")
+    value = value.replace("ي", "ی").replace("ك", "ک")
+    return "".join(value.split())
+
+
+def role_catalog():
+    """Crew roles from the Castyar group list.
+
+    Spelling variants inside one group collapse. The same title in two groups
+    stays two roles, because the group is part of the role. Existing slugs that
+    already point at a person or a call are kept.
+    """
+    import hashlib
+    import json
+    from pathlib import Path
+
+    legacy = {
+        ("بازیگری و اجرا", _role_key("بازیگر تئاتر")): "actor",
+        ("کارگردانی", _role_key("کارگردان")): "director",
+        ("تهیه و تولید", _role_key("تهیه‌کننده")): "producer",
+        ("کارگردانی", _role_key("دستیار کارگردان")): "assistant-director",
+        ("نویسندگی", _role_key("نمایشنامه‌نویس")): "playwright",
+        ("طراحی صحنه و دکور", _role_key("طراح صحنه")): "set-designer",
+        ("طراحی لباس", _role_key("طراح لباس")): "costume-designer",
+        ("موسیقی", _role_key("آهنگساز")): "composer",
+        ("بازیگری و اجرا", _role_key("پرفورمر")): "performer",
+        ("تهیه و تولید", _role_key("سرمایه‌گذار")): "investor",
+    }
+    path = Path(__file__).resolve().parent / "data" / "role-groups.json"
+    groups = json.loads(path.read_text(encoding="utf-8"))["groups"]
+    records = []
+    seen_slugs = set()
+    for bucket in groups:
+        group = bucket["group"]
+        seen_titles = set()
+        for title in bucket["jobs"]:
+            key = (group, _role_key(title))
+            if key in seen_titles:
+                continue
+            seen_titles.add(key)
+            slug = legacy.get(key)
+            if slug is None or slug in seen_slugs:
+                slug = "role-" + hashlib.sha1(f"{group}\n{title}".encode()).hexdigest()[:10]
+            seen_slugs.add(slug)
+            records.append({"slug": slug, "title": title, "group": group})
+    return records
 
 
 def role_title(slug):
@@ -627,8 +778,61 @@ def roles():
     return [{"slug": item.slug, "title": item.title} for item in Role.objects.all()]
 
 
+def years_old(birth, today=None):
+    if birth is None:
+        return None
+    today = today or date.today()
+    years = today.year - birth.year
+    if (today.month, today.day) < (birth.month, birth.day):
+        years -= 1
+    return years
+
+
+def age_bounds():
+    lows = []
+    highs = []
+    for item in _opportunities():
+        if item["age_min"] is not None:
+            lows.append(item["age_min"])
+        if item["age_max"] is not None:
+            highs.append(item["age_max"])
+    if not lows and not highs:
+        return None
+    floor = min(lows or highs)
+    ceiling = max(highs or lows)
+    if ceiling <= floor:
+        return None
+    return floor, ceiling
+
+
+def artist_age_bounds():
+    ages = [item["age"] for item in _artists() if item["age"] is not None]
+    if len(set(ages)) < 2:
+        return None
+    return min(ages), max(ages)
+
+
+def age_group(floor, ceiling, start, end, active):
+    return {
+        "name": "age",
+        "label": "سن",
+        "kind": "age",
+        "floor": floor,
+        "ceiling": ceiling,
+        "start": start,
+        "end": end,
+        "open": active,
+        "more": False,
+        "options": [],
+        "selected": 1 if active else 0,
+    }
+
+
 def age_label(item):
-    start, end = item["age_min"], item["age_max"]
+    if isinstance(item, dict):
+        start, end = item.get("age_min"), item.get("age_max")
+    else:
+        start, end = getattr(item, "age_min", None), getattr(item, "age_max", None)
     if start and end:
         return f"{start} تا {end} سال"
     if start:
@@ -647,12 +851,20 @@ def _artist_dict(profile):
     primary = next((link.role for link in links if link.is_primary), None)
     if primary is None and links:
         primary = links[0].role
+    ordered = sorted(links, key=lambda link: (not link.is_primary, link.role.title))
+    user = profile.user
+    legal_name = " ".join(part for part in (user.first_name, user.last_name) if part).strip()
     return {
         "slug": profile.slug,
-        "name": profile.name,
+        "name": profile.public_name(),
+        "legal_name": legal_name or profile.public_name(),
         "role": primary.slug if primary else "",
+        "role_slugs": [link.role.slug for link in ordered],
+        "role_titles": [link.role.title for link in ordered],
         "city": profile.city.title if profile.city_id else "",
         "about": profile.about,
+        "age": years_old(profile.birth_date),
+        "gender": profile.gender,
         "arts": list(profile.arts or []),
         "art_titles": [art_title(slug) for slug in _art_order() if slug in set(profile.arts or [])],
         "skills": [
@@ -672,8 +884,8 @@ def _artist_dict(profile):
 
 
 def _testimonial_dict(item):
-    if item.profile_id and (item.profile.name or item.profile.first_name):
-        name = item.profile.name or f"{item.profile.first_name} {item.profile.last_name}".strip()
+    if item.profile_id:
+        name = item.profile.public_name()
     else:
         name = item.name
     role = item.role.title if item.role_id else item.role_label
@@ -690,8 +902,7 @@ def _testimonial_dict(item):
 def _profile_name(profile):
     if profile is None:
         return ""
-    full = f"{profile.first_name} {profile.last_name}".strip()
-    return full or profile.name
+    return profile.public_name()
 
 
 def _project_dict(project):
@@ -707,6 +918,7 @@ def _project_dict(project):
         "production": project.art_category.title if project.art_category_id else "",
         "summary": project.summary,
         "status": project.get_status_display(),
+        "status_code": project.status,
         "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
     }
 
@@ -733,6 +945,9 @@ def _opportunity_dict(item):
         "description": item.description,
         "requirements": item.requirements or [],
         "status": item.status,
+        "collaboration_type": item.collaboration_type,
+        "experience_level": item.experience_level,
+        "special_conditions": item.special_conditions or [],
     }
 
 
@@ -741,7 +956,7 @@ def _artists():
 
     profiles = (
         Profile.objects.filter(profile_roles__isnull=False)
-        .select_related("city")
+        .select_related("city", "user")
         .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill")
         .distinct()
     )
@@ -751,19 +966,19 @@ def _artists():
 def _projects():
     from django.db.models import Prefetch
 
-    from ejranow.models import Project, Testimonial
+    from ejranow.models import PUBLIC_PROJECT_STATUSES, Project, Testimonial
 
-    quotes = Testimonial.objects.select_related("profile", "role", "project")
-    projects = Project.objects.select_related("owner", "art_category", "lead_role", "city").prefetch_related(
+    quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
+    projects = Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).select_related("owner", "owner__user", "art_category", "lead_role", "city").prefetch_related(
         Prefetch("testimonials", queryset=quotes)
     )
     return [_project_dict(item) for item in projects]
 
 
 def _opportunities():
-    from ejranow.models import Opportunity
+    from ejranow.models import PUBLIC_PROJECT_STATUSES, Opportunity
 
-    items = Opportunity.objects.select_related("project", "project__art_category", "role", "city", "art_category")
+    items = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related("project", "project__art_category", "role", "city", "art_category")
     return [_opportunity_dict(item) for item in items]
 
 
@@ -772,7 +987,20 @@ def project_by_slug(slug):
 
 
 def artist_by_slug(slug):
-    return next((item for item in _artists() if item["slug"] == slug), None)
+    found = next((item for item in _artists() if item["slug"] == slug), None)
+    if found is not None:
+        return found
+    from ejranow.models import Profile
+
+    profile = (
+        Profile.objects.filter(slug=slug)
+        .select_related("city", "user")
+        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill")
+        .first()
+    )
+    if profile is None:
+        return None
+    return _artist_dict(profile)
 
 
 def opportunity_by_slug(slug):
@@ -788,7 +1016,9 @@ def _artist_text(artist):
     return " ".join(
         [
             artist["name"],
+            artist.get("legal_name", ""),
             artist["city"],
+            " ".join(artist.get("role_titles", [])),
             role_title(artist["role"]),
             " ".join(artist["art_titles"]),
             " ".join(item["label"] for item in artist["skills"]),
@@ -804,40 +1034,82 @@ def artist_arts():
     return [{"slug": slug, "title": art_title(slug)} for slug in _art_order() if slug in present]
 
 
-def list_artists(q="", city="", role="", art=""):
+def _picked(value):
+    if value is None or value == "":
+        return set()
+    if isinstance(value, str):
+        return {value}
+    return {str(item) for item in value if item not in (None, "")}
+
+
+def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark=""):
+    cities = _picked(city)
+    roles = _picked(role)
+    arts = _picked(art)
+    genders = _picked(gender)
+    saved = _picked(bookmark)
     items = _artists()
-    if city:
-        items = [item for item in items if item["city"] == city]
-    if role:
-        items = [item for item in items if item["role"] == role]
-    if art:
-        items = [item for item in items if art in item["arts"]]
+    if cities:
+        items = [item for item in items if item["city"] in cities]
+    if roles:
+        items = [item for item in items if roles.intersection(item["role_slugs"])]
+    if arts:
+        items = [item for item in items if arts.intersection(item["arts"])]
+    if genders:
+        items = [item for item in items if item["gender"] in genders]
+    if saved:
+        items = [item for item in items if item["slug"] in saved]
+    if age_from is not None and age_to is not None:
+        items = [
+            item
+            for item in items
+            if item["age"] is not None and age_from <= item["age"] <= age_to
+        ]
     if q:
         items = [item for item in items if _contains(_artist_text(item), q)]
     return items
 
 
-def _opportunity_matches(item, query, city, paid, gender, production, role, age, art):
+def _age_overlaps(item, start, end):
+    low = item["age_min"]
+    high = item["age_max"]
+    if low is None and high is None:
+        return True
+    if high is not None and high < start:
+        return False
+    if low is not None and low > end:
+        return False
+    return True
+
+
+def _opportunity_matches(item, query, city, paid, gender, production, role, age_from, age_to, art, status):
     project = project_by_slug(item["project"])
-    if city and item["city"] != city:
+    cities = _picked(city)
+    arts = _picked(art)
+    paid_values = _picked(paid)
+    genders = _picked(gender)
+    productions = _picked(production)
+    roles = _picked(role)
+    statuses = _picked(status)
+    if statuses and item["status"] not in statuses:
         return False
-    if art and item["art"] != art:
+    if cities and item["city"] not in cities:
         return False
-    if paid == "paid" and not item["paid"]:
+    if arts and item["art"] not in arts:
         return False
-    if paid == "unpaid" and item["paid"]:
-        return False
-    if gender and item["gender"] not in {"any", gender}:
-        return False
-    if production and item["production"] != production:
-        return False
-    if role and item["role"] != role:
-        return False
-    if age is not None:
-        start = item["age_min"] if item["age_min"] is not None else 0
-        end = item["age_max"] if item["age_max"] is not None else 200
-        if not start <= age <= end:
+    if paid_values and paid_values != {"paid", "unpaid"}:
+        if "paid" in paid_values and not item["paid"]:
             return False
+        if "unpaid" in paid_values and item["paid"]:
+            return False
+    if genders and item["gender"] not in genders and not (item["gender"] == "any" and genders - {"any"}):
+        return False
+    if productions and item["production"] not in productions:
+        return False
+    if roles and item["role"] not in roles:
+        return False
+    if age_from is not None and age_to is not None and not _age_overlaps(item, age_from, age_to):
+        return False
     if query:
         text = " ".join(
             [
@@ -849,6 +1121,9 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age,
                 item["deadline"],
                 gender_label(item["gender"]),
                 role_title(item["role"]),
+                collaboration_label(item.get("collaboration_type", "")),
+                experience_label(item.get("experience_level", "")),
+                " ".join(special_label(code) for code in item.get("special_conditions") or []),
                 item["description"],
                 project["art_title"] if project else "",
             ]
@@ -858,11 +1133,11 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age,
     return True
 
 
-def list_opportunities(q="", city="", paid="", gender="", production="", role="", age=None, art=""):
+def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status=""):
     return [
         item
         for item in _opportunities()
-        if _opportunity_matches(item, q, city, paid, gender, production, role, age, art)
+        if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status)
     ]
 
 
@@ -941,12 +1216,17 @@ def _project_text(project):
     )
 
 
-def list_projects(q="", city="", art=""):
+def list_projects(q="", city="", art="", status=""):
+    cities = _picked(city)
+    arts = _picked(art)
+    statuses = _picked(status)
     items = _projects()
-    if city:
-        items = [item for item in items if item["city"] == city]
-    if art:
-        items = [item for item in items if item["art"] == art]
+    if cities:
+        items = [item for item in items if item["city"] in cities]
+    if arts:
+        items = [item for item in items if item["art"] in arts]
+    if statuses:
+        items = [item for item in items if item["status_code"] in statuses]
     if q:
         items = [item for item in items if _contains(_project_text(item), q)]
     return items
@@ -957,18 +1237,18 @@ OPPORTUNITY_QUICK = [
     ("مرد", {"gender": "male"}),
     ("زن", {"gender": "female"}),
     ("پرداختی", {"paid": "paid"}),
-    ("بازیگر", {"role": "actor"}),
+    ("بازیگر تئاتر", {"role": "actor"}),
     ("دستیار کارگردان", {"role": "assistant-director"}),
-    ("هنرجو", {"role": "student"}),
+    ("کارگردان", {"role": "director"}),
     ("آهنگساز", {"role": "composer"}),
     ("نمایش صحنه‌ای", {"production": "نمایش صحنه‌ای"}),
 ]
 
 ARTIST_QUICK = [
     ("تهران", {"city": "تهران"}),
-    ("بازیگر", {"role": "actor"}),
+    ("بازیگر تئاتر", {"role": "actor"}),
     ("دستیار کارگردان", {"role": "assistant-director"}),
-    ("هنرجو", {"role": "student"}),
+    ("کارگردان", {"role": "director"}),
     ("آهنگساز", {"role": "composer"}),
 ]
 
@@ -992,23 +1272,23 @@ def arts():
 
 
 def choice_group(name, label, pairs, selected):
-    selected = "" if selected is None else str(selected)
-    options = [{"value": "", "label": "همه", "selected": selected == ""}]
-    selected_index = None
+    picked = _picked(selected)
+    options = []
+    first = None
     for value, text in pairs:
         value = str(value)
-        is_selected = bool(selected) and value == selected
+        is_selected = value in picked
         options.append({"value": value, "label": text, "selected": is_selected})
-        if is_selected:
-            selected_index = len(options) - 1
+        if is_selected and first is None:
+            first = len(options) - 1
     return {
         "name": name,
         "label": label,
         "kind": "choice",
         "options": options,
-        "open": selected_index is not None,
-        "more": selected_index is not None and selected_index >= 6,
-        "selected": 1 if selected_index else 0,
+        "open": first is not None,
+        "more": first is not None and first >= 6,
+        "selected": sum(1 for option in options if option["selected"]),
     }
 
 
@@ -1031,13 +1311,12 @@ def filter_chips(request, specs):
     chips = []
     for label, params in specs:
         query = request.GET.copy()
-        active = all(query.get(key, "") == str(value) for key, value in params.items())
-        if active:
-            for key in params:
-                query.pop(key, None)
-        else:
-            for key, value in params.items():
-                query[key] = str(value)
+        active = all(str(value) in query.getlist(key) for key, value in params.items())
+        for key, value in params.items():
+            values = [item for item in query.getlist(key) if item != str(value)]
+            if not active:
+                values.append(str(value))
+            query.setlist(key, values)
         encoded = query.urlencode()
         chips.append(
             {
@@ -1107,23 +1386,23 @@ def hero_fields():
 def talent_stats():
     from django.db.models import Q
 
-    from ejranow.models import City, Opportunity, OpportunityStatus, Project, ProjectStatus, Role
+    from ejranow.models import PUBLIC_PROJECT_STATUSES, City, Opportunity, OpportunityStatus, Project, ProjectStatus, Role
 
-    live = [ProjectStatus.CASTING, ProjectStatus.OPEN_CALL]
-    calls = Opportunity.objects.filter(status=OpportunityStatus.OPEN).count()
-    projects = Project.objects.filter(status__in=live).count()
+    calls = Opportunity.objects.filter(status=OpportunityStatus.OPEN, project__status__in=PUBLIC_PROJECT_STATUSES).count()
+    projects = Project.objects.filter(status=ProjectStatus.CASTING).count()
     roles = (
         Role.objects.filter(
-            Q(opportunities__status=OpportunityStatus.OPEN)
+            Q(opportunities__status=OpportunityStatus.OPEN, opportunities__project__status__in=PUBLIC_PROJECT_STATUSES)
             | Q(profile_roles__isnull=False)
-            | Q(led_projects__status__in=live)
+            | Q(led_projects__status__in=PUBLIC_PROJECT_STATUSES)
         )
         .distinct()
         .count()
     )
     cities = (
         City.objects.filter(
-            Q(opportunities__status=OpportunityStatus.OPEN) | Q(projects__status__in=live)
+            Q(opportunities__status=OpportunityStatus.OPEN, opportunities__project__status__in=PUBLIC_PROJECT_STATUSES)
+            | Q(projects__status__in=PUBLIC_PROJECT_STATUSES)
         )
         .distinct()
         .count()
@@ -1143,7 +1422,7 @@ def featured_opportunities():
 def featured_testimonials():
     from ejranow.models import Testimonial
 
-    items = Testimonial.objects.filter(featured=True).select_related("project", "profile", "role")
+    items = Testimonial.objects.filter(featured=True).select_related("project", "profile", "profile__user", "role")
     return [_testimonial_dict(item) for item in items]
 
 
@@ -1181,7 +1460,7 @@ def search_shortcuts():
 
 
 def footer_shortcuts():
-    from ejranow.models import City, ArtCategory, Project, Role
+    from ejranow.models import PUBLIC_PROJECT_STATUSES, City, ArtCategory, Project, Role
 
     cities = list(City.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
     by_slug = {item.slug: item for item in Role.objects.all()}
@@ -1192,7 +1471,7 @@ def footer_shortcuts():
     ]
     projects = [
         {"slug": item.slug, "title": item.title}
-        for item in Project.objects.order_by("-pk")[:7]
+        for item in Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).order_by("-pk")[:7]
     ]
     productions = []
     seen = set()
@@ -1221,6 +1500,8 @@ def search(query):
 
 
 def seed():
+    from django.contrib.auth.models import User
+
     from ejranow.models import (
         City,
         Credit,
@@ -1256,11 +1537,14 @@ def seed():
         productions_by_title[item["title"]] = art_category
         productions_by_slug[item["slug"]] = art_category
     roles_by_slug = {}
+    catalog_by_slug = {item["slug"]: item for item in role_catalog()}
     for item in ROLES:
+        record = catalog_by_slug.get(item["slug"], {})
         roles_by_slug[item["slug"]], _created = Role.objects.get_or_create(
             slug=item["slug"],
             defaults={
-                "title": item["title"],
+                "title": record.get("title", item["title"]),
+                "group": record.get("group", ""),
                 "art_category": productions_by_slug[item.get("production", "stage-play")],
             },
         )
@@ -1276,15 +1560,34 @@ def seed():
             },
         )
     for item in ARTISTS:
+        user, user_created = User.objects.get_or_create(
+            username=item["slug"][:150],
+            defaults={"is_staff": False, "is_superuser": False},
+        )
+        if user_created:
+            user.set_unusable_password()
+            user.save(update_fields=["password"])
         profile, _created = Profile.objects.get_or_create(
             slug=item["slug"],
             defaults={
+                "user": user,
                 "name": item["name"],
                 "city": cities_by_title[item["city"]],
                 "about": item["about"],
+                "birth_date": item.get("born"),
+                "gender": item.get("gender", ""),
                 "status": item["status"],
             },
         )
+        updates = []
+        if item.get("born") and profile.birth_date is None:
+            profile.birth_date = item["born"]
+            updates.append("birth_date")
+        if item.get("gender") and not profile.gender:
+            profile.gender = item["gender"]
+            updates.append("gender")
+        if updates:
+            profile.save(update_fields=updates)
         for title in item["skills"]:
             slug = LEGACY_SKILL_TITLES[title]
             ProfileSkill.objects.get_or_create(

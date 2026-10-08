@@ -1,0 +1,10 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/jalali-date.css' %}">
+<div class="jalali-date" data-jalali-date>
+    <input class="jalali-date__text {{ widget.attrs.class }}" type="text" value="{{ widget.jalali }}" placeholder="۱۳۷۳/۰۶/۱۰" inputmode="numeric" autocomplete="off" {% if widget.attrs.id %}id="{{ widget.attrs.id }}"{% endif %} {% if widget.attrs.disabled %}disabled{% endif %} {% if widget.attrs.required %}required{% endif %}>
+    <button class="jalali-date__open" type="button" aria-label="تقویم" tabindex="-1">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+    </button>
+    <input type="hidden" name="{{ widget.name }}" value="{{ widget.value|default_if_none:'' }}" data-jalali-value>
+</div>
+<script src="{% static 'js/jalali-date.js' %}"></script>

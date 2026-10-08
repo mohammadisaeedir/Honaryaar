@@ -1,0 +1,11 @@
+<div class="art-picker" dir="rtl" role="group" aria-label="هنرها">
+    {% for option in widget.optgroups %}
+        {% for item in option.1 %}
+            <label class="art-picker__btn art-{{ item.value }}">
+                <input type="checkbox" name="{{ item.name }}" value="{{ item.value }}" {% if item.selected %}checked{% endif %}>
+                {% include "components/art_icon.html" with slug=item.value %}
+                <span>{{ item.label }}</span>
+            </label>
+        {% endfor %}
+    {% endfor %}
+</div>

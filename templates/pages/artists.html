@@ -7,14 +7,18 @@
 
 {% block content %}
     <h1 class="text-[28px] font-semibold leading-9">هنرمندان</h1>
-    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">رزومهٔ حرفه‌ای، نه ویترین عکس. نقش هر کس از داده می‌آید و فقط به بازیگر محدود نیست.</p>
+    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">نام، عکس و نقش هر کس. نقش‌ها از داده می‌آیند و فقط به بازیگر محدود نیستند.</p>
     <div class="list-tools" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
         <form class="page-search" method="get" action="{% url 'artists' %}" role="search" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
-            <input type="hidden" name="city" value="{{ filters.city }}">
-            <input type="hidden" name="role" value="{{ filters.role }}">
-            <input type="hidden" name="art" value="{{ filters.art }}">
+            {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
+            {% for value in filters.role %}<input type="hidden" name="role" value="{{ value }}">{% endfor %}
+            {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
+            {% for value in filters.gender %}<input type="hidden" name="gender" value="{{ value }}">{% endfor %}
+            {% for value in filters.bookmark %}<input type="hidden" name="bookmark" value="{{ value }}">{% endfor %}
+            {% if filters.age_from %}<input type="hidden" name="age_from" value="{{ filters.age_from }}">{% endif %}
+            {% if filters.age_to %}<input type="hidden" name="age_to" value="{{ filters.age_to }}">{% endif %}
             <label class="sr-only" for="artists-q">جستجو در هنرمندان</label>
-            <input class="field" id="artists-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام، مهارت یا سابقه" enterkeyhint="search">
+            <input class="field" id="artists-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام یا نقش" enterkeyhint="search">
             {% include "components/filters/suggest.html" %}
         </form>
         {% include "components/filters/panel.html" with action=request.path %}
@@ -22,7 +26,7 @@
     {% include "components/skeleton/list.html" with kind="artists" %}
     <div class="live-pane">
     {% if artists %}
-        <div class="mt-6 grid gap-4 md:grid-cols-2">
+        <div class="artist-grid">
             {% for artist in artists %}
                 {% include "components/artist/artist_card.html" %}
             {% endfor %}

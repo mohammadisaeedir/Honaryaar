@@ -1,0 +1,67 @@
+.art-theatre { --art: #c13281; --art-bg: #f8e6f0; }
+.art-music { --art: #1f7a4d; --art-bg: #e5f3ec; }
+.art-film { --art: #3a5278; --art-bg: #e7eef6; }
+.art-painting { --art: #8a5a00; --art-bg: #f8f1e3; }
+.art-architecture { --art: #3d4a5c; --art-bg: #e8eef3; }
+.art-sculpture { --art: #8a4030; --art-bg: #f8ebe6; }
+.art-literature { --art: #4a3d78; --art-bg: #eeeaf6; }
+
+.art-picker {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(4.75rem, 1fr);
+    gap: 8px;
+    overflow-x: auto;
+}
+
+.art-picker__btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 76px;
+    margin: 0;
+    padding: 10px 6px;
+    border: 1px solid #e7e4e2;
+    border-radius: 12px;
+    background: #fff;
+    color: #6f6863;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.art-picker__btn input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.art-picker__btn .icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #8a847e;
+}
+
+.art-picker__btn:has(input:checked) {
+    border-color: var(--art, #c13281);
+    background: var(--art-bg, #f8e6f0);
+    color: #17131a;
+}
+
+.art-picker__btn:has(input:checked) .icon {
+    color: var(--art, #c13281);
+}
+
+.art-picker__btn:has(input:focus-visible) {
+    outline: none;
+}

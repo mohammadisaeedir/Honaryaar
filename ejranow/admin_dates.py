@@ -150,3 +150,24 @@ def install():
     admin_list.display_for_field = admin_utils.display_for_field
     admin_helpers.display_for_field = admin_utils.display_for_field
     _install_date_hierarchy()
+    _install_pickers()
+
+
+def _install_pickers():
+    from django.contrib import admin
+    from django.db import models
+
+    from ejranow.jalali_widget import JalaliAdminDateWidget, JalaliSplitDateTimeWidget
+    from unfold.overrides import FORMFIELD_OVERRIDES, FORMFIELD_OVERRIDES_INLINE
+
+    for table in (FORMFIELD_OVERRIDES, FORMFIELD_OVERRIDES_INLINE):
+        table[models.DateField]["widget"] = JalaliAdminDateWidget
+        table[models.DateTimeField]["widget"] = JalaliSplitDateTimeWidget
+    for model_admin in admin.site._registry.values():
+        overrides = getattr(model_admin, "formfield_overrides", None)
+        if not overrides:
+            continue
+        if models.DateField in overrides:
+            overrides[models.DateField]["widget"] = JalaliAdminDateWidget
+        if models.DateTimeField in overrides:
+            overrides[models.DateTimeField]["widget"] = JalaliSplitDateTimeWidget

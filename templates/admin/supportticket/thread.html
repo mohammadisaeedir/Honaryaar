@@ -1,0 +1,49 @@
+{% load ejranow_ui static %}
+{% if original %}
+    <link rel="stylesheet" href="{% static 'css/admin-ticket.css' %}">
+    <section class="ticket-thread">
+        <div class="ticket-thread__head">
+            <h2>Conversation</h2>
+            {% status_chip original.status original.get_status_display %}
+        </div>
+        <div class="ticket-thread__scroll">
+            <table class="ticket-thread__table">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>Message</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in original.messages.all %}
+                        <tr>
+                            <td>{% if item.from_staff %}Staff{% else %}{{ item.sender_name|default:"User" }}{% endif %}</td>
+                            <td class="ticket-thread__body">{{ item.body }}</td>
+                            <td>{{ item.created_at|jalali }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">No messages yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if original.status == "closed" %}
+            <p class="ticket-thread__note">This ticket is closed.</p>
+        {% else %}
+            <form class="ticket-thread__reply" method="post" action="{% url 'admin:ejranow_supportticket_reply' original.pk %}">
+                {% csrf_token %}
+                <label>
+                    <span>Reply</span>
+                    <textarea name="body" rows="4" required></textarea>
+                </label>
+                <div class="ticket-thread__actions">
+                    <button type="submit">Send</button>
+                    <button type="submit" name="action" value="close" formnovalidate>Close ticket</button>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+{% endif %}

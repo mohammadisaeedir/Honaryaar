@@ -1,0 +1,15 @@
+{% if slug == "theatre" %}
+    {% include "components/icon.html" with name="drama" size=size|default:"18" %}
+{% elif slug == "music" %}
+    {% include "components/icon.html" with name="music" size=size|default:"18" %}
+{% elif slug == "film" %}
+    {% include "components/icon.html" with name="clapperboard" size=size|default:"18" %}
+{% elif slug == "painting" %}
+    {% include "components/icon.html" with name="palette" size=size|default:"18" %}
+{% elif slug == "architecture" %}
+    {% include "components/icon.html" with name="landmark" size=size|default:"18" %}
+{% elif slug == "sculpture" %}
+    {% include "components/icon.html" with name="sculpture" size=size|default:"18" %}
+{% elif slug == "literature" %}
+    {% include "components/icon.html" with name="book-open" size=size|default:"18" %}
+{% endif %}

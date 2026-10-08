@@ -7,11 +7,13 @@ from ejranow import catalog
 from ejranow.accounts import current_profile
 from ejranow.labels import (
     APPLICATION_LABELS,
+    CHIP_LABELS,
     INVITE_LABELS,
     MATCH_LABELS,
     MEDIA_LABELS,
     SKILL_LEVEL_LABELS,
     STATUS_LABELS,
+    STATUS_TONE,
 )
 
 register = template.Library()
@@ -58,6 +60,16 @@ def status_label(value):
     return STATUS_LABELS.get(value, value)
 
 
+@register.inclusion_tag("components/status_chip.html")
+def status_chip(code, label=""):
+    code = "" if code is None else str(code)
+    return {
+        "show": bool(code),
+        "label": label or CHIP_LABELS.get(code, code),
+        "tone": STATUS_TONE.get(code, "progress"),
+    }
+
+
 @register.filter
 def media_label(value):
     return MEDIA_LABELS.get(value, value)
@@ -85,6 +97,21 @@ def gender_label(value):
 
 
 @register.filter
+def collaboration_label(value):
+    return catalog.collaboration_label(value)
+
+
+@register.filter
+def experience_label(value):
+    return catalog.experience_label(value)
+
+
+@register.filter
+def special_label(value):
+    return catalog.special_label(value)
+
+
+@register.filter
 def role_title(slug):
     return catalog.role_title(slug)
 
@@ -105,11 +132,21 @@ def project_of(slug):
 
 
 @register.simple_tag
-def profile_first_name(user):
+def account_name(user):
     profile = current_profile(user)
-    if profile is None:
+    if profile is not None:
+        shown = profile.public_name()
+        if shown and shown != profile.slug and shown != getattr(profile.user, "username", ""):
+            return shown
+    full = f"{getattr(user, 'first_name', '')} {getattr(user, 'last_name', '')}".strip()
+    return full or "کاربر هنریار"
+
+
+@register.simple_tag
+def profile_first_name(user):
+    if not getattr(user, "is_authenticated", False):
         return ""
-    return profile.first_name or ""
+    return user.first_name or ""
 
 
 @register.simple_tag
@@ -133,11 +170,24 @@ def applied_filters(context, groups):
             if not group["value"]:
                 continue
             label = group["value"]
-        else:
-            picked = next((option for option in group["options"] if option["selected"] and option["value"]), None)
-            if picked is None:
+        elif group["kind"] == "age":
+            if not group["selected"]:
                 continue
-            label = picked["label"]
+            query = request.GET.copy()
+            query.pop("age_from", None)
+            query.pop("age_to", None)
+            encoded = query.urlencode()
+            items.append({"label": f"{group['start']} تا {group['end']}", "href": f"?{encoded}" if encoded else request.path})
+            continue
+        else:
+            picked = [option for option in group["options"] if option["selected"] and option["value"]]
+            for option in picked:
+                query = request.GET.copy()
+                values = [item for item in query.getlist(group["name"]) if item != option["value"]]
+                query.setlist(group["name"], values)
+                encoded = query.urlencode()
+                items.append({"label": option["label"], "href": f"?{encoded}" if encoded else request.path})
+            continue
         query = request.GET.copy()
         query.pop(group["name"], None)
         encoded = query.urlencode()

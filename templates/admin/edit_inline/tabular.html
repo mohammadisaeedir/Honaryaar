@@ -1,0 +1,65 @@
+{% load i18n static %}
+<div id="{{ inline_admin_formset.formset.prefix }}-group" data-inline-type="tabular" data-inline-modal {% if inline_admin_formset.opts.tab %}x-show="activeTab == '{{ inline_admin_formset.formset.prefix|slugify }}'"{% else %}x-show="activeTab == 'general'"{% endif %}>
+    <link rel="stylesheet" href="{% static 'css/admin-inline-modal.css' %}">
+    <div class="tabular inline-related {% if forloop.last %}last-related{% endif %}">
+        <fieldset class="module relative {{ inline_admin_formset.classes }} min-w-0" aria-labelledby="{{ inline_admin_formset.formset.prefix }}-heading">
+            {% if inline_admin_formset.is_collapsible %}<details><summary class="*:mb-0">{% endif %}
+
+            <div class="inline-add-bar">
+                <div class="min-w-0 grow">
+                    {% include "unfold/helpers/inline_heading.html" %}
+                </div>
+                {% if inline_admin_formset.has_add_permission %}
+                    <button class="inline-add-open" type="button" data-modal-open aria-label="Add {{ inline_admin_formset.opts.verbose_name }}">
+                        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                    </button>
+                {% endif %}
+            </div>
+
+            {% if inline_admin_formset.is_collapsible %}</summary>{% endif %}
+
+            {% if inline_admin_formset.opts.template_before %}
+                {% include inline_admin_formset.opts.template_before %}
+            {% endif %}
+
+            <div class="formset-wrapper border border-base-200 overflow-x-auto relative shadow-xs dark:border-base-800 rounded-default">
+                {{ inline_admin_formset.formset.management_form }}
+                {% include "unfold/helpers/edit_inline/inline_errors.html" %}
+                <table id="{{ inline_admin_formset.formset.prefix }}-data" class="bg-white dark:bg-base-900 formset group/formset-parent w-full" data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+                    {% include "unfold/helpers/edit_inline/tabular_heading.html" %}
+                    {% for inline_admin_form in inline_admin_formset %}
+                        {% include "unfold/helpers/edit_inline/tabular_group.html" %}
+                    {% endfor %}
+                </table>
+            </div>
+
+            {% if inline_admin_formset.opts.template_after %}
+                {% include inline_admin_formset.opts.template_after %}
+            {% endif %}
+
+            {% if inline_admin_formset.is_collapsible %}</details>{% endif %}
+        </fieldset>
+    </div>
+    {% if inline_admin_formset.has_add_permission %}
+        <div class="inline-add" data-modal>
+            <div class="inline-add__backdrop" data-modal-cancel></div>
+            <div class="inline-add__panel" role="dialog" aria-modal="true" aria-labelledby="{{ inline_admin_formset.formset.prefix }}-modal-title">
+                <div class="inline-add__head">
+                    <h3 id="{{ inline_admin_formset.formset.prefix }}-modal-title" data-modal-title>Add {{ inline_admin_formset.opts.verbose_name }}</h3>
+                    <button type="button" data-modal-cancel aria-label="Close">
+                        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
+                </div>
+                <div class="inline-add__body" data-modal-slot>
+                    <table class="inline-add__table"></table>
+                </div>
+                <p class="inline-add__error" data-modal-error hidden>Fill in the required fields.</p>
+                <div class="inline-add__foot">
+                    <button type="button" data-modal-cancel>Cancel</button>
+                    <button type="button" data-modal-add>Add</button>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+<script src="{% static 'js/admin-inline-modal.js' %}"></script>

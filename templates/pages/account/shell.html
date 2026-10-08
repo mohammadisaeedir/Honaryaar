@@ -3,6 +3,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/profile.css' %}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{% static 'css/art-picker.css' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block body_class %}account-page min-h-dvh overflow-x-clip text-sm leading-[22px] antialiased{% endblock %}
@@ -20,7 +21,7 @@
             <div class="pf-sidebar__panel">
                 <a class="pf-sidebar__userLink {% if request.resolver_match.url_name == 'me-profile' %}pf-sidebar__userLink--active{% endif %}" href="{% url 'me-profile' %}">
                     <span class="pf-sidebar__userText">
-                        <p class="pf-sidebar__name">{% if request.user.profile.name %}{{ request.user.profile.name }}{% else %}کاربر هنریار{% endif %}</p>
+                        <p class="pf-sidebar__name">{% account_name request.user %}</p>
                         <p class="pf-sidebar__phone" dir="ltr">{{ request.user.username|phone_fa }}</p>
                     </span>
                     {% include "components/account/avatar.html" %}

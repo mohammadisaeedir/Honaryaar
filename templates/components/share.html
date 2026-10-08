@@ -1,0 +1,26 @@
+<div class="share-slot">
+    <button class="share-btn" type="button" data-share-title="{{ title }}" data-share-url="{{ request.build_absolute_uri }}" onclick="sharePage(this)">
+        {% include "components/icon.html" with name="share" size="18" %}
+        <span>اشتراک‌گذاری</span>
+    </button>
+    <p class="share-note" hidden>لینک کپی شد</p>
+</div>
+<script>
+    if (!window.sharePage) {
+        window.sharePage = function (button) {
+            var url = button.dataset.shareUrl;
+            var shareTitle = button.dataset.shareTitle;
+            var note = button.parentElement.querySelector(".share-note");
+            function showNote() {
+                note.hidden = false;
+                clearTimeout(button._shareTimer);
+                button._shareTimer = setTimeout(function () { note.hidden = true; }, 2000);
+            }
+            if (navigator.share) {
+                navigator.share({ title: shareTitle, url: url }).catch(function () {});
+                return;
+            }
+            navigator.clipboard.writeText(url).then(showNote);
+        };
+    }
+</script>

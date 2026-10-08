@@ -9,13 +9,15 @@
     <h1 class="text-[28px] font-semibold leading-9">فراخوان‌ها</h1>
     <div class="list-tools" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
         <form class="page-search" method="get" action="{% url 'opportunities' %}" role="search" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
-            <input type="hidden" name="city" value="{{ filters.city }}">
-            <input type="hidden" name="art" value="{{ filters.art }}">
-            <input type="hidden" name="paid" value="{{ filters.paid }}">
-            <input type="hidden" name="role" value="{{ filters.role }}">
-            <input type="hidden" name="production" value="{{ filters.production }}">
-            <input type="hidden" name="gender" value="{{ filters.gender }}">
-            <input type="hidden" name="age" value="{{ filters.age }}">
+            {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
+            {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
+            {% for value in filters.paid %}<input type="hidden" name="paid" value="{{ value }}">{% endfor %}
+            {% for value in filters.role %}<input type="hidden" name="role" value="{{ value }}">{% endfor %}
+            {% for value in filters.production %}<input type="hidden" name="production" value="{{ value }}">{% endfor %}
+            {% for value in filters.gender %}<input type="hidden" name="gender" value="{{ value }}">{% endfor %}
+            {% for value in filters.status %}<input type="hidden" name="status" value="{{ value }}">{% endfor %}
+            {% if filters.age_from %}<input type="hidden" name="age_from" value="{{ filters.age_from }}">{% endif %}
+            {% if filters.age_to %}<input type="hidden" name="age_to" value="{{ filters.age_to }}">{% endif %}
             <label class="sr-only" for="opportunities-q">جستجو در فرصت‌ها</label>
             <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search">
             {% include "components/filters/suggest.html" %}

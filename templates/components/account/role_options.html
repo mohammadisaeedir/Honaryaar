@@ -1,0 +1,8 @@
+{% regroup roles by group as role_groups %}
+{% for bucket in role_groups %}
+    <optgroup label="{{ bucket.grouper }}">
+        {% for role in bucket.list %}
+            <option value="{{ role.pk }}" {% if selected|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.title }}</option>
+        {% endfor %}
+    </optgroup>
+{% endfor %}

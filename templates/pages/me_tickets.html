@@ -1,0 +1,101 @@
+{% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
+
+{% block title %}پشتیبانی · هنریار{% endblock %}
+{% block account_title %}پشتیبانی{% endblock %}
+
+{% block account_main %}
+    <div class="pf-plp" dir="rtl" x-data="{ tab: 'open', add: {% if form_open %}true{% else %}false{% endif %} }">
+        <div class="pf-board__head">
+            <h1>پشتیبانی</h1>
+            <button class="pf-board__add" type="button" @click="add = true">افزودن</button>
+        </div>
+        <div class="profile-tabs" role="tablist" aria-label="تیکت‌ها">
+            <button class="profile-tabs__tab is-on" type="button" role="tab" :class="{ 'is-on': tab === 'open' }" :aria-selected="tab === 'open'" @click="tab = 'open'">جاری</button>
+            <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'closed' }" :aria-selected="tab === 'closed'" @click="tab = 'closed'">بسته شده</button>
+        </div>
+        <div class="profile-pane is-on" :class="{ 'is-on': tab === 'open' }">
+            {% if open_tickets %}
+                <div class="repeat-wrap">
+                    <table class="ticket-table">
+                        <thead>
+                            <tr>
+                                <th>موضوع</th>
+                                <th>پیام</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in open_tickets %}
+                                <tr class="ticket-table__row" data-href="{% url 'me-ticket' ticket.pk %}" @click="window.location = $el.dataset.href">
+                                    <td><a href="{% url 'me-ticket' ticket.pk %}">{{ ticket.kind_reason_label }}</a></td>
+                                    <td>{{ ticket.latest_body|truncatechars:80 }}</td>
+                                    <td>{% status_chip ticket.status %}</td>
+                                    <td>{{ ticket.updated_at|jalali }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% include "components/account/empty.html" with icon="tickets" text="تیکت بازی ندارید." %}
+            {% endif %}
+        </div>
+        <div class="profile-pane" :class="{ 'is-on': tab === 'closed' }">
+            {% if closed_tickets %}
+                <div class="repeat-wrap">
+                    <table class="ticket-table">
+                        <thead>
+                            <tr>
+                                <th>موضوع</th>
+                                <th>پیام</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in closed_tickets %}
+                                <tr class="ticket-table__row" data-href="{% url 'me-ticket' ticket.pk %}" @click="window.location = $el.dataset.href">
+                                    <td><a href="{% url 'me-ticket' ticket.pk %}">{{ ticket.kind_reason_label }}</a></td>
+                                    <td>{{ ticket.latest_body|truncatechars:80 }}</td>
+                                    <td>{% status_chip ticket.status %}</td>
+                                    <td>{{ ticket.updated_at|jalali }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% include "components/account/empty.html" with icon="tickets" text="تیکت بسته‌شده‌ای ندارید." %}
+            {% endif %}
+        </div>
+        <div class="report-modal" x-show="add" x-cloak x-effect="document.body.classList.toggle('is-report-open', add)" @keydown.escape.window="add = false">
+            <div class="report-modal__backdrop" @click="add = false"></div>
+            <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="ticket-modal-title" @click.stop>
+                <div class="report-modal__top">
+                    <h2 id="ticket-modal-title">تیکت جدید</h2>
+                    <button class="report-modal__close" type="button" @click="add = false" aria-label="بستن">
+                        {% include "components/icon.html" with name="x" size="20" %}
+                    </button>
+                </div>
+                <form class="support-form" method="post" action="{% url 'me-tickets' %}">
+                    {% csrf_token %}
+                    <fieldset class="mb-4">
+                        <legend class="field-label">موضوع</legend>
+                        {{ form.kind_reason }}
+                        {% if form.kind_reason.errors %}<p class="support-error">{{ form.kind_reason.errors.0 }}</p>{% endif %}
+                    </fieldset>
+                    <label class="mb-4 block">
+                        <span class="field-label">پیام</span>
+                        <textarea class="field" name="body" rows="5">{{ form.body.value|default:'' }}</textarea>
+                        {% if form.body.errors %}<p class="support-error">{{ form.body.errors.0 }}</p>{% endif %}
+                    </label>
+                    <div class="mt-4">
+                        {% include "components/button.html" with label="افزودن" button_type="submit" %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

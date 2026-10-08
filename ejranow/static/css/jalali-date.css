@@ -1,0 +1,112 @@
+.jalali-date {
+    position: relative;
+    width: 100%;
+}
+
+.jalali-date__text {
+    width: 100%;
+    padding-inline-end: 40px;
+}
+
+.jalali-date__open {
+    position: absolute;
+    top: 50%;
+    inset-inline-end: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-top: -16px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #6f6863;
+    cursor: pointer;
+}
+
+.jalali-panel {
+    position: fixed;
+    z-index: 200;
+    width: 280px;
+    padding: 12px;
+    border: 1px solid #e7e4e2;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 16px 40px rgb(23 19 26 / 16%);
+    color: #17131a;
+    direction: rtl;
+}
+
+.jalali-panel__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.jalali-panel__title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.jalali-panel__nav {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: #f6f4ef;
+    color: #17131a;
+    cursor: pointer;
+    font: inherit;
+    font-size: 16px;
+}
+
+.jalali-panel__week,
+.jalali-panel__days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.jalali-panel__week span {
+    color: #6f6863;
+    font-size: 11px;
+    line-height: 24px;
+    text-align: center;
+}
+
+.jalali-panel__days button {
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #17131a;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+}
+
+.jalali-panel__days button:hover,
+.jalali-panel__days button.is-on {
+    background: #c13281;
+    color: #fff;
+}
+
+.jalali-panel__foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.jalali-panel__foot button {
+    border: 0;
+    background: transparent;
+    color: #c13281;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+}

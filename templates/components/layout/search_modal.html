@@ -22,15 +22,7 @@
                 {% else %}
                     <a class="search-modal__art art-{{ art.slug }}" href="{% url 'opportunities' %}?q={{ art.title|urlencode }}">
                 {% endif %}
-                    {% if art.slug == "theatre" %}
-                        {% include "components/icon.html" with name="drama" size="18" %}
-                    {% elif art.slug == "music" %}
-                        {% include "components/icon.html" with name="music" size="18" %}
-                    {% elif art.slug == "film" %}
-                        {% include "components/icon.html" with name="clapperboard" size="18" %}
-                    {% elif art.slug == "painting" %}
-                        {% include "components/icon.html" with name="palette" size="18" %}
-                    {% endif %}
+                    {% include "components/art_icon.html" with slug=art.slug %}
                     <span>{{ art.title }}</span>
                     {% if art.soon %}<span class="search-modal__soon">به زودی</span>{% endif %}
                 {% if art.soon %}</span>{% else %}</a>{% endif %}
