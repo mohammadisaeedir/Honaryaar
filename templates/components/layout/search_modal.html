@@ -7,13 +7,15 @@
                 {% include "components/icon.html" with name="x" size="20" %}
             </button>
         </div>
-        <form method="get" action="{% url 'search' %}" role="search">
+        <form method="get" action="{% url 'search' %}" role="search" autocomplete="off" data-remember-search>
             <label class="sr-only" for="modal-q">جستجو</label>
             <div class="search-modal__field">
                 {% include "components/icon.html" with name="search" size="18" %}
-                <input class="field" id="modal-q" type="search" name="q" value="{% if request.resolver_match.url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="مثلاً: بازیگر" data-search-typewriter enterkeyhint="search" x-ref="searchQ">
+                <input class="field" id="modal-q" type="search" name="q" value="{% if request.resolver_match.url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="مثلاً: بازیگر" data-search-typewriter enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
             </div>
         </form>
+
+        {% include "components/filters/recent.html" %}
 
         <div class="search-modal__arts" aria-label="جستجوهای محبوب">
             {% for art in search_arts %}

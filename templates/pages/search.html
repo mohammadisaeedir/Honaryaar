@@ -18,7 +18,7 @@
         <section class="mt-8">
             <h2 class="text-[18px] font-semibold leading-[26px]">هنرمندان</h2>
             {% if artists %}
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <div class="catalog-grid mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {% for artist in artists %}
                         {% include "components/artist/artist_card.html" %}
                     {% endfor %}
@@ -30,7 +30,7 @@
         <section class="mt-8">
             <h2 class="text-[18px] font-semibold leading-[26px]">فرصت‌ها</h2>
             {% if opportunities %}
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <div class="catalog-grid mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {% for opportunity in opportunities %}
                         {% include "components/casting/opportunity_card.html" %}
                     {% endfor %}
@@ -42,7 +42,7 @@
         <section class="mt-8">
             <h2 class="text-[18px] font-semibold leading-[26px]">پروژه‌ها</h2>
             {% if projects %}
-                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <div class="catalog-grid mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {% for project in projects %}
                         {% include "components/project/project_card.html" %}
                     {% endfor %}

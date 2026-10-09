@@ -1,0 +1,123 @@
+{% load ejranow_ui %}
+<div class="filter-backdrop" x-cloak x-show="open" x-transition.opacity @click="open = false"></div>
+<div class="catalog-side">
+<aside class="filter-drawer" x-cloak x-show="open" x-transition:enter="filter-drawer-motion" x-transition:enter-start="filter-drawer-start" x-transition:enter-end="filter-drawer-end" x-transition:leave="filter-drawer-motion" x-transition:leave-start="filter-drawer-end" x-transition:leave-end="filter-drawer-start" role="dialog" aria-modal="true" aria-label="فیلترها">
+    <form method="get" action="{{ action }}" @change="$el.requestSubmit()">
+        <div class="filter-drawer__head">
+            <h2>فیلترها</h2>
+            <div class="filter-drawer__tools">
+                <button class="filter-drawer__close" type="button" @click="open = false" aria-label="بستن">{% include "components/icon.html" with name="x" size="20" %}</button>
+                <a class="filter-clear{% if not filters_on %} is-off{% endif %}" {% if filters_on %}href="{{ clear_href }}"{% else %}aria-disabled="true" tabindex="-1"{% endif %} aria-label="پاک کردن فیلترها">{% include "components/icon.html" with name="trash" size="18" %}</a>
+            </div>
+        </div>
+        <div class="filter-drawer__body">
+            <input type="hidden" name="q" value="{{ filters.q }}">
+            {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
+            {% for group in groups %}
+                <div class="filter-acc{% if group.plain %} is-plain{% endif %}" x-data="{ open: {% if group.plain %}true{% else %}{{ group.open|yesno:'true,false' }}{% endif %}, more: {{ group.more|yesno:'true,false' }}, q: '' }">
+                    {% if group.plain %}
+                        <div class="filter-acc__head">
+                            <span class="filter-acc__label">
+                                {{ group.label }}
+                                {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
+                            </span>
+                        </div>
+                    {% else %}
+                        <button class="filter-acc__head" type="button" @click="open = !open">
+                            <span class="filter-acc__label">
+                                {{ group.label }}
+                                {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
+                            </span>
+                            <span class="filter-acc__chev" :class="open && 'is-open'"></span>
+                        </button>
+                    {% endif %}
+                    <div class="filter-acc__body" {% if not group.plain %}x-cloak x-show="open"{% endif %}>
+                        {% if group.kind == "text" %}
+                            <input class="field" type="text" inputmode="numeric" name="{{ group.name }}" value="{{ group.value }}" placeholder="{{ group.placeholder }}">
+                        {% elif group.kind == "saved" %}
+                            <ul class="saved-list">
+                                {% for option in group.options %}
+                                    <li>
+                                        <label>
+                                            <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                            <span class="saved-list__name">{{ option.label }}</span>
+                                            <span class="saved-list__status">{% status_chip option.status_code %}</span>
+                                        </label>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% elif group.kind == "age" %}
+                            <div class="age-slider" dir="rtl">
+                                <p class="age-slider__readout"><span>از <b data-age="from">{{ group.start }}</b></span><span>تا <b data-age="to">{{ group.end }}</b></span></p>
+                                <div class="age-slider__track">
+                                    <span class="age-slider__rail"></span>
+                                    <span class="age-slider__fill"></span>
+                                    <input type="range" name="age_from" min="{{ group.floor }}" max="{{ group.ceiling }}" value="{{ group.start }}" step="1" oninput="ageSlide(this)">
+                                    <input type="range" name="age_to" min="{{ group.floor }}" max="{{ group.ceiling }}" value="{{ group.end }}" step="1" oninput="ageSlide(this)">
+                                </div>
+                            </div>
+                        {% else %}
+                            {% if group.find %}
+                                <input class="filter-find" type="search" placeholder="جستجو" x-model="q" @change.stop @keydown.enter.prevent autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                            {% endif %}
+                            <div class="filter-boxes{% if group.find %} is-find{% endif %}" x-data="{ all: {% if group.selected %}false{% else %}true{% endif %} }" @change="all = !$event.target.closest('.filter-boxes').querySelector('input:checked')">
+                                <button class="filter-box{% if not group.selected %} is-on{% endif %}" type="button" :class="{ 'is-on': all }" @click="all = true; var form = $el.closest('form'); $el.parentElement.querySelectorAll('input').forEach(function (input) { input.checked = false }); form.requestSubmit()">همه</button>
+                                {% for option in group.options %}
+                                    <label class="filter-box{% if not group.find and forloop.counter > 6 %} is-extra{% endif %}" data-option {% if group.find %}x-show="!q || $el.textContent.includes(q)"{% elif forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
+                                        <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                        {{ option.label }}
+                                    </label>
+                                {% endfor %}
+                                {% if group.find %}
+                                    <p class="filter-find__empty" x-cloak x-show="q && Array.from($el.parentElement.querySelectorAll('[data-option]')).every(function (el) { return !el.textContent.includes(q); })">موردی پیدا نشد</p>
+                                {% elif group.options|length > 6 %}
+                                    <button class="filter-box" type="button" x-cloak x-show="!more" @click="more = true">موارد بیشتر</button>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+</aside>
+</div>
+<script>
+    function faAge(value) {
+        return String(value).replace(/[0-9]/g, function (digit) {
+            return "۰۱۲۳۴۵۶۷۸۹"[digit];
+        });
+    }
+    function ageSlide(input) {
+        var root = input.closest(".age-slider");
+        var from = root.querySelector("[name=age_from]");
+        var to = root.querySelector("[name=age_to]");
+        if (Number(from.value) > Number(to.value)) {
+            if (input === from) to.value = from.value;
+            else from.value = to.value;
+        }
+        from.style.zIndex = input === from ? "2" : "1";
+        to.style.zIndex = input === to ? "2" : "1";
+        var span = Number(from.max) - Number(from.min) || 1;
+        var fill = root.querySelector(".age-slider__fill");
+        fill.style.insetInlineStart = ((Number(from.value) - Number(from.min)) / span * 100) + "%";
+        fill.style.width = ((Number(to.value) - Number(from.value)) / span * 100) + "%";
+        root.querySelector("[data-age=from]").textContent = faAge(from.value);
+        root.querySelector("[data-age=to]").textContent = faAge(to.value);
+    }
+    document.querySelectorAll(".age-slider [name=age_from]").forEach(function (input) {
+        ageSlide(input);
+    });
+    document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form.querySelectorAll) return;
+        form.querySelectorAll(".age-slider").forEach(function (root) {
+            var from = root.querySelector("[name=age_from]");
+            var to = root.querySelector("[name=age_to]");
+            if (from.value === from.min && to.value === to.max) {
+                from.disabled = true;
+                to.disabled = true;
+            }
+        });
+    });
+</script>

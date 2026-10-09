@@ -374,8 +374,9 @@ class TestimonialAdmin(ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(StatusChipMixin, ModelAdmin):
-    list_display = ("title", "owner", "city", "art_name", "art_category", "status_chip", "opportunity_link")
-    list_filter = ("status", "art_category__art", "art_category", "city")
+    list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link")
+    list_filter = ("status", "featured", "art_category__art", "art_category", "city")
+    list_editable = ("featured",)
     search_fields = ("title", "owner__user__first_name", "owner__user__last_name", "owner__name", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("owner", "art_category", "lead_role", "city")
     list_select_related = ("owner", "city", "art_category")

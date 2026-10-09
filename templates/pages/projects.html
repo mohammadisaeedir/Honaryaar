@@ -6,23 +6,31 @@
 {% block og_description %}پروژه‌های تئاتر در هنریار. هر پروژه می‌تواند چند نقش باز داشته باشد.{% endblock %}
 
 {% block content %}
+    <div class="catalog-layout" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
+    <div class="catalog-intro">
     <h1 class="text-[28px] font-semibold leading-9">پروژه‌ها</h1>
     <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">هر پروژه می‌تواند چند نقش باز داشته باشد.</p>
-    <div class="list-tools" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
-        <form class="page-search" method="get" action="{% url 'projects' %}" role="search" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
+    </div>
+    <div class="catalog-body">
+    {% include "components/filters/drawer.html" with action=request.path %}
+    <div class="catalog-main">
+    <div class="list-tools">
+        <form class="page-search" method="get" action="{% url 'projects' %}" role="search" autocomplete="off" data-remember-search @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
             {% for value in filters.status %}<input type="hidden" name="status" value="{{ value }}">{% endfor %}
+            {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
             <label class="sr-only" for="projects-q">جستجو در پروژه‌ها</label>
-            <input class="field" id="projects-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام پروژه یا شهر" enterkeyhint="search">
+            <input class="field" id="projects-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام پروژه یا شهر" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
             {% include "components/filters/suggest.html" %}
         </form>
         {% include "components/filters/panel.html" with action=request.path %}
+        {% include "components/filters/sort.html" %}
     </div>
     {% include "components/skeleton/list.html" with kind="projects" %}
     <div class="live-pane">
     {% if projects %}
-        <div class="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div class="catalog-grid mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {% for project in projects %}
                 {% include "components/project/project_card.html" %}
             {% endfor %}
@@ -31,6 +39,9 @@
         <div class="mt-6">
             {% include "components/empty_state.html" with title="پروژه‌ای با این عبارت نیست" body="نام یا شهر را عوض کنید." %}
         </div>
-    {% endif %}
+        {% endif %}
+    </div>
+    </div>
+    </div>
     </div>
 {% endblock %}

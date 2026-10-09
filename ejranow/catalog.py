@@ -821,7 +821,9 @@ def age_group(floor, ceiling, start, end, active):
         "ceiling": ceiling,
         "start": start,
         "end": end,
-        "open": active,
+        "open": True,
+        "plain": True,
+        "find": False,
         "more": False,
         "options": [],
         "selected": 1 if active else 0,
@@ -875,6 +877,7 @@ def _artist_dict(profile):
             {"title": credit.title, "role": credit.role_name, "year": credit.year}
             for credit in profile.credits.all()
         ],
+        "pk": profile.pk,
         "status": profile.status,
         "media": [
             {"kind": MEDIA_LABEL.get(item.kind, item.kind), "label": item.label}
@@ -905,9 +908,17 @@ def _profile_name(profile):
     return profile.public_name()
 
 
+def is_urgent(start, today=None):
+    if start is None:
+        return False
+    today = today or date.today()
+    return 0 <= (start - today).days < 14
+
+
 def _project_dict(project):
     art = project.art_category.art if project.art_category_id else ""
     return {
+        "pk": project.pk,
         "slug": project.slug,
         "title": project.title,
         "city": project.city.title if project.city_id else "",
@@ -917,6 +928,9 @@ def _project_dict(project):
         "art_title": project.art_category.get_art_display() if project.art_category_id else "",
         "production": project.art_category.title if project.art_category_id else "",
         "summary": project.summary,
+        "start_date": project.start_date,
+        "urgent": is_urgent(project.start_date),
+        "featured": project.featured,
         "status": project.get_status_display(),
         "status_code": project.status,
         "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
@@ -925,6 +939,7 @@ def _project_dict(project):
 
 def _opportunity_dict(item):
     return {
+        "pk": item.pk,
         "slug": item.slug,
         "title": item.title,
         "project": item.project.slug,
@@ -942,6 +957,7 @@ def _opportunity_dict(item):
         "pay_note": item.pay_note,
         "dates": format_date_range(item.start_date, item.end_date),
         "deadline": format_date(item.deadline),
+        "deadline_on": item.deadline,
         "description": item.description,
         "requirements": item.requirements or [],
         "status": item.status,
@@ -971,6 +987,21 @@ def _projects():
     quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
     projects = Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).select_related("owner", "owner__user", "art_category", "lead_role", "city").prefetch_related(
         Prefetch("testimonials", queryset=quotes)
+    )
+    return [_project_dict(item) for item in projects]
+
+
+def latest_projects(limit=5):
+    from django.db.models import Prefetch
+
+    from ejranow.models import PUBLIC_PROJECT_STATUSES, Project, Testimonial
+
+    quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
+    projects = (
+        Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
+        .select_related("owner", "owner__user", "art_category", "lead_role", "city")
+        .prefetch_related(Prefetch("testimonials", queryset=quotes))
+        .order_by("-pk")[:limit]
     )
     return [_project_dict(item) for item in projects]
 
@@ -1042,7 +1073,77 @@ def _picked(value):
     return {str(item) for item in value if item not in (None, "")}
 
 
-def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark=""):
+SORTS = {
+    "artists": (
+        ("new", "جدیدترین"),
+        ("name", "نام"),
+        ("young", "جوان‌ترین"),
+        ("experienced", "باتجربه‌ترین"),
+    ),
+    "projects": (
+        ("new", "جدیدترین"),
+        ("title", "عنوان"),
+        ("start", "نزدیک‌ترین آغاز"),
+        ("featured", "ویژه‌ها اول"),
+    ),
+    "opportunities": (
+        ("new", "جدیدترین"),
+        ("deadline", "نزدیک‌ترین مهلت"),
+        ("title", "عنوان"),
+        ("paid", "پرداختی‌ها اول"),
+    ),
+}
+
+
+def sort_state(request, kind):
+    options = SORTS[kind]
+    allowed = {key for key, _label in options}
+    current = request.GET.get("sort", "")
+    if current not in allowed:
+        current = options[0][0]
+    rows = []
+    for key, label in options:
+        query = request.GET.copy()
+        query["sort"] = key
+        rows.append(
+            {
+                "key": key,
+                "label": label,
+                "href": f"?{query.urlencode()}",
+                "selected": key == current,
+            }
+        )
+    label = next(text for key, text in options if key == current)
+    return current, label, rows
+
+
+def _apply_sort(items, kind, sort):
+    if kind == "artists":
+        if sort == "name":
+            return sorted(items, key=lambda item: item["legal_name"])
+        if sort == "young":
+            return sorted(items, key=lambda item: (item["age"] is None, item["age"] if item["age"] is not None else 0))
+        if sort == "experienced":
+            return sorted(items, key=lambda item: (-len(item["credits"]), item["age"] is None, -(item["age"] or 0)))
+        return sorted(items, key=lambda item: -item["pk"])
+    if kind == "projects":
+        if sort == "title":
+            return sorted(items, key=lambda item: item["title"])
+        if sort == "start":
+            return sorted(items, key=lambda item: (item["start_date"] is None, item["start_date"] or date.max))
+        if sort == "featured":
+            return sorted(items, key=lambda item: (not item["featured"], -item["pk"]))
+        return sorted(items, key=lambda item: -item["pk"])
+    if sort == "deadline":
+        return sorted(items, key=lambda item: (item["deadline_on"] is None, item["deadline_on"] or date.max))
+    if sort == "title":
+        return sorted(items, key=lambda item: item["title"])
+    if sort == "paid":
+        return sorted(items, key=lambda item: (not item["paid"], -item["pk"]))
+    return sorted(items, key=lambda item: -item["pk"])
+
+
+def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark="", sort=""):
     cities = _picked(city)
     roles = _picked(role)
     arts = _picked(art)
@@ -1067,7 +1168,7 @@ def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gen
         ]
     if q:
         items = [item for item in items if _contains(_artist_text(item), q)]
-    return items
+    return _apply_sort(items, "artists", sort)
 
 
 def _age_overlaps(item, start, end):
@@ -1133,12 +1234,13 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
     return True
 
 
-def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status=""):
-    return [
+def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status="", sort=""):
+    items = [
         item
         for item in _opportunities()
         if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status)
     ]
+    return _apply_sort(items, "opportunities", sort)
 
 
 def opportunity_facets():
@@ -1216,7 +1318,7 @@ def _project_text(project):
     )
 
 
-def list_projects(q="", city="", art="", status=""):
+def list_projects(q="", city="", art="", status="", sort=""):
     cities = _picked(city)
     arts = _picked(art)
     statuses = _picked(status)
@@ -1229,7 +1331,7 @@ def list_projects(q="", city="", art="", status=""):
         items = [item for item in items if item["status_code"] in statuses]
     if q:
         items = [item for item in items if _contains(_project_text(item), q)]
-    return items
+    return _apply_sort(items, "projects", sort)
 
 
 OPPORTUNITY_QUICK = [
@@ -1271,6 +1373,10 @@ def arts():
     return arts_in_use()
 
 
+_PLAIN_FILTERS = {"status", "art", "gender", "paid"}
+_FIND_FILTERS = {"city", "role"}
+
+
 def choice_group(name, label, pairs, selected):
     picked = _picked(selected)
     options = []
@@ -1281,13 +1387,17 @@ def choice_group(name, label, pairs, selected):
         options.append({"value": value, "label": text, "selected": is_selected})
         if is_selected and first is None:
             first = len(options) - 1
+    plain = name in _PLAIN_FILTERS
+    find = name in _FIND_FILTERS and len(options) > 5
     return {
         "name": name,
         "label": label,
         "kind": "choice",
         "options": options,
-        "open": first is not None,
-        "more": first is not None and first >= 6,
+        "open": True if plain else first is not None,
+        "plain": plain,
+        "find": find,
+        "more": first is not None and first >= 6 and not find,
         "selected": sum(1 for option in options if option["selected"]),
     }
 
@@ -1328,7 +1438,7 @@ def filter_chips(request, specs):
     return chips
 
 
-def clear_filters_href(request, keep=("q",)):
+def clear_filters_href(request, keep=("q", "sort")):
     query = request.GET.copy()
     for key in list(query.keys()):
         if key not in keep:

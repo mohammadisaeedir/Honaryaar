@@ -153,6 +153,7 @@ def project_new(request):
             city=form.cleaned_data["city"],
             art_category=form.cleaned_data["art_category"],
             summary=form.cleaned_data["summary"],
+            start_date=form.cleaned_data["start_date"],
             status=form.cleaned_data["status"],
         )
         messages.success(request, f"پروژه «{project.title}» ساخته شد.")
@@ -182,6 +183,7 @@ def project_manage(request, slug):
             "city": project.city_id,
             "art_category": project.art_category_id,
             "summary": project.summary,
+            "start_date": project.start_date,
             "status": project.status,
         },
     )
@@ -198,8 +200,9 @@ def project_manage(request, slug):
             project.city = project_form.cleaned_data["city"]
             project.art_category = project_form.cleaned_data["art_category"]
             project.summary = project_form.cleaned_data["summary"]
+            project.start_date = project_form.cleaned_data["start_date"]
             project.status = project_form.cleaned_data["status"]
-            project.save(update_fields=["title", "city", "art_category", "summary", "status"])
+            project.save(update_fields=["title", "city", "art_category", "summary", "start_date", "status"])
             messages.success(request, "پروژه ذخیره شد.")
             return redirect(_project_step(project.slug))
         if action == "opportunity-city":

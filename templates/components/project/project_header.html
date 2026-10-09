@@ -3,12 +3,13 @@
     <p class="text-sm leading-[22px] text-muted-foreground"><span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span> · {{ project.city }}</p>
     <div class="pdp-title mt-2">
         <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
-        <div class="pdp-actions">
-        {% include "components/share.html" with title=project.title %}
-        <button class="report-link" type="button" @click="$dispatch('open-report')">گزارش</button>
-        </div>
+        {% include "components/pdp_actions.html" with kind="project" slug=project.slug title=project.title %}
     </div>
     <p class="mt-3 max-w-2xl text-sm leading-[22px]">{{ project.summary }}</p>
     <p class="mt-4 text-sm leading-[22px] text-muted-foreground">{% if project.lead %}{{ project.lead }} · {% endif %}{{ project.lead_role|role_title }}</p>
-    <div class="mt-3">{% status_chip project.status_code %}</div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+        {% status_chip project.status_code %}
+        {% if project.urgent %}<span class="project-tag project-tag--urgent">فوری</span>{% endif %}
+        {% if project.featured %}<span class="project-tag project-tag--featured">ویژه</span>{% endif %}
+    </div>
 </header>

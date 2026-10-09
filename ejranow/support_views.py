@@ -98,6 +98,7 @@ def _report(request, *, back, target, obj):
         )
         open_thread(ticket)
         request.session.pop("report_draft", None)
+        messages.success(request, "گزارش ثبت شد.")
         return redirect(f"{back}?reported=1")
     request.session["report_draft"] = {
         "target": target,

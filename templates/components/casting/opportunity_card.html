@@ -1,7 +1,10 @@
 {% load ejranow_ui %}
 {% with project=opportunity.project|project_of %}
 {% url 'opportunity' opportunity.slug as opportunity_url %}
-<a class="role-card" href="{{ opportunity_url }}">
-    {% include "components/casting/role_card.html" %}
-</a>
+<article class="role-card {{ card_class }}">
+    <a class="role-card__link" href="{{ opportunity_url }}">
+        {% include "components/casting/role_card.html" %}
+    </a>
+    {% include "components/card_mark.html" with kind="opportunity" slug=opportunity.slug title=opportunity.title marks=bookmarked_opportunities %}
+</article>
 {% endwith %}

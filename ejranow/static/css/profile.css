@@ -39,6 +39,8 @@ body.account-page main.account-main {
     padding: 8px 16px 0;
 }
 
+.pf-topbar__back .icon { transform: scaleX(-1); }
+
 .pf-topbar__back {
     display: inline-flex;
     align-items: center;

@@ -39,43 +39,24 @@
 <body class="{% block body_class %}min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}" x-data="{ searchOpen: false }" @keydown.escape.window="searchOpen = false" @keydown.window="if (!$event.repeat && !$event.altKey && !$event.shiftKey && $event.key.toLowerCase() === 'k' && (document.documentElement.dataset.os === 'mac' ? $event.metaKey && !$event.ctrlKey : $event.ctrlKey && !$event.metaKey)) { $event.preventDefault(); searchOpen = true }" :class="{ 'is-search-open': searchOpen }">
     {% include "components/layout/header.html" %}
     {% if messages %}
-        <div class="toasts">
-            {% for message in messages %}
-                <div class="toast" data-toast role="status">
-                    <p>{{ message }}</p>
-                    <button type="button" data-toast-close aria-label="بستن">{% include "components/icon.html" with name="x" size="16" %}</button>
-                </div>
-            {% endfor %}
-        </div>
-        <script>
-            document.querySelectorAll("[data-toast]").forEach(function (toast) {
-                function close() {
-                    if (toast.classList.contains("is-out")) return;
-                    toast.classList.add("is-out");
-                    window.setTimeout(function () { toast.remove(); }, 180);
-                }
-                toast.querySelector("[data-toast-close]").addEventListener("click", close);
-                window.setTimeout(close, 4200);
-            });
-        </script>
+        <script type="application/json" id="server-toasts">[{% for message in messages %}"{{ message|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]</script>
     {% endif %}
-    <main class="{% block main_class %}mx-auto w-full min-w-0 max-w-5xl px-4 pb-24 pt-8 md:pb-16{% endblock %}">
+    <main class="{% block main_class %}site-main mx-auto w-full min-w-0 px-4 pb-24 pt-8 md:pb-16{% endblock %}">
         {% block content %}{% endblock %}
     </main>
+    {% block before_footer %}{% endblock %}
     {% block site_footer %}{% include "components/layout/footer.html" %}{% endblock %}
-    <div x-data="{ removeOpen: false, removeStep: 1, removeTitle: '', removeForm: null }" @bookmark-remove.window="removeOpen = true; removeStep = 1; removeTitle = $event.detail.title; removeForm = $event.detail.form" x-effect="document.body.classList.toggle('pf-logout-open', removeOpen)" @keydown.escape.window="removeOpen = false">
+    <div x-data="{ removeOpen: false, removeTitle: '', removeForm: null }" @bookmark-remove.window="removeOpen = true; removeTitle = $event.detail.title; removeForm = $event.detail.form" x-effect="document.body.classList.toggle('pf-logout-open', removeOpen)" @keydown.escape.window="removeOpen = false">
         <div class="pf-logoutDialog" x-show="removeOpen" x-cloak @click.self="removeOpen = false">
             <div class="pf-logoutDialog__backdrop" @click="removeOpen = false"></div>
             <div class="pf-logoutDialog__sheet" role="dialog" aria-modal="true" aria-labelledby="bookmark-remove-title" tabindex="-1">
                 <div class="pf-logoutDialog__handle" aria-hidden="true"></div>
                 <div class="pf-logoutDialog__body">
                     <h2 id="bookmark-remove-title" class="pf-logoutDialog__title">حذف از نشان‌شده‌ها</h2>
-                    <p class="pf-logoutDialog__text" x-show="removeStep === 1">آیا می‌خواهید «<span x-text="removeTitle"></span>» از نشان‌شده‌ها حذف شود؟</p>
-                    <p class="pf-logoutDialog__text" x-show="removeStep === 2" x-cloak>برای حذف دوباره تأیید کنید.</p>
+                    <p class="pf-logoutDialog__text">آیا می‌خواهید «<span x-text="removeTitle"></span>» از نشان‌شده‌ها حذف شود؟</p>
                 </div>
                 <div class="pf-logoutDialog__actions" dir="ltr">
-                    <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" x-show="removeStep === 1" @click="removeStep = 2">ادامه</button>
-                    <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" x-show="removeStep === 2" x-cloak @click="removeForm.submit()">حذف</button>
+                    <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" @click="removeOpen = false; removeForm.requestSubmit()">حذف</button>
                     <button class="pf-logoutDialog__btn pf-logoutDialog__btn--ghost" type="button" @click="removeOpen = false">انصراف</button>
                 </div>
             </div>
@@ -89,6 +70,58 @@
     <template id="skel-src-artist">{% include "components/skeleton/artist_page.html" %}</template>
     <template id="skel-src-project">{% include "components/skeleton/project_page.html" %}</template>
     <script>
+        (function () {
+            var limit = 3;
+            var pending = [];
+            function host() {
+                var node = document.querySelector(".toasts");
+                if (!node) {
+                    node = document.createElement("div");
+                    node.className = "toasts";
+                    document.body.appendChild(node);
+                }
+                return node;
+            }
+            function shown() {
+                return host().querySelectorAll(".toast").length;
+            }
+            function dismiss(toast) {
+                if (!toast || toast.classList.contains("is-out")) return;
+                toast.classList.add("is-out");
+                window.setTimeout(function () {
+                    toast.remove();
+                    drain();
+                }, 180);
+            }
+            function mount(message) {
+                var toast = document.createElement("div");
+                toast.className = "toast";
+                toast.setAttribute("role", "status");
+                var text = document.createElement("p");
+                text.textContent = message;
+                var closeBtn = document.createElement("button");
+                closeBtn.type = "button";
+                closeBtn.setAttribute("aria-label", "بستن");
+                closeBtn.textContent = "×";
+                closeBtn.addEventListener("click", function () { dismiss(toast); });
+                toast.append(text, closeBtn);
+                host().appendChild(toast);
+                window.setTimeout(function () { dismiss(toast); }, 4200);
+            }
+            function drain() {
+                while (pending.length && shown() < limit) mount(pending.shift());
+            }
+            window.showToast = function (message) {
+                if (!message) return;
+                if (shown() < limit) mount(message);
+                else pending.push(String(message));
+            };
+            var server = document.getElementById("server-toasts");
+            if (server) {
+                try { JSON.parse(server.textContent).forEach(window.showToast); } catch (error) {}
+                server.remove();
+            }
+        })();
         function revealPage() { document.documentElement.classList.remove("is-booting"); }
         if (document.readyState === "complete") revealPage();
         else window.addEventListener("load", revealPage);
@@ -119,12 +152,133 @@
             var action = form.getAttribute("action") || location.pathname;
             var path = "";
             try { path = new URL(action, location.href).pathname; } catch (error) { return; }
-            if (/\/(report|bookmark)\/$/.test(path)) return;
+            if (/\/(report|bookmark)\/$/.test(path) || /\/me\/bookmarks\/\d+\/$/.test(path)) return;
             if (/^\/(opportunities|artists|projects)(\/|$)/.test(path)) document.documentElement.classList.add("is-booting");
+        }, true);
+        document.addEventListener("submit", function (event) {
+            var form = event.target;
+            if (!form || !form.action) return;
+            var path = "";
+            try { path = new URL(form.action, location.href).pathname; } catch (error) { return; }
+            if (!/\/bookmark\/$/.test(path) && !/\/me\/bookmarks\/\d+\/$/.test(path)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            var button = form.querySelector("button");
+            if (button) button.disabled = true;
+            fetch(form.action, {
+                method: "POST",
+                body: new FormData(form),
+                headers: { "X-Requested-With": "fetch", "Accept": "application/json" },
+                credentials: "same-origin",
+            }).then(function (response) {
+                if (response.redirected) {
+                    location.href = response.url;
+                    return null;
+                }
+                if (!response.ok) throw new Error("bookmark");
+                return response.json();
+            }).then(function (data) {
+                if (!data) return;
+                var mark = form.querySelector(".card-mark__btn, .pdp-action");
+                if (mark) {
+                    mark.classList.toggle("is-on", data.saved);
+                    mark.setAttribute("aria-pressed", data.saved ? "true" : "false");
+                    mark.setAttribute("aria-label", data.saved ? "حذف از نشان‌شده‌ها" : "نشان کردن");
+                    var label = mark.querySelector("span");
+                    if (label) label.textContent = data.saved ? "نشان شده" : "نشان کردن";
+                }
+                var row = form.closest("li");
+                if (row && /\/me\/bookmarks\/\d+\/$/.test(path)) {
+                    var list = row.parentElement;
+                    row.remove();
+                    var tab = document.querySelector("[data-saved-count]");
+                    if (tab) {
+                        var count = Math.max(0, Number(tab.getAttribute("data-saved-count")) - 1);
+                        tab.setAttribute("data-saved-count", String(count));
+                        tab.textContent = "نشان‌شده‌ها (" + String(count).replace(/[0-9]/g, function (digit) { return "۰۱۲۳۴۵۶۷۸۹"[digit]; }) + ")";
+                    }
+                    if (list && !list.children.length) {
+                        var empty = document.createElement("p");
+                        empty.className = "pf-empty";
+                        empty.textContent = "هنوز کسی را نشان نکرده‌اید.";
+                        list.replaceWith(empty);
+                    }
+                }
+                window.showToast(data.message);
+            }).catch(function () {
+                window.showToast("نشان‌کردن انجام نشد.");
+            }).finally(function () {
+                if (button) button.disabled = false;
+            });
         }, true);
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("{% url 'service-worker' %}");
         }
+        (function () {
+            var key = "ejranow-recent-searches";
+            function read() {
+                try {
+                    var items = JSON.parse(localStorage.getItem(key) || "[]");
+                    return Array.isArray(items) ? items.filter(function (item) { return typeof item === "string" && item; }) : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+            function write(items) {
+                localStorage.setItem(key, JSON.stringify(items.slice(0, 8)));
+            }
+            function paint() {
+                var items = read();
+                document.querySelectorAll(".search-recent").forEach(function (block) {
+                    var list = block.querySelector("[data-recent-list]");
+                    list.replaceChildren();
+                    block.hidden = !items.length;
+                    items.forEach(function (query) {
+                        var chip = document.createElement("span");
+                        chip.className = "search-recent__chip";
+                        var link = document.createElement("a");
+                        link.href = "#";
+                        link.textContent = query;
+                        var remove = document.createElement("button");
+                        remove.type = "button";
+                        remove.setAttribute("aria-label", "حذف");
+                        remove.textContent = "×";
+                        link.addEventListener("click", function (event) {
+                            event.preventDefault();
+                            var form = block.closest("form") || block.parentElement.querySelector("form");
+                            var input = form && form.querySelector("input[name=q]");
+                            if (!input) return;
+                            input.removeAttribute("readonly");
+                            input.value = query;
+                            form.requestSubmit();
+                        });
+                        remove.addEventListener("click", function () {
+                            write(read().filter(function (item) { return item !== query; }));
+                            paint();
+                        });
+                        chip.append(link, remove);
+                        list.appendChild(chip);
+                    });
+                });
+            }
+            document.addEventListener("submit", function (event) {
+                var form = event.target;
+                if (!form || !form.hasAttribute || !form.hasAttribute("data-remember-search")) return;
+                var input = form.querySelector("input[name=q]");
+                var value = input ? input.value.trim() : "";
+                if (!value) return;
+                var items = read().filter(function (item) { return item !== value; });
+                items.unshift(value);
+                write(items);
+            });
+            document.addEventListener("click", function (event) {
+                var button = event.target.closest && event.target.closest("[data-recent-clear]");
+                if (!button) return;
+                write([]);
+                paint();
+            });
+            paint();
+        })();
         (function () {
             var examples = ["مثلاً: بازیگر", "مثلاً: تهران", "مثلاً: گیتار", "مثلاً: طراح صحنه", "مثلاً: تئاتر"];
             var index = 0;

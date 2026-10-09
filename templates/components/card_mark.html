@@ -1,0 +1,20 @@
+{% if kind == "project" %}
+    {% url 'bookmark-project' slug as mark_action %}
+{% elif kind == "opportunity" %}
+    {% url 'bookmark-opportunity' slug as mark_action %}
+{% else %}
+    {% url 'bookmark-artist' slug as mark_action %}
+{% endif %}
+{% if request.user.is_authenticated %}
+    <form class="card-mark" method="post" action="{{ mark_action }}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="card-mark__btn{% if slug in marks %} is-on{% endif %}" type="submit" aria-pressed="{% if slug in marks %}true{% else %}false{% endif %}" aria-label="{% if slug in marks %}حذف از نشان‌شده‌ها{% else %}نشان کردن{% endif %}">
+            {% include "components/icon.html" with name="bookmark" size="16" %}
+        </button>
+    </form>
+{% else %}
+    <a class="card-mark card-mark__btn" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="نشان کردن">
+        {% include "components/icon.html" with name="bookmark" size="16" %}
+    </a>
+{% endif %}

@@ -176,6 +176,11 @@ class ProjectCreateForm(forms.Form):
         error_messages={"required": "نوع هنر را انتخاب کنید."},
     )
     summary = forms.CharField(required=False)
+    start_date = forms.DateField(
+        required=False,
+        input_formats=["%Y-%m-%d"],
+        widget=JalaliDateWidget(attrs={"class": "field jalali-date__text"}),
+    )
     status = forms.ChoiceField(
         choices=[(value, CHIP_LABELS[value]) for value, _label in ProjectStatus.choices],
         initial=ProjectStatus.DRAFT,

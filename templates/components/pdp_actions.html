@@ -1,0 +1,30 @@
+{% load ejranow_ui %}
+<div class="pdp-actions">
+    {% if kind == "project" %}
+        {% url 'bookmark-project' slug as bookmark_action %}
+    {% elif kind == "opportunity" %}
+        {% url 'bookmark-opportunity' slug as bookmark_action %}
+    {% else %}
+        {% url 'bookmark-artist' slug as bookmark_action %}
+    {% endif %}
+    {% if request.user.is_authenticated %}
+        <form method="post" action="{{ bookmark_action }}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="pdp-action{% if saved %} is-on{% endif %}" type="submit" aria-pressed="{% if saved %}true{% else %}false{% endif %}">
+                {% include "components/icon.html" with name="bookmark" size="16" %}
+                <span>{% if saved %}نشان شده{% else %}نشان کردن{% endif %}</span>
+            </button>
+        </form>
+    {% else %}
+        <a class="pdp-action" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">
+            {% include "components/icon.html" with name="bookmark" size="16" %}
+            <span>نشان کردن</span>
+        </a>
+    {% endif %}
+    <button class="pdp-action" type="button" @click="$dispatch('open-report')">
+        {% include "components/icon.html" with name="flag" size="16" %}
+        <span>گزارش</span>
+    </button>
+    {% include "components/share.html" with title=title %}
+</div>

@@ -20,7 +20,7 @@
     <section class="mt-10">
         <h2 class="text-[22px] font-semibold leading-[30px]">نقش‌های باز</h2>
         {% if opportunities %}
-            <div class="mt-6 grid gap-4 md:grid-cols-2">
+            <div class="catalog-grid mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {% for opportunity in opportunities %}
                     {% include "components/casting/opportunity_card.html" %}
                 {% endfor %}

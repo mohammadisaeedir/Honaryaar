@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.templatetags.static import static
@@ -72,6 +72,9 @@ def home(request):
             "hero_fields": catalog.hero_fields(),
             "hero_roles": catalog.hero_roles(),
             "posts": catalog.HOME_POSTS,
+            "latest_projects": catalog.latest_projects(),
+            "bookmarked_projects": _bookmarked_slugs(request.user, "project"),
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
             "testimonials": catalog.featured_testimonials(),
             "home_json_ld": mark_safe(json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")),
             "join_cta": _join_cta(request.user),
@@ -146,8 +149,59 @@ def bookmark_rows(user):
     return rows
 
 
-def _bookmarked_slugs(user):
-    return [row["slug"] for row in bookmark_rows(user) if row["kind"] == "profile"]
+def _bookmarked_slugs(user, kind="profile"):
+    return [row["slug"] for row in bookmark_rows(user) if row["kind"] == kind]
+
+
+def _is_bookmarked(user, model, slug):
+    if not getattr(user, "is_authenticated", False):
+        return False
+    from django.contrib.contenttypes.models import ContentType
+
+    from ejranow.models import Bookmark
+
+    obj = model.objects.filter(slug=slug).only("pk").first()
+    if obj is None:
+        return False
+    return Bookmark.objects.filter(
+        user=user,
+        content_type=ContentType.objects.get_for_model(model),
+        object_id=obj.pk,
+    ).exists()
+
+
+def _bookmark_wants_json(request):
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def _bookmark_result(request, saved, message, fallback):
+    if _bookmark_wants_json(request):
+        return JsonResponse({"saved": saved, "message": message})
+    messages.success(request, message)
+    nxt = request.POST.get("next", "")
+    if not nxt.startswith("/") or nxt.startswith("//"):
+        nxt = fallback
+    return redirect(nxt)
+
+
+def _toggle_bookmark(request, model, slug, fallback):
+    from django.contrib.contenttypes.models import ContentType
+
+    from ejranow.models import Bookmark
+
+    obj = get_object_or_404(model, slug=slug)
+    content_type = ContentType.objects.get_for_model(model)
+    bookmark = Bookmark.objects.filter(
+        user=request.user,
+        content_type=content_type,
+        object_id=obj.pk,
+    ).first()
+    name = _bookmark_name(obj, content_type.model)
+    if bookmark:
+        bookmark.delete()
+        return _bookmark_result(request, False, f"{name} از نشان‌شده‌ها حذف شد.", fallback)
+    Bookmark.objects.create(user=request.user, content_type=content_type, object_id=obj.pk)
+    return _bookmark_result(request, True, f"{name} به نشان‌شده‌ها اضافه شد.", fallback)
 
 
 def _age_filter(request, bounds):
@@ -218,13 +272,18 @@ def artist_list(request):
     )
     if age:
         groups.append(age)
+    sort, sort_label, sort_options = catalog.sort_state(request, "artists")
+    filters["sort"] = sort
     return render(
         request,
         "pages/artists.html",
         {
             "artists": catalog.list_artists(**filters),
+            "sort_label": sort_label,
+            "sort_options": sort_options,
             "filters": filters,
             "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
+            "filters_on": any(group.get("selected") for group in groups),
             "quick": catalog.filter_chips(request, catalog.artist_quick()),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked": _bookmarked_slugs(request.user),
@@ -235,28 +294,25 @@ def artist_list(request):
 @login_required
 @require_POST
 def bookmark_artist(request, slug):
-    from django.contrib.contenttypes.models import ContentType
+    from ejranow.models import Profile
 
-    from ejranow.models import Bookmark, Profile
+    return _toggle_bookmark(request, Profile, slug, reverse("artists"))
 
-    profile = get_object_or_404(Profile, slug=slug)
-    profile_type = ContentType.objects.get_for_model(Profile)
-    bookmark = Bookmark.objects.filter(
-        user=request.user,
-        content_type=profile_type,
-        object_id=profile.pk,
-    ).first()
-    name = _bookmark_name(profile, "profile")
-    if bookmark:
-        bookmark.delete()
-        messages.success(request, f"{name} از نشان‌شده‌ها حذف شد.")
-    else:
-        Bookmark.objects.create(user=request.user, content_type=profile_type, object_id=profile.pk)
-        messages.success(request, f"{name} به نشان‌شده‌ها اضافه شد.")
-    nxt = request.POST.get("next", "")
-    if not nxt.startswith("/") or nxt.startswith("//"):
-        nxt = reverse("artists")
-    return redirect(nxt)
+
+@login_required
+@require_POST
+def bookmark_project(request, slug):
+    from ejranow.models import Project
+
+    return _toggle_bookmark(request, Project, slug, reverse("projects"))
+
+
+@login_required
+@require_POST
+def bookmark_opportunity(request, slug):
+    from ejranow.models import Opportunity
+
+    return _toggle_bookmark(request, Opportunity, slug, reverse("opportunities"))
 
 
 @login_required
@@ -267,14 +323,12 @@ def bookmark_remove(request, pk):
     bookmark = get_object_or_404(Bookmark, pk=pk, user=request.user)
     name = _bookmark_name(bookmark.target, bookmark.content_type.model)
     bookmark.delete()
-    messages.success(request, f"{name} از نشان‌شده‌ها حذف شد.")
-    nxt = request.POST.get("next", "")
-    if not nxt.startswith("/") or nxt.startswith("//"):
-        nxt = reverse("me-collaborations")
-    return redirect(nxt)
+    return _bookmark_result(request, False, f"{name} از نشان‌شده‌ها حذف شد.", reverse("me-collaborations"))
 
 
 def artist_detail(request, slug):
+    from ejranow.models import Profile
+
     artist = catalog.artist_by_slug(slug)
     if artist is None:
         raise Http404
@@ -283,6 +337,7 @@ def artist_detail(request, slug):
         "pages/artist.html",
         {
             "artist": artist,
+            "saved": _is_bookmarked(request.user, Profile, slug),
             "report_title": artist["name"],
             "report_action": reverse("report-artist", args=[slug]),
             **report_page_state(request, f"artist:{slug}"),
@@ -332,15 +387,21 @@ def opportunity_list(request):
     ]
     if bounds:
         groups.append(catalog.age_group(floor, ceiling, start, end, age_active))
+    sort, sort_label, sort_options = catalog.sort_state(request, "opportunities")
+    filters["sort"] = sort
     return render(
         request,
         "pages/opportunities.html",
         {
             "opportunities": catalog.list_opportunities(**filters),
+            "sort_label": sort_label,
+            "sort_options": sort_options,
             "filters": filters,
             "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
+            "filters_on": any(group.get("selected") for group in groups),
             "quick": catalog.filter_chips(request, catalog.opportunity_quick(facets)),
             "clear_href": catalog.clear_filters_href(request),
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
         },
     )
 
@@ -368,6 +429,7 @@ def opportunity_detail(request, slug):
             "project": project,
             "application": application,
             "is_owner": is_owner,
+            "saved": _is_bookmarked(request.user, Opportunity, slug),
             "report_title": opportunity["title"],
             "report_action": reverse("report-opportunity", args=[slug]),
             **report_page_state(request, f"opportunity:{slug}"),
@@ -382,33 +444,42 @@ def project_list(request):
         "art": _picked(request, "art"),
         "status": _picked(request, "status"),
     }
+    sort, sort_label, sort_options = catalog.sort_state(request, "projects")
+    filters["sort"] = sort
+    groups = [
+        catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
+        catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
+        catalog.choice_group(
+            "art",
+            "هنر",
+            [(item["slug"], item["title"]) for item in catalog.arts()],
+            filters["art"],
+        ),
+    ]
     return render(
         request,
         "pages/projects.html",
         {
             "projects": catalog.list_projects(**filters),
+            "sort_label": sort_label,
+            "sort_options": sort_options,
             "filters": filters,
-            "groups": [
-                catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
-                catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
-                catalog.choice_group(
-                    "art",
-                    "هنر",
-                    [(item["slug"], item["title"]) for item in catalog.arts()],
-                    filters["art"],
-                ),
-            ],
+            "groups": groups,
+            "filters_on": any(group.get("selected") for group in groups),
             "quick": catalog.filter_chips(
                 request,
                 [("تهران", {"city": "تهران"})]
                 + [(item["title"], {"art": item["slug"]}) for item in catalog.arts()],
             ),
             "clear_href": catalog.clear_filters_href(request),
+            "bookmarked_projects": _bookmarked_slugs(request.user, "project"),
         },
     )
 
 
 def project_detail(request, slug):
+    from ejranow.models import Project
+
     project = catalog.project_by_slug(slug)
     if project is None:
         raise Http404
@@ -417,7 +488,9 @@ def project_detail(request, slug):
         "pages/project.html",
         {
             "project": project,
+            "saved": _is_bookmarked(request.user, Project, slug),
             "opportunities": catalog.opportunities_for_project(slug),
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
             "report_title": project["title"],
             "report_action": reverse("report-project", args=[slug]),
             **report_page_state(request, f"project:{slug}"),
@@ -536,6 +609,8 @@ def search(request):
             "opportunities": opportunities,
             "projects": projects,
             "bookmarked": _bookmarked_slugs(request.user),
+            "bookmarked_projects": _bookmarked_slugs(request.user, "project"),
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
         },
     )
 

@@ -1,5 +1,6 @@
 <div class="search-suggest" x-cloak x-show="suggest" @mousedown.prevent>
-    <p class="search-suggest__title">جستجوهای محبوب</p>
+    {% include "components/filters/recent.html" %}
+    <p class="search-suggest__title">{% include "components/icon.html" with name="search" size="16" %}جستجوهای محبوب</p>
     <div class="search-suggest__chips">
         {% for chip in quick %}
             <a href="{{ chip.href }}">{{ chip.label }}</a>

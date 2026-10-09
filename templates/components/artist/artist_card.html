@@ -3,19 +3,6 @@
     <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
         <span class="artist-tile__face">{% include "components/icon.html" with name="user" size="40" %}</span>
     </a>
-    {% if request.user.is_authenticated %}
-        <form class="artist-tile__mark" method="post" action="{% url 'bookmark-artist' artist.slug %}">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button type="button" class="{% if artist.slug in bookmarked %}is-on{% endif %}" data-title="{{ artist.legal_name }}" aria-pressed="{% if artist.slug in bookmarked %}true{% else %}false{% endif %}" aria-label="{% if artist.slug in bookmarked %}حذف از نشان‌شده‌ها{% else %}نشان کردن{% endif %}" @click="if (!$el.classList.contains('is-on')) { $el.closest('form').submit() } else { $dispatch('bookmark-remove', { title: $el.dataset.title, form: $el.closest('form') }) }">
-                {% include "components/icon.html" with name="bookmark" size="18" %}
-            </button>
-        </form>
-    {% else %}
-        <a class="artist-tile__mark" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="نشان کردن">
-            {% include "components/icon.html" with name="bookmark" size="18" %}
-        </a>
-    {% endif %}
     <div class="artist-tile__body">
         <h3 class="artist-tile__name"><a href="{% url 'artist' artist.slug %}">{{ artist.legal_name }}</a></h3>
         {% status_chip artist.status %}
@@ -26,5 +13,6 @@
                 {% endfor %}
             </ul>
         {% endif %}
+        {% include "components/card_mark.html" with kind="profile" slug=artist.slug title=artist.legal_name marks=bookmarked %}
     </div>
 </article>

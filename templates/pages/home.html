@@ -8,6 +8,7 @@
 {% block structured_data %}<script type="application/ld+json">{{ home_json_ld }}</script>{% endblock %}
 
 {% block body_class %}home-page min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}
+{% block main_class %}site-main mx-auto w-full min-w-0 px-4 pt-8 pb-0{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
@@ -77,32 +78,25 @@
         </div>
         <div class="feature-row">
             {% for opportunity in opportunities %}
-                {% with project=opportunity.project|project_of %}
-                    <a class="feature-card role-card" href="{% url 'opportunity' opportunity.slug %}">
-                        {% include "components/casting/role_card.html" %}
-                    </a>
-                {% endwith %}
+                {% include "components/casting/opportunity_card.html" with card_class="feature-card" %}
             {% endfor %}
         </div>
     </section>
     {% endif %}
 
+    {% if latest_projects %}
     <section class="home-block">
-        <div class="join-card">
-            <div class="join-copy">
-                <h2>دیده شو، انتخاب شو.</h2>
-                <p>بازیگرها از همین‌جا به پروژه می‌رسند. نقش را ببین، نمونه کارت را بگذار، و برای همان نقش درخواست بده.</p>
-                <ul class="join-list">
-                    <li>{% include "components/icon.html" with name="user" size="20" %}چند نقش و مهارت در یک پروفایل.</li>
-                    <li>{% include "components/icon.html" with name="image" size="20" %}عکس، ویدیو و صوت برای نمونه کار.</li>
-                    <li>{% include "components/icon.html" with name="bell" size="20" %}فراخوان شهر و نقش، یک‌جا.</li>
-                    <li>{% include "components/icon.html" with name="smartphone" size="20" %}درخواست برای هر نقش، از همین صفحه.</li>
-                </ul>
-                <a class="hero-cta" href="{{ join_cta.href }}">{{ join_cta.label }}{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
-            </div>
-            <dotlottie-wc class="join-lottie" src="{% static 'home/honaryaar-theater.lottie' %}" autoplay loop></dotlottie-wc>
+        <div class="home-head">
+            <h2>آخرین پروژه‌ها</h2>
+            <a class="home-more" href="{% url 'projects' %}">مشاهده همه{% include "components/icon.html" with name="chevron-right" size="16" %}</a>
+        </div>
+        <div class="feature-row">
+            {% for project in latest_projects %}
+                <div class="home-project">{% include "components/project/project_card.html" %}</div>
+            {% endfor %}
         </div>
     </section>
+    {% endif %}
 
     <section class="home-block">
         <h2>تازه‌های مجله</h2>
@@ -133,4 +127,54 @@
             }, 2400);
         });
     </script>
+{% endblock %}
+
+{% block before_footer %}
+    <section class="home-faq">
+        <div class="home-faq__inner">
+            <h2>سوالات متداول</h2>
+            <div class="faq-list">
+                <details class="faq-item" open>
+                    <summary>هنریار چیست؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>جای دیدن فراخوان‌های تئاتر و پیدا کردن هنرمند است. نقش، شهر و پروژه را می‌بینید و برای همان نقش درخواست می‌دهید.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>چطور وارد شوم؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>با شماره موبایل. کد ورود برای همان شماره می‌آید و با آن حساب ساخته می‌شود.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>برای یک نقش چطور درخواست بدهم؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>فراخوان را باز کنید و درخواست را برای همان نقش بفرستید. اگر وارد نشده باشید، اول صفحه ورود می‌آید.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>پروژه و فراخوان چه فرقی دارند؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>پروژه کار کلی است و می‌تواند چند نقش داشته باشد. فراخوان همان نقش باز است که برایش درخواست می‌دهید.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>نشان کردن به چه کار می‌آید؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>هنرمند، پروژه یا فراخوان را برای خودتان نگه می‌دارید. صاحب پروژه برای دعوت، فقط از هنرمندهای نشان‌شده انتخاب می‌کند.</p>
+                </details>
+                <details class="faq-item">
+                    <summary>اگر اطلاعات یک صفحه غلط بود؟{% include "components/icon.html" with name="chevron-right" size="18" %}</summary>
+                    <p>از همان صفحه گزارش بدهید. گزارش ثبت می‌شود و بررسی‌اش می‌کنیم.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+    <section class="join-band">
+        <div class="join-card">
+            <div class="join-copy">
+                <h2>دیده شو، انتخاب شو.</h2>
+                <p>بازیگرها از همین‌جا به پروژه می‌رسند. نقش را ببین، نمونه کارت را بگذار، و برای همان نقش درخواست بده.</p>
+                <ul class="join-list">
+                    <li>{% include "components/icon.html" with name="user" size="20" %}چند نقش و مهارت در یک پروفایل.</li>
+                    <li>{% include "components/icon.html" with name="image" size="20" %}عکس، ویدیو و صوت برای نمونه کار.</li>
+                    <li>{% include "components/icon.html" with name="bell" size="20" %}فراخوان شهر و نقش، یک‌جا.</li>
+                    <li>{% include "components/icon.html" with name="smartphone" size="20" %}درخواست برای هر نقش، از همین صفحه.</li>
+                </ul>
+                <a class="hero-cta" href="{{ join_cta.href }}">{{ join_cta.label }}{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
+            </div>
+            <dotlottie-wc class="join-lottie" src="{% static 'home/honaryaar-theater.lottie' %}" autoplay loop></dotlottie-wc>
+        </div>
+    </section>
 {% endblock %}

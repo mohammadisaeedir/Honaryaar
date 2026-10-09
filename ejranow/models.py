@@ -306,6 +306,8 @@ class Project(models.Model):
         related_name="led_projects",
     )
     summary = models.TextField(blank=True)
+    start_date = models.DateField(null=True, blank=True, verbose_name="Start date")
+    featured = models.BooleanField(default=False, verbose_name="Featured")
     status = models.CharField(
         max_length=20,
         choices=ProjectStatus.choices,

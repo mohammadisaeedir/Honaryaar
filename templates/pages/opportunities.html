@@ -6,9 +6,15 @@
 {% block og_description %}فراخوان‌های هنری در هنریار. نقش، شهر و پروژه را یک‌جا ببینید.{% endblock %}
 
 {% block content %}
+    <div class="catalog-layout" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
+    <div class="catalog-intro">
     <h1 class="text-[28px] font-semibold leading-9">فراخوان‌ها</h1>
-    <div class="list-tools" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
-        <form class="page-search" method="get" action="{% url 'opportunities' %}" role="search" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
+    </div>
+    <div class="catalog-body">
+    {% include "components/filters/drawer.html" with action=request.path %}
+    <div class="catalog-main">
+    <div class="list-tools">
+        <form class="page-search" method="get" action="{% url 'opportunities' %}" role="search" autocomplete="off" data-remember-search @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
             {% for value in filters.paid %}<input type="hidden" name="paid" value="{{ value }}">{% endfor %}
@@ -18,16 +24,18 @@
             {% for value in filters.status %}<input type="hidden" name="status" value="{{ value }}">{% endfor %}
             {% if filters.age_from %}<input type="hidden" name="age_from" value="{{ filters.age_from }}">{% endif %}
             {% if filters.age_to %}<input type="hidden" name="age_to" value="{{ filters.age_to }}">{% endif %}
+            {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
             <label class="sr-only" for="opportunities-q">جستجو در فرصت‌ها</label>
-            <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search">
+            <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
             {% include "components/filters/suggest.html" %}
         </form>
         {% include "components/filters/panel.html" with action=request.path %}
+        {% include "components/filters/sort.html" %}
     </div>
     {% include "components/skeleton/list.html" with kind="opportunities" %}
     <div class="live-pane mt-6" id="results">
         {% if opportunities %}
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="catalog-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {% for opportunity in opportunities %}
                     {% include "components/casting/opportunity_card.html" %}
                 {% endfor %}
@@ -35,5 +43,8 @@
         {% else %}
             {% include "components/empty_state.html" with title="فرصتی با این شرط‌ها نیست" body="فیلتر را بردارید یا شهر دیگری را ببینید." %}
         {% endif %}
+    </div>
+    </div>
+    </div>
     </div>
 {% endblock %}

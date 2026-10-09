@@ -27,7 +27,7 @@
             var next = root.querySelector("[data-dir='1']");
             if (!prev || !next) return;
             var index = 0;
-            function perView() { return window.innerWidth < 800 ? 1 : 2; }
+            function perView() { return window.innerWidth < 900 ? 1 : 3; }
             function step() {
                 if (!cards.length) return 0;
                 var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;

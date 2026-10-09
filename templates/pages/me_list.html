@@ -16,7 +16,7 @@
             <div x-data="{ tab: 'work' }">
                 <div class="profile-tabs" role="tablist" aria-label="همکاری و نشان‌شده‌ها">
                     <button class="profile-tabs__tab is-on" type="button" role="tab" :class="{ 'is-on': tab === 'work' }" :aria-selected="tab === 'work'" @click="tab = 'work'">لیست همکاری‌ها ({{ items|length }})</button>
-                    <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'saved' }" :aria-selected="tab === 'saved'" @click="tab = 'saved'">نشان‌شده‌ها ({{ bookmarks|length }})</button>
+                    <button class="profile-tabs__tab" type="button" role="tab" data-saved-count="{{ bookmarks|length }}" :class="{ 'is-on': tab === 'saved' }" :aria-selected="tab === 'saved'" @click="tab = 'saved'">نشان‌شده‌ها ({{ bookmarks|length }})</button>
                 </div>
                 <div class="profile-pane is-on" :class="{ 'is-on': tab === 'work' }">
                     {% if items %}

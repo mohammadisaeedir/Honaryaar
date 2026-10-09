@@ -49,6 +49,10 @@
                     <textarea class="field" style="min-height: 7rem" name="summary" rows="4">{{ project_form.summary.value|default:'' }}</textarea>
                 </label>
                 <label class="mb-4 block">
+                    <span class="field-label">زمان آغاز</span>
+                    {{ project_form.start_date }}
+                </label>
+                <label class="mb-4 block">
                     <span class="field-label">وضعیت</span>
                     <select class="field field-select" name="status">
                         {% for value, label in project_form.fields.status.choices %}
