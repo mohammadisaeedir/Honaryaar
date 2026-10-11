@@ -6,6 +6,7 @@ dependencies = [
     "Django==6.1.1",
     "django-unfold==0.108.0",
     "psycopg[binary]==3.3.6",
+    "redis==6.4.0",
 ]
 
 [tool.vercel.scripts]

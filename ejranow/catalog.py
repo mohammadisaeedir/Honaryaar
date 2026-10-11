@@ -4,7 +4,127 @@ The lists below are the first records loaded into the database.
 Pages read Profile, Project, and Opportunity from there.
 """
 
+import os
+import pickle
+import time
 from datetime import date
+
+_CACHE_SECONDS = 20
+_SNAPSHOT_KEY = "honaryaar:home:v1"
+_SNAPSHOT_TTL = 60 * 60 * 24
+_DAILY_LOADERS = {}
+_building = False
+_daily_mem = {"at": 0.0, "value": None}
+_redis_client = None
+_redis_down_until = 0.0
+
+
+def _upstash():
+    """Shared Upstash client. None until Vercel provides a Redis URL."""
+    global _redis_client, _redis_down_until
+
+    if time.monotonic() < _redis_down_until:
+        return None
+    if _redis_client is not None:
+        return _redis_client
+    url = ""
+    for name in ("UPSTASH_REDIS_URL", "KV_URL", "REDIS_URL"):
+        url = os.environ.get(name, "").strip()
+        if url.startswith("rediss://") or url.startswith("redis://"):
+            break
+        url = ""
+    if not url:
+        return None
+    try:
+        import redis
+    except ImportError:
+        _redis_down_until = time.monotonic() + 60
+        return None
+    try:
+        _redis_client = redis.Redis.from_url(
+            url,
+            socket_connect_timeout=2,
+            socket_timeout=2,
+            decode_responses=False,
+        )
+    except Exception:
+        _redis_client = None
+        _redis_down_until = time.monotonic() + 60
+        return None
+    return _redis_client
+
+
+def _redis_pause():
+    global _redis_client, _redis_down_until
+
+    _redis_client = None
+    _redis_down_until = time.monotonic() + 60
+
+
+def _daily_snapshot():
+    """One Redis value for the public home page, kept for 24 hours.
+
+    Returns None when Redis is not configured, so local requests keep
+    reading the database through the short in-process cache.
+    """
+    global _building
+
+    client = _upstash()
+    if client is None:
+        return None
+    now = time.monotonic()
+    if _daily_mem["value"] is not None and now - _daily_mem["at"] < 60:
+        return _daily_mem["value"]
+    data = None
+    try:
+        raw = client.get(_SNAPSHOT_KEY)
+    except Exception:
+        _redis_pause()
+        return None
+    if raw:
+        try:
+            data = pickle.loads(raw)
+        except (pickle.UnpicklingError, TypeError, ValueError):
+            data = None
+    if not isinstance(data, dict) or any(name not in data for name in _DAILY_LOADERS):
+        _building = True
+        try:
+            data = {name: loader() for name, loader in _DAILY_LOADERS.items()}
+        finally:
+            _building = False
+        try:
+            client.setex(_SNAPSHOT_KEY, _SNAPSHOT_TTL, pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL))
+        except Exception:
+            _redis_pause()
+    _daily_mem["at"] = now
+    _daily_mem["value"] = data
+    return data
+
+
+def _cached(fn=None, *, daily=False):
+    def decorate(func):
+        if daily:
+            _DAILY_LOADERS[func.__name__] = func
+        box = {"at": 0.0, "value": None}
+
+        def wrapper():
+            if daily and not _building:
+                snap = _daily_snapshot()
+                if snap is not None and func.__name__ in snap:
+                    return snap[func.__name__]
+            now = time.monotonic()
+            if box["value"] is not None and now - box["at"] < _CACHE_SECONDS:
+                return box["value"]
+            value = func()
+            box["at"] = now
+            box["value"] = value
+            return value
+
+        return wrapper
+
+    if fn is None:
+        return decorate
+    return decorate(fn)
 
 ROLES = [
     {"slug": "actor", "title": "بازیگر"},
@@ -747,10 +867,10 @@ def role_catalog():
 
 
 def role_title(slug):
-    from ejranow.models import Role
-
-    match = Role.objects.filter(slug=slug).first()
-    return match.title if match else slug
+    for item in roles():
+        if item["slug"] == slug:
+            return item["title"]
+    return slug
 
 
 def art_title(slug):
@@ -765,6 +885,7 @@ def _art_order():
     return [value for value, _label in Art.choices]
 
 
+@_cached(daily=True)
 def arts_in_use():
     from ejranow.models import Art, ArtCategory
 
@@ -772,6 +893,7 @@ def arts_in_use():
     return [{"slug": value, "title": label} for value, label in Art.choices if value in present]
 
 
+@_cached(daily=True)
 def roles():
     from ejranow.models import Role
 
@@ -899,6 +1021,7 @@ def _testimonial_dict(item):
         "role": role,
         "project_slug": project.slug if project else "",
         "project_title": project.title if project else "",
+        "featured": item.featured,
     }
 
 
@@ -943,6 +1066,7 @@ def _opportunity_dict(item):
         "slug": item.slug,
         "title": item.title,
         "project": item.project.slug,
+        "project_title": item.project.title,
         "role": item.role.slug,
         "art": item.art_category.art if item.art_category_id else "",
         "art_title": item.art_category.get_art_display() if item.art_category_id else "",
@@ -967,6 +1091,7 @@ def _opportunity_dict(item):
     }
 
 
+@_cached
 def _artists():
     from ejranow.models import Profile
 
@@ -979,6 +1104,7 @@ def _artists():
     return [_artist_dict(item) for item in profiles]
 
 
+@_cached(daily=True)
 def _projects():
     from django.db.models import Prefetch
 
@@ -992,20 +1118,10 @@ def _projects():
 
 
 def latest_projects(limit=5):
-    from django.db.models import Prefetch
-
-    from ejranow.models import PUBLIC_PROJECT_STATUSES, Project, Testimonial
-
-    quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
-    projects = (
-        Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
-        .select_related("owner", "owner__user", "art_category", "lead_role", "city")
-        .prefetch_related(Prefetch("testimonials", queryset=quotes))
-        .order_by("-pk")[:limit]
-    )
-    return [_project_dict(item) for item in projects]
+    return sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:limit]
 
 
+@_cached(daily=True)
 def _opportunities():
     from ejranow.models import PUBLIC_PROJECT_STATUSES, Opportunity
 
@@ -1184,7 +1300,6 @@ def _age_overlaps(item, start, end):
 
 
 def _opportunity_matches(item, query, city, paid, gender, production, role, age_from, age_to, art, status):
-    project = project_by_slug(item["project"])
     cities = _picked(city)
     arts = _picked(art)
     paid_values = _picked(paid)
@@ -1215,7 +1330,7 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
         text = " ".join(
             [
                 item["title"],
-                project["title"] if project else "",
+                item.get("project_title", ""),
                 item["city"],
                 item["production"],
                 item["dates"],
@@ -1226,7 +1341,7 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
                 experience_label(item.get("experience_level", "")),
                 " ".join(special_label(code) for code in item.get("special_conditions") or []),
                 item["description"],
-                project["art_title"] if project else "",
+                item.get("art_title", ""),
             ]
         )
         if not _contains(text, query):
@@ -1245,14 +1360,9 @@ def list_opportunities(q="", city="", paid="", gender="", production="", role=""
 
 def opportunity_facets():
     items = _opportunities()
-    cities = list(dict.fromkeys(item["city"] for item in items if item["city"]))
-    from ejranow.models import City
-
-    order = {
-        title: index
-        for index, title in enumerate(City.objects.order_by("priority", "title").values_list("title", flat=True))
-    }
-    cities.sort(key=lambda title: (order.get(title, 10_000), title))
+    city_names = list(dict.fromkeys(item["city"] for item in items if item["city"]))
+    order = {title: index for index, title in enumerate(cities())}
+    city_names.sort(key=lambda title: (order.get(title, 10_000), title))
 
     role_slugs = list(dict.fromkeys(item["role"] for item in items if item["role"]))
     roles = sorted(
@@ -1276,7 +1386,7 @@ def opportunity_facets():
     if any(not item["paid"] for item in items):
         paid.append(("unpaid", "غیرپرداختی"))
     return {
-        "cities": cities,
+        "cities": city_names,
         "roles": roles,
         "arts": arts,
         "productions": productions,
@@ -1447,10 +1557,11 @@ def clear_filters_href(request, keep=("q", "sort")):
     return f"?{encoded}" if encoded else request.path
 
 
+@_cached(daily=True)
 def cities():
     from ejranow.models import City
 
-    return list(City.objects.values_list("title", flat=True))
+    return list(City.objects.order_by("priority", "title").values_list("title", flat=True))
 
 
 def persian_number(value):
@@ -1463,6 +1574,7 @@ def round_up_five(value):
     return ((value + 4) // 5) * 5
 
 
+@_cached(daily=True)
 def hero_roles():
     from ejranow.models import Role
 
@@ -1474,6 +1586,7 @@ def hero_roles():
     return ordered or list(titles.values())
 
 
+@_cached(daily=True)
 def hire_stats():
     from ejranow.models import Profile, ProfileRole, ProfileSkill
 
@@ -1489,10 +1602,12 @@ def hire_stats():
     ]
 
 
+@_cached(daily=True)
 def hero_fields():
     return [item["title"] for item in arts_in_use()]
 
 
+@_cached(daily=True)
 def talent_stats():
     from django.db.models import Q
 
@@ -1530,10 +1645,12 @@ def featured_opportunities():
 
 
 def featured_testimonials():
-    from ejranow.models import Testimonial
-
-    items = Testimonial.objects.filter(featured=True).select_related("project", "profile", "profile__user", "role")
-    return [_testimonial_dict(item) for item in items]
+    return [
+        quote
+        for project in _projects()
+        for quote in project["testimonials"]
+        if quote.get("featured")
+    ]
 
 
 def featured_cities():
@@ -1555,33 +1672,33 @@ def search_modal_arts():
     return [{"slug": slug, "title": titles[slug], "soon": soon} for slug, soon in shown]
 
 
+@_cached(daily=True)
 def search_shortcuts():
-    from ejranow.models import Role
-
-    roles = {item.slug: item.title for item in Role.objects.all()}
+    by_slug = {item["slug"]: item["title"] for item in roles()}
     return {
         "search_arts": search_modal_arts(),
         "search_roles": [
-            {"slug": item["slug"], "title": roles[item["slug"]]}
+            {"slug": item["slug"], "title": by_slug[item["slug"]]}
             for item in ROLES
-            if item["slug"] in roles
+            if item["slug"] in by_slug
         ],
     }
 
 
+@_cached(daily=True)
 def footer_shortcuts():
-    from ejranow.models import PUBLIC_PROJECT_STATUSES, City, ArtCategory, Project, Role
+    from ejranow.models import City, ArtCategory
 
     cities = list(City.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
-    by_slug = {item.slug: item for item in Role.objects.all()}
-    roles = [
-        {"slug": item["slug"], "title": by_slug[item["slug"]].title}
+    by_slug = {item["slug"]: item["title"] for item in roles()}
+    role_links = [
+        {"slug": item["slug"], "title": by_slug[item["slug"]]}
         for item in ROLES
         if item["slug"] in by_slug
     ]
     projects = [
-        {"slug": item.slug, "title": item.title}
-        for item in Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).order_by("-pk")[:7]
+        {"slug": item["slug"], "title": item["title"]}
+        for item in sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:7]
     ]
     productions = []
     seen = set()
@@ -1596,7 +1713,7 @@ def footer_shortcuts():
         productions = list(ArtCategory.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
     return {
         "footer_cities": cities,
-        "footer_roles": roles,
+        "footer_roles": role_links,
         "footer_projects": projects,
         "footer_productions": productions,
         "footer_socials": SOCIALS,

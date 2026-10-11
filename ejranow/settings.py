@@ -285,7 +285,7 @@ def _neon_database():
             "PORT": str(url.port or 5432),
             "OPTIONS": {"sslmode": sslmode},
             "CONN_HEALTH_CHECKS": True,
-            "CONN_MAX_AGE": 0,
+            "CONN_MAX_AGE": 60,
             "DISABLE_SERVER_SIDE_CURSORS": True,
         }
 
@@ -299,7 +299,7 @@ def _neon_database():
         "PORT": os.environ.get("PGPORT", "5432"),
         "OPTIONS": {"sslmode": "require"},
         "CONN_HEALTH_CHECKS": True,
-        "CONN_MAX_AGE": 0,
+        "CONN_MAX_AGE": 60,
         "DISABLE_SERVER_SIDE_CURSORS": True,
     }
 
