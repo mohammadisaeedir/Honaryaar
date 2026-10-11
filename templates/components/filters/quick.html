@@ -1,0 +1,7 @@
+{% if quick %}
+<div class="quick-picks" aria-label="جستجوهای محبوب">
+    {% for chip in quick %}
+        <a class="{% if chip.active %}is-on{% endif %}" href="{{ chip.href }}">{{ chip.label }}</a>
+    {% endfor %}
+</div>
+{% endif %}

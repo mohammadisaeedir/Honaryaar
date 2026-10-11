@@ -12,7 +12,8 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
-    <script type="module" src="{% static 'js/dotlottie/boot.js' %}?v={{ asset_v }}"></script>
+    <script src="{% static 'js/lottie.min.js' %}?v={{ asset_v }}" defer></script>
+    <script src="{% static 'js/lottie-home.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
 
 {% block content %}
@@ -65,8 +66,8 @@
                 </div>
             </div>
             <div class="hero-photo">
-                <dotlottie-wc class="hero-lottie is-on" :class="{ 'is-on': mode === 'talent' }" src="{% static 'home/honaryaar-job-proposal.lottie' %}" autoplay loop></dotlottie-wc>
-                <dotlottie-wc class="hero-lottie hero-lottie--hire" :class="{ 'is-on': mode === 'hire' }" src="{% static 'home/honaryaar-recruitment.lottie' %}" autoplay loop></dotlottie-wc>
+                <div class="hero-lottie is-on" :class="{ 'is-on': mode === 'talent' }" data-lottie="{% static 'home/hero-talent.json' %}"></div>
+                <div class="hero-lottie hero-lottie--hire" :class="{ 'is-on': mode === 'hire' }" data-lottie="{% static 'home/hero-hire.json' %}"></div>
             </div>
         </div>
     </section>
@@ -174,7 +175,7 @@
                 </ul>
                 <a class="hero-cta" href="{{ join_cta.href }}">{{ join_cta.label }}{% include "components/icon.html" with name="chevron-right" size="18" %}</a>
             </div>
-            <dotlottie-wc class="join-lottie" src="{% static 'home/honaryaar-theater.lottie' %}" autoplay loop></dotlottie-wc>
+            <div class="join-lottie" data-lottie="{% static 'home/join-theater.json' %}"></div>
         </div>
     </section>
 {% endblock %}

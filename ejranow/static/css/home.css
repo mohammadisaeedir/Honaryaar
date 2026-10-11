@@ -199,6 +199,13 @@
     opacity: 1;
 }
 
+.hero-lottie svg,
+.join-lottie svg {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .hero-lottie--hire {
     inset: 12% 8% 14%;
 }

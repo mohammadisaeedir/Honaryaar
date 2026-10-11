@@ -7,13 +7,15 @@
                 {% include "components/icon.html" with name="x" size="20" %}
             </button>
         </div>
-        <form method="get" action="{% url 'search' %}" role="search" autocomplete="off" data-remember-search>
+        {% with page=request.resolver_match.url_name %}
+        <form method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search>
             <label class="sr-only" for="modal-q">جستجو</label>
             <div class="search-modal__field">
                 {% include "components/icon.html" with name="search" size="18" %}
-                <input class="field" id="modal-q" type="search" name="q" value="{% if request.resolver_match.url_name == 'search' %}{{ request.GET.q }}{% endif %}" placeholder="مثلاً: بازیگر" data-search-typewriter enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
+                <input class="field" id="modal-q" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% if page == 'artists' or page == 'artist' %}نام یا نقش{% elif page == 'projects' or page == 'project' %}نام پروژه یا شهر{% elif page == 'opportunities' or page == 'opportunity' %}نقش، شهر یا پروژه{% else %}مثلاً: بازیگر{% endif %}" {% if page != 'artists' and page != 'artist' and page != 'projects' and page != 'project' and page != 'opportunities' and page != 'opportunity' %}data-search-typewriter{% endif %} enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
             </div>
         </form>
+        {% endwith %}
 
         {% include "components/filters/recent.html" %}
 

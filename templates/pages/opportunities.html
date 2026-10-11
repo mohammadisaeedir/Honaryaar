@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}فراخوان‌ها · هنریار{% endblock %}
 {% block meta_description %}فراخوان‌های هنری در هنریار. نقش، شهر و پروژه را یک‌جا ببینید.{% endblock %}
@@ -9,6 +10,7 @@
     <div class="catalog-layout" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
     <div class="catalog-intro">
     <h1 class="text-[28px] font-semibold leading-9">فراخوان‌ها</h1>
+    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">نقش، شهر و پروژه را یک‌جا ببینید.</p>
     </div>
     <div class="catalog-body">
     {% include "components/filters/drawer.html" with action=request.path %}
@@ -29,17 +31,21 @@
             <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
             {% include "components/filters/suggest.html" %}
         </form>
-        {% include "components/filters/panel.html" with action=request.path %}
-        {% include "components/filters/sort.html" %}
+        <div class="tool-row">
+            {% include "components/filters/sort.html" %}
+            {% include "components/filters/panel.html" with action=request.path %}
+            {% include "components/filters/quick.html" %}
+        </div>
     </div>
     {% include "components/skeleton/list.html" with kind="opportunities" %}
     <div class="live-pane mt-6" id="results">
         {% if opportunities %}
-            <div class="catalog-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="catalog-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
                 {% for opportunity in opportunities %}
                     {% include "components/casting/opportunity_card.html" %}
                 {% endfor %}
             </div>
+            <script src="{% static 'js/catalog-more.js' %}?v={{ asset_v }}" defer></script>
         {% else %}
             {% include "components/empty_state.html" with title="فرصتی با این شرط‌ها نیست" body="فیلتر را بردارید یا شهر دیگری را ببینید." %}
         {% endif %}

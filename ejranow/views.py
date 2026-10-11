@@ -235,6 +235,11 @@ def artist_list(request):
         "age_from": age_from,
         "age_to": age_to,
     }
+    sort, sort_label, sort_options = catalog.sort_state(request, "artists")
+    filters["sort"] = sort
+    artists, total, shown, partial = _catalog_window(request, catalog.list_artists(**filters))
+    if partial:
+        return render(request, "components/catalog/artist_page.html", {"artists": artists, "bookmarked": _bookmarked_slugs(request.user)})
     groups = []
     if saved:
         picked = set(filters["bookmark"])
@@ -272,13 +277,13 @@ def artist_list(request):
     )
     if age:
         groups.append(age)
-    sort, sort_label, sort_options = catalog.sort_state(request, "artists")
-    filters["sort"] = sort
     return render(
         request,
         "pages/artists.html",
         {
-            "artists": catalog.list_artists(**filters),
+            "artists": artists,
+            "page_total": total,
+            "page_shown": shown,
             "sort_label": sort_label,
             "sort_options": sort_options,
             "filters": filters,
@@ -350,6 +355,26 @@ def _age(raw):
     return int(normalized) if normalized.isdigit() else None
 
 
+_PAGE_SIZE = 12
+_ROW_CAP = 4
+
+
+def _safe_int(raw, default):
+    normalized = str(raw or "").translate(str.maketrans("۰۱۲۳۴۵۶۷۸۹", "0123456789"))
+    return int(normalized) if normalized.isdigit() else default
+
+
+def _catalog_window(request, items):
+    """First paint is 12 cards. A scroll asks for one more row."""
+    total = len(items)
+    if request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET:
+        offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), total)
+        limit = min(max(_safe_int(request.GET.get("limit"), 1), 1), _ROW_CAP)
+        return items[offset:offset + limit], total, offset + limit, True
+    shown = items[:_PAGE_SIZE]
+    return shown, total, len(shown), False
+
+
 def opportunity_list(request):
     bounds = catalog.age_bounds()
     floor, ceiling = bounds if bounds else (None, None)
@@ -375,6 +400,15 @@ def opportunity_list(request):
         "age_from": start if age_active else None,
         "age_to": end if age_active else None,
     }
+    sort, sort_label, sort_options = catalog.sort_state(request, "opportunities")
+    filters["sort"] = sort
+    opportunities, total, shown, partial = _catalog_window(request, catalog.list_opportunities(**filters))
+    if partial:
+        return render(
+            request,
+            "components/catalog/opportunity_page.html",
+            {"opportunities": opportunities, "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity")},
+        )
     facets = catalog.opportunity_facets()
     groups = [
         catalog.choice_group("status", "وضعیت", [("open", "باز"), ("closed", "بسته")], filters["status"]),
@@ -387,13 +421,13 @@ def opportunity_list(request):
     ]
     if bounds:
         groups.append(catalog.age_group(floor, ceiling, start, end, age_active))
-    sort, sort_label, sort_options = catalog.sort_state(request, "opportunities")
-    filters["sort"] = sort
     return render(
         request,
         "pages/opportunities.html",
         {
-            "opportunities": catalog.list_opportunities(**filters),
+            "opportunities": opportunities,
+            "page_total": total,
+            "page_shown": shown,
             "sort_label": sort_label,
             "sort_options": sort_options,
             "filters": filters,
@@ -446,6 +480,13 @@ def project_list(request):
     }
     sort, sort_label, sort_options = catalog.sort_state(request, "projects")
     filters["sort"] = sort
+    projects, total, shown, partial = _catalog_window(request, catalog.list_projects(**filters))
+    if partial:
+        return render(
+            request,
+            "components/catalog/project_page.html",
+            {"projects": projects, "bookmarked_projects": _bookmarked_slugs(request.user, "project")},
+        )
     groups = [
         catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
@@ -460,7 +501,9 @@ def project_list(request):
         request,
         "pages/projects.html",
         {
-            "projects": catalog.list_projects(**filters),
+            "projects": projects,
+            "page_total": total,
+            "page_shown": shown,
             "sort_label": sort_label,
             "sort_options": sort_options,
             "filters": filters,

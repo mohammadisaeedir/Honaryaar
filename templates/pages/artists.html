@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}هنرمندان · هنریار{% endblock %}
 {% block meta_description %}هنرمندان تئاتر در هنریار. نقش، شهر و سابقه را ببینید.{% endblock %}
@@ -28,17 +29,21 @@
             <input class="field" id="artists-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام یا نقش" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
             {% include "components/filters/suggest.html" %}
         </form>
-        {% include "components/filters/panel.html" with action=request.path %}
-        {% include "components/filters/sort.html" %}
+        <div class="tool-row">
+            {% include "components/filters/sort.html" %}
+            {% include "components/filters/panel.html" with action=request.path %}
+            {% include "components/filters/quick.html" %}
+        </div>
     </div>
     {% include "components/skeleton/list.html" with kind="artists" %}
     <div class="live-pane">
     {% if artists %}
-        <div class="artist-grid">
+        <div class="artist-grid" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
             {% for artist in artists %}
                 {% include "components/artist/artist_card.html" %}
             {% endfor %}
         </div>
+        <script src="{% static 'js/catalog-more.js' %}?v={{ asset_v }}" defer></script>
     {% else %}
         <div class="mt-6">
             {% include "components/empty_state.html" with title="هنرمندی با این شرط‌ها نیست" body="نام یا شهر را عوض کنید." %}

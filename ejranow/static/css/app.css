@@ -914,6 +914,14 @@ body,
     min-width: 0;
 }
 
+.site-header__q-btn,
+.page-search .field,
+.search-modal__field .field,
+.page-search .field[readonly],
+.search-modal__field .field[readonly] {
+    background: #ececee;
+}
+
 .site-header__q-btn {
     display: flex;
     align-items: center;
@@ -925,7 +933,7 @@ body,
     padding-inline: 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-input);
-    background: var(--color-background);
+    background: #ececee;
     color: var(--color-muted-foreground);
     font: inherit;
     font-size: 12px;
@@ -989,6 +997,10 @@ html[data-os="win"] .is-mac {
 
 .site-header__q-btn.has-value {
     color: var(--color-foreground);
+}
+
+body.is-search-open .site-header {
+    z-index: 70;
 }
 
 .search-modal {
@@ -1083,8 +1095,14 @@ html[data-os="win"] .is-mac {
 }
 
 .search-modal__field .field {
+    min-height: 48px;
+    padding-block: 12px;
     padding-inline-start: 40px;
     text-align: right;
+}
+
+.search-modal .search-recent {
+    margin-top: 16px;
 }
 
 .search-modal__arts {
@@ -1092,7 +1110,14 @@ html[data-os="win"] .is-mac {
     flex-wrap: nowrap;
     gap: 8px;
     margin-top: 20px;
+    padding-block: 6px;
     overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.search-modal__arts::-webkit-scrollbar,
+.search-modal__chips::-webkit-scrollbar {
+    display: none;
 }
 
 .art-theatre { --art: var(--color-art-theatre); --art-bg: var(--color-art-theatre-bg); }
@@ -1130,11 +1155,11 @@ html[data-os="win"] .is-mac {
 .search-modal__art.is-soon {
     position: relative;
     flex: 0 0 auto;
-    min-height: 36px;
+    min-height: 44px;
     cursor: default;
     opacity: 0.72;
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
     padding-right: 10px;
     padding-left: 58px;
 }
@@ -1160,7 +1185,9 @@ html[data-os="win"] .is-mac {
     display: flex;
     flex-wrap: nowrap;
     gap: 8px;
+    padding-block: 4px;
     overflow-x: auto;
+    scrollbar-width: none;
 }
 
 .search-modal__chips a {
@@ -1250,6 +1277,16 @@ html[data-os="win"] .is-mac {
     margin-top: 16px;
 }
 
+.catalog-intro p {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .catalog-intro p {
+        display: block;
+    }
+}
+
 .list-tools {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -1257,6 +1294,14 @@ html[data-os="win"] .is-mac {
     column-gap: 10px;
     row-gap: 8px;
     margin-top: 16px;
+}
+
+.tool-row {
+    display: contents;
+}
+
+.quick-picks {
+    display: none;
 }
 
 .list-tools .page-search {
@@ -1924,28 +1969,83 @@ body.is-filter-open {
 }
 
 @media (max-width: 767.98px) {
-    .list-tools .page-search {
-        grid-column: 2;
-        grid-row: 1;
+    .list-tools {
+        display: block;
+        margin-inline: -16px;
     }
 
-    .sort-menu {
-        grid-column: 3;
-        grid-row: 1;
+    .list-tools .page-search,
+    .list-tools .filter-selected {
+        display: none;
+    }
+
+    .tool-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding-inline: 16px;
+    }
+
+    .tool-row .sort-menu,
+    .tool-row .filter-open {
+        grid-column: auto;
+        grid-row: auto;
+        flex: 0 0 auto;
+    }
+
+    .sort-menu__btn,
+    .filter-open,
+    .quick-picks a {
+        min-height: 36px;
+        border-radius: 999px;
+        font-size: 12px;
+    }
+
+    .sort-menu__btn,
+    .filter-open {
+        padding-inline: 12px;
+        gap: 6px;
+    }
+
+    .filter-open.is-on {
+        border-color: #f3b6d4;
+        background: #fde7f1;
+        color: #c13281;
+    }
+
+    .quick-picks {
+        display: flex;
+        flex: 1 1 auto;
+        gap: 8px;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .quick-picks::-webkit-scrollbar { display: none; }
+
+    .quick-picks a {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        padding: 0 14px;
+        border: 1px solid #e7e4e2;
+        background: #fff;
+        color: #17131a;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .quick-picks a.is-on {
+        border-color: #f3b6d4;
+        background: #fde7f1;
+        color: #c13281;
     }
 
     .search-suggest {
         z-index: 50;
-    }
-
-    .filter-open {
-        grid-row: 2;
-    }
-
-    .filter-selected {
-        grid-row: 2;
-        align-self: center;
-        z-index: auto;
     }
 
     .site-header {
@@ -2594,6 +2694,10 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 .catalog-grid {
     display: grid;
     gap: 16px;
+}
+
+.catalog-more {
+    height: 1px;
 }
 
 .artist-grid {

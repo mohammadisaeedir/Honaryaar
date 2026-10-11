@@ -1,6 +1,6 @@
 {% load ejranow_ui %}
 {% applied_filters groups as selected %}
-<button class="filter-open" type="button" @click="open = true">
+<button class="filter-open{% if selected %} is-on{% endif %}" type="button" @click="open = true">
     {% include "components/icon.html" with name="sliders" size="18" %}
     فیلتر
     {% if selected %}<span class="filter-open__count">{{ selected|length }}</span>{% endif %}

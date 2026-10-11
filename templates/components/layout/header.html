@@ -13,10 +13,10 @@
             <a class="{% if request.path == '/projects/' or '/projects/' == request.path|slice:':10' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
         </nav>
         <div class="site-header__q">
-            <button class="site-header__q-btn{% if request.resolver_match.url_name == 'search' and request.GET.q %} has-value{% endif %}" type="button" aria-keyshortcuts="Meta+K Control+K" @click="searchOpen = true">
+            <button class="site-header__q-btn{% if request.GET.q %} has-value{% endif %}" type="button" aria-keyshortcuts="Meta+K Control+K" @click="searchOpen = true">
                 <span class="site-header__q-label">
                     {% include "components/icon.html" with name="search" size="18" %}
-                    {% if request.resolver_match.url_name == 'search' and request.GET.q %}
+                    {% if request.GET.q %}
                         <span>{{ request.GET.q }}</span>
                     {% else %}
                         <span data-search-typewriter>مثلاً: بازیگر</span>
