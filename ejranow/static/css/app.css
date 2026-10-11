@@ -1383,6 +1383,14 @@ body.is-search-open .site-header {
     flex-shrink: 0;
 }
 
+.sort-menu__backdrop {
+    display: none;
+}
+
+.sort-menu__title {
+    display: none;
+}
+
 .sort-menu__panel {
     position: absolute;
     z-index: 40;
@@ -1396,6 +1404,7 @@ body.is-search-open .site-header {
     box-shadow: 0 16px 40px rgb(23 19 26 / 14%);
 }
 
+.sort-menu__backdrop[x-cloak],
 .sort-menu__panel[x-cloak] { display: none !important; }
 
 .sort-menu__option {
@@ -2050,6 +2059,43 @@ body.is-filter-open {
 
     .site-header {
         z-index: 60;
+    }
+
+    body.is-sort-open {
+        overflow: hidden;
+    }
+
+    .sort-menu__backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 84;
+        display: block;
+        background: rgb(23 19 26 / 40%);
+    }
+
+    .sort-menu__panel {
+        position: fixed;
+        z-index: 85;
+        inset-inline: 0;
+        top: auto;
+        bottom: 0;
+        width: auto;
+        min-width: 0;
+        max-height: min(70dvh, 480px);
+        overflow: auto;
+        border-radius: 16px 16px 0 0;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        box-shadow: 0 -8px 32px rgb(23 19 26 / 12%);
+    }
+
+    .sort-menu__title {
+        display: block;
+        margin: 0;
+        padding: 16px 16px 4px;
+        color: #17131a;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 28px;
     }
 
     .filter-backdrop {

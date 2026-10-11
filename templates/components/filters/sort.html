@@ -1,11 +1,13 @@
-<div class="sort-menu" x-data="{ open: false }" @keydown.escape.window="open = false">
-    <button class="sort-menu__btn" type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="listbox">
+<div class="sort-menu" x-data="{ open: false }" @keydown.escape.window="open = false" x-effect="document.body.classList.toggle('is-sort-open', open)">
+    <button class="sort-menu__btn" type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="dialog">
         <span>{{ sort_label }}</span>
         {% include "components/icon.html" with name="sort" size="16" %}
     </button>
-    <div class="sort-menu__panel" x-cloak x-show="open" @click.outside="open = false" role="listbox" aria-label="مرتب‌سازی">
+    <div class="sort-menu__backdrop" x-cloak x-show="open" @click="open = false"></div>
+    <div class="sort-menu__panel" x-cloak x-show="open" @click.outside="open = false" role="dialog" aria-modal="true" aria-labelledby="sort-menu-title">
+        <p class="sort-menu__title" id="sort-menu-title">مرتب‌سازی</p>
         {% for option in sort_options %}
-            <a class="sort-menu__option{% if option.selected %} is-on{% endif %}" href="{{ option.href }}" role="option" aria-selected="{% if option.selected %}true{% else %}false{% endif %}">{{ option.label }}</a>
+            <a class="sort-menu__option{% if option.selected %} is-on{% endif %}" href="{{ option.href }}">{{ option.label }}</a>
         {% endfor %}
     </div>
 </div>
