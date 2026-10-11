@@ -12,7 +12,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
-    <script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js"></script>
+    <script type="module" src="{% static 'js/dotlottie/boot.js' %}?v={{ asset_v }}"></script>
 {% endblock %}
 
 {% block content %}

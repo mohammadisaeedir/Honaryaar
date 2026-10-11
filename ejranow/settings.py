@@ -10,9 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import mimetypes
 import os
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
+
+mimetypes.add_type("application/wasm", ".wasm", strict=True)
+mimetypes.add_type("font/woff2", ".woff2", strict=True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -169,7 +173,7 @@ UNFOLD = {
     "SITE_HEADER": "Honaryaar",
     "DASHBOARD_CALLBACK": "ejranow.dashboard.dashboard_callback",
     "STYLES": [
-        "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap",
+        _static_file("css/fonts.css"),
         _static_file("css/admin-font.css"),
         _static_file("css/art-picker.css"),
     ],

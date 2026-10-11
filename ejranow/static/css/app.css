@@ -2559,8 +2559,11 @@ article .fact-chips {
 }
 
 .skel-pane { display: none; }
-html.is-booting .skel-pane { display: block; }
+html.is-booting .catalog-main > .skel-pane,
+html.is-booting main > .skel-pane { display: block; }
 html.is-booting .live-pane { display: none; }
+main.is-skel-cover { min-height: calc(100dvh - 8rem); }
+main.is-skel-cover > .skel-pane { display: block; }
 main.is-skel-cover > :not(.skel-pane) { display: none; }
 
 .skel-grid {
@@ -2704,6 +2707,7 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     animation: bone-wave 1.15s ease-in-out infinite;
 }
 
+.bone.bone-photo { height: auto; }
 .bone-lg { height: 28px; width: 72%; }
 .bone-md { height: 16px; width: 48%; }
 .bone-sm { height: 12px; width: 36%; }
