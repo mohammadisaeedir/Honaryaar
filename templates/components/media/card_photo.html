@@ -1,0 +1,11 @@
+{% load static %}
+<div class="card-photo{% if src %} is-loading{% endif %}">
+    {% if src %}
+        <span class="card-photo__bone" aria-hidden="true">
+            <img class="card-photo__glyph" src="{% static 'brand/mark-fallback.svg' %}" alt="">
+        </span>
+        <img src="{{ src }}" alt="{{ alt|default:'' }}" loading="lazy" decoding="async" data-card-photo>
+    {% else %}
+        <img class="card-photo__fallback" src="{% static 'brand/mark-fallback.svg' %}" alt="">
+    {% endif %}
+</div>

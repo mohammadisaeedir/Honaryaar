@@ -122,6 +122,38 @@
         function revealPage() { document.documentElement.classList.remove("is-booting"); }
         if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", revealPage);
         else revealPage();
+        (function () {
+            var fallback = "{% static 'brand/mark-fallback.svg' %}";
+            function boxOf(img) { return img.closest && img.closest(".card-photo"); }
+            function show(img) {
+                var box = boxOf(img);
+                if (box) box.classList.remove("is-loading");
+            }
+            function fail(img) {
+                if (img.getAttribute("src") === fallback) {
+                    show(img);
+                    return;
+                }
+                img.classList.add("card-photo__fallback");
+                img.removeAttribute("data-card-photo");
+                img.setAttribute("src", fallback);
+                show(img);
+            }
+            function settle(img) {
+                if (!img || !img.getAttribute || !img.hasAttribute("data-card-photo") || !img.complete) return;
+                if (img.naturalWidth) show(img);
+                else fail(img);
+            }
+            document.addEventListener("load", function (event) {
+                var img = event.target;
+                if (img && img.hasAttribute && img.hasAttribute("data-card-photo")) show(img);
+            }, true);
+            document.addEventListener("error", function (event) {
+                var img = event.target;
+                if (img && img.hasAttribute && img.hasAttribute("data-card-photo")) fail(img);
+            }, true);
+            document.querySelectorAll("[data-card-photo]").forEach(settle);
+        })();
         document.addEventListener("click", function (event) {
             var link = event.target.closest && event.target.closest("a");
             if (!link || link.target === "_blank" || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;

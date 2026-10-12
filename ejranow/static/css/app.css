@@ -2778,15 +2778,88 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 }
 
 .artist-tile__photo {
+    position: relative;
     display: block;
     aspect-ratio: 1;
     background: #f6f4ef;
 }
 
-.artist-tile__photo img {
+.artist-tile__photo .card-photo {
+    position: absolute;
+    inset: 0;
+    height: auto;
+}
+
+.artist-tile__photo img:not(.card-photo__glyph),
+.project-card__media .card-photo img:not(.card-photo__glyph) {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.card-photo {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.card-photo__bone {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #e4dfd6;
+    pointer-events: none;
+}
+
+.card-photo__bone::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 10%, rgba(255, 255, 255, 0.9) 46%, transparent 82%);
+    transform: translateX(-120%);
+    animation: card-photo-shine 1.15s ease-in-out infinite;
+}
+
+.artist-tile__photo img.card-photo__glyph,
+.project-card__media .card-photo img.card-photo__glyph {
+    position: relative;
+    z-index: 1;
+    width: 34%;
+    max-width: 64px;
+    height: auto;
+    max-height: 42%;
+    object-fit: contain;
+    animation: card-photo-pulse 1.15s ease-in-out infinite;
+}
+
+@keyframes card-photo-shine {
+    to { transform: translateX(120%); }
+}
+
+@keyframes card-photo-pulse {
+    50% { opacity: 0.35; }
+}
+
+.card-photo.is-loading [data-card-photo] { opacity: 0; }
+
+.card-photo:not(.is-loading) .card-photo__bone { display: none; }
+
+.artist-tile__photo img.card-photo__fallback,
+.project-card__media .card-photo img.card-photo__fallback {
+    object-fit: contain;
+    padding: 16%;
+    background: #f6f4ef;
+}
+
+.project-card__media .card-photo,
+.project-card__media .card-photo img:not(.card-photo__glyph),
+.project-card__media .card-photo__bone {
+    height: 148px;
 }
 
 .profile-cover {
@@ -2947,6 +3020,8 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
     .bone { animation: none; }
+    .card-photo__bone::before,
+    .card-photo__glyph { animation: none; }
 }
 
 .profile-head {

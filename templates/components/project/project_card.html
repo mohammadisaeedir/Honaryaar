@@ -1,12 +1,8 @@
-{% load ejranow_ui static %}
+{% load ejranow_ui %}
 {% media_src project.image_thumb_key project.image_public project.image_public_acl project.image_key "photo" as card_image %}
 <article class="project-card flex h-full flex-col rounded-card border border-border bg-background p-4">
     <div class="project-card__media">
-        {% if card_image %}
-            <img src="{{ card_image }}" alt="{{ project.title }}">
-        {% else %}
-            <img src="{% static 'brand/project-placeholder.svg' %}" alt="">
-        {% endif %}
+        {% include "components/media/card_photo.html" with src=card_image alt=project.title %}
     </div>
     <div class="flex items-start justify-between gap-2">
         <p class="text-xs leading-[18px] text-muted-foreground"><span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span> · {{ project.city }}</p>
