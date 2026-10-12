@@ -1,5 +1,5 @@
 <div class="search-suggest" x-cloak x-show="suggest" @mousedown.prevent>
-    {% include "components/filters/recent.html" %}
+    {% include "components/filters/recent.html" with scope=scope %}
     <p class="search-suggest__title">{% include "components/icon.html" with name="search" size="16" %}جستجوهای محبوب</p>
     <div class="search-suggest__chips">
         {% for chip in quick %}

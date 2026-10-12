@@ -1,7 +1,12 @@
 {% load ejranow_ui %}
 <article class="artist-tile">
     <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
-        <span class="artist-tile__face">{% include "components/icon.html" with name="user" size="40" %}</span>
+        {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
+        {% if face %}
+            <img src="{{ face }}" alt="">
+        {% else %}
+            <span class="artist-tile__face">{% include "components/icon.html" with name="user" size="40" %}</span>
+        {% endif %}
     </a>
     <div class="artist-tile__body">
         <h3 class="artist-tile__name"><a href="{% url 'artist' artist.slug %}">{{ artist.legal_name }}</a></h3>

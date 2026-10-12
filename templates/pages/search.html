@@ -5,7 +5,7 @@
 
 {% block content %}
     <h1 class="text-[28px] font-semibold leading-9">جستجو</h1>
-    <form class="mt-6 flex gap-2" method="get" action="{% url 'search' %}">
+    <form class="mt-6 flex gap-2" method="get" action="{% url 'search' %}" data-remember-search data-search-scope="search">
         {% include "components/input.html" with name="q" value=query placeholder="نام، نقش، شهر یا پروژه" extra="min-w-0 flex-1" %}
         <button class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-input bg-foreground px-4 text-sm font-semibold text-white" type="submit">جستجو</button>
     </form>

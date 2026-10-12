@@ -60,9 +60,12 @@ from ejranow.storage import (
 logger = logging.getLogger("ejranow.media")
 GROUPS = {
     "profile": "profiles",
+    "profile_list": "profiles",
+    "profile_banner": "profiles",
     "project": "projects",
     "testimonial": "testimonials",
 }
+PICTURES = {"profile_list", "profile_banner", "project", "testimonial"}
 
 
 def presign_seconds():
@@ -109,7 +112,7 @@ def authorize(user, purpose, target_id):
         if target_id and not Testimonial.objects.filter(pk=target_id).exists():
             raise MediaError(PERMISSION, 403)
         return target_id
-    if purpose == "profile":
+    if purpose in {"profile", "profile_list", "profile_banner"}:
         if getattr(user, "is_staff", False) and target_id:
             if not Profile.objects.filter(pk=target_id).exists():
                 raise MediaError(PERMISSION, 403)
@@ -155,7 +158,7 @@ def start_upload(user, payload):
     kind = payload.get("kind") or "photo"
     if kind not in {"photo", "video", "audio"}:
         raise MediaError(BAD_REQUEST)
-    if purpose in {"project", "testimonial"} and kind != "photo":
+    if purpose in PICTURES and kind != "photo":
         raise MediaError(IMAGE_ONLY)
     size = payload.get("size")
     if isinstance(size, bool) or not isinstance(size, int) or size < 1:
@@ -303,7 +306,7 @@ def _assert_publish_target(user, purpose, target_id):
         if project is None:
             raise MediaError(PERMISSION, 403)
         return project.status in PUBLIC_PROJECT_STATUSES
-    if purpose == "profile":
+    if purpose in {"profile", "profile_list", "profile_banner"}:
         if not Profile.objects.filter(pk=target_id).exists():
             raise MediaError(PERMISSION, 403)
         return True
@@ -332,7 +335,7 @@ def publish_upload(user, upload_id, *, purpose, target_id, public):
             raise MediaError(EXPIRED)
         intended_public = _assert_publish_target(user, purpose, target_id)
         public = bool(public and intended_public)
-        if purpose in {"project", "testimonial"} and upload.kind != "photo":
+        if purpose in PICTURES and upload.kind != "photo":
             raise MediaError(IMAGE_ONLY)
         ext = EXT[upload.content_type]
         final = f"{storage_prefix()}/{GROUPS[purpose]}/{target_id}/{upload.id}{ext}"
@@ -405,6 +408,12 @@ def _referenced(key):
         return False
     return (
         ProfileMedia.objects.filter(models.Q(file=key) | models.Q(thumbnail=key)).exists()
+        or Profile.objects.filter(
+            models.Q(list_image=key)
+            | models.Q(list_thumb=key)
+            | models.Q(banner=key)
+            | models.Q(banner_thumb=key)
+        ).exists()
         or Project.objects.filter(models.Q(image=key) | models.Q(image_thumb=key)).exists()
         or Testimonial.objects.filter(models.Q(image=key) | models.Q(image_thumb=key)).exists()
     )
@@ -480,6 +489,34 @@ def save_profile_media(profile, rows, user):
             current.position = position
             current.save()
         position += 1
+
+
+def attach_profile_picture(user, profile, upload_id, *, field, remove=False):
+    thumb = "list_thumb" if field == "list_image" else "banner_thumb"
+    acl_field = "list_public_acl" if field == "list_image" else "banner_public_acl"
+    purpose = "profile_list" if field == "list_image" else "profile_banner"
+    current = getattr(profile, field).name
+    current_thumb = getattr(profile, thumb).name
+    if upload_id:
+        published = publish_upload(
+            user,
+            upload_id,
+            purpose=purpose,
+            target_id=profile.id,
+            public=True,
+        )
+        assign_file(profile, field, published.key)
+        assign_file(profile, thumb, published.thumb_key)
+        setattr(profile, acl_field, published.public_acl)
+        profile.save(update_fields=[field, thumb, acl_field])
+        enqueue_delete(current, current_thumb)
+        return
+    if remove and current:
+        assign_file(profile, field, "")
+        assign_file(profile, thumb, "")
+        setattr(profile, acl_field, False)
+        profile.save(update_fields=[field, thumb, acl_field])
+        enqueue_delete(current, current_thumb)
 
 
 def attach_project_image(user, project, upload_id, *, required=False, remove=False):

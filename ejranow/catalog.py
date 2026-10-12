@@ -10,7 +10,7 @@ import time
 from datetime import date
 
 _CACHE_SECONDS = 20
-_SNAPSHOT_KEY = "honaryaar:home:v2"
+_SNAPSHOT_KEY = "honaryaar:home:v3"
 _SNAPSHOT_TTL = 60 * 60 * 24
 _DAILY_LOADERS = {}
 _building = False
@@ -1001,6 +1001,12 @@ def _artist_dict(profile):
         ],
         "pk": profile.pk,
         "status": profile.status,
+        "list_image_key": profile.list_image.name if profile.list_image else "",
+        "list_thumb_key": profile.list_thumb.name if profile.list_thumb else "",
+        "list_public_acl": bool(profile.list_public_acl),
+        "banner_key": profile.banner.name if profile.banner else "",
+        "banner_thumb_key": profile.banner_thumb.name if profile.banner_thumb else "",
+        "banner_public_acl": bool(profile.banner_public_acl),
         "media": [
             {
                 "kind": MEDIA_LABEL.get(item.kind, item.kind),

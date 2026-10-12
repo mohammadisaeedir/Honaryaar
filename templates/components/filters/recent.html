@@ -1,7 +1,11 @@
-<div class="search-recent" hidden>
+<div class="search-recent" hidden data-recent-scope="{{ scope|default:'all' }}">
     <div class="search-suggest__head">
         <p class="search-suggest__title">{% include "components/icon.html" with name="clock" size="16" %}جستجوهای اخیر</p>
         <button class="search-recent__all" type="button" data-recent-clear>حذف همه</button>
     </div>
     <div class="search-recent__list" data-recent-list></div>
+    <template data-recent-icon="artists">{% include "components/icon.html" with name="users" size="14" %}</template>
+    <template data-recent-icon="projects">{% include "components/icon.html" with name="clapperboard" size="14" %}</template>
+    <template data-recent-icon="opportunities">{% include "components/icon.html" with name="megaphone" size="14" %}</template>
+    <template data-recent-icon="search">{% include "components/icon.html" with name="search" size="14" %}</template>
 </div>

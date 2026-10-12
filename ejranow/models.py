@@ -184,6 +184,12 @@ class Profile(models.Model):
         default=ProfileStatus.INDEXED,
     )
     roles = models.ManyToManyField("Role", through="ProfileRole", related_name="profiles")
+    list_image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    list_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    list_public_acl = models.BooleanField(default=False)
+    banner = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    banner_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    banner_public_acl = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["name"]

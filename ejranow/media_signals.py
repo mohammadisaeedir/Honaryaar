@@ -3,7 +3,7 @@ from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from ejranow.media_service import enqueue_delete, sync_stored_visibility
-from ejranow.models import PUBLIC_PROJECT_STATUSES, ProfileMedia, Project, Testimonial
+from ejranow.models import PUBLIC_PROJECT_STATUSES, Profile, ProfileMedia, Project, Testimonial
 
 
 def _file_name(instance, field):
@@ -14,6 +14,16 @@ def _file_name(instance, field):
 @receiver(post_delete, sender=ProfileMedia)
 def delete_profile_media_files(sender, instance, **kwargs):
     enqueue_delete(_file_name(instance, "file"), _file_name(instance, "thumbnail"))
+
+
+@receiver(post_delete, sender=Profile)
+def delete_profile_pictures(sender, instance, **kwargs):
+    enqueue_delete(
+        _file_name(instance, "list_image"),
+        _file_name(instance, "list_thumb"),
+        _file_name(instance, "banner"),
+        _file_name(instance, "banner_thumb"),
+    )
 
 
 @receiver(post_delete, sender=Project)

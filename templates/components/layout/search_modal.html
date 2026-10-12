@@ -8,7 +8,7 @@
             </button>
         </div>
         {% with page=request.resolver_match.url_name %}
-        <form method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search>
+        <form method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search data-search-scope="{% if page == 'artists' or page == 'artist' %}artists{% elif page == 'projects' or page == 'project' %}projects{% elif page == 'opportunities' or page == 'opportunity' %}opportunities{% else %}search{% endif %}">
             <label class="sr-only" for="modal-q">جستجو</label>
             <div class="search-modal__field">
                 {% include "components/icon.html" with name="search" size="18" %}
@@ -17,7 +17,7 @@
         </form>
         {% endwith %}
 
-        {% include "components/filters/recent.html" %}
+        {% include "components/filters/recent.html" with scope="all" %}
 
         <div class="search-modal__arts" aria-label="جستجوهای محبوب">
             {% for art in search_arts %}

@@ -214,44 +214,66 @@
         }
         (function () {
             var key = "ejranow-recent-searches";
+            var paths = { artists: "/artists/", projects: "/projects/", opportunities: "/opportunities/", search: "/search/" };
+            function normalize(item) {
+                if (typeof item === "string" && item) return { q: item, scope: "search" };
+                if (item && typeof item.q === "string" && item.q && paths[item.scope]) return { q: item.q, scope: item.scope };
+                return null;
+            }
             function read() {
                 try {
                     var items = JSON.parse(localStorage.getItem(key) || "[]");
-                    return Array.isArray(items) ? items.filter(function (item) { return typeof item === "string" && item; }) : [];
+                    return Array.isArray(items) ? items.map(normalize).filter(Boolean) : [];
                 } catch (error) {
                     return [];
                 }
             }
             function write(items) {
-                localStorage.setItem(key, JSON.stringify(items.slice(0, 8)));
+                var kept = [];
+                var counts = {};
+                items.forEach(function (item) {
+                    counts[item.scope] = counts[item.scope] || 0;
+                    if (counts[item.scope] >= 8) return;
+                    counts[item.scope] += 1;
+                    kept.push({ q: item.q, scope: item.scope });
+                });
+                localStorage.setItem(key, JSON.stringify(kept));
             }
             function paint() {
                 var items = read();
                 document.querySelectorAll(".search-recent").forEach(function (block) {
+                    var scope = block.getAttribute("data-recent-scope") || "all";
+                    var shown = scope === "all" ? items.slice(0, 8) : items.filter(function (item) { return item.scope === scope; }).slice(0, 8);
                     var list = block.querySelector("[data-recent-list]");
                     list.replaceChildren();
-                    block.hidden = !items.length;
-                    items.forEach(function (query) {
+                    block.hidden = !shown.length;
+                    shown.forEach(function (item) {
                         var chip = document.createElement("span");
                         chip.className = "search-recent__chip";
+                        if (scope === "all") {
+                            var icon = block.querySelector("[data-recent-icon='" + item.scope + "']");
+                            if (icon) chip.appendChild(icon.content.cloneNode(true));
+                        }
                         var link = document.createElement("a");
-                        link.href = "#";
-                        link.textContent = query;
+                        link.href = paths[item.scope] + "?q=" + encodeURIComponent(item.q);
+                        link.textContent = item.q;
                         var remove = document.createElement("button");
                         remove.type = "button";
                         remove.setAttribute("aria-label", "حذف");
                         remove.textContent = "×";
-                        link.addEventListener("click", function (event) {
-                            event.preventDefault();
-                            var form = block.closest("form") || block.parentElement.querySelector("form");
-                            var input = form && form.querySelector("input[name=q]");
-                            if (!input) return;
-                            input.removeAttribute("readonly");
-                            input.value = query;
-                            form.requestSubmit();
-                        });
+                        if (scope !== "all") {
+                            link.addEventListener("click", function (event) {
+                                event.preventDefault();
+                                var form = block.closest("form") || block.parentElement.querySelector("form");
+                                var input = form && form.querySelector("input[name=q]");
+                                if (!input) return;
+                                input.removeAttribute("readonly");
+                                input.value = item.q;
+                                form.requestSubmit();
+                            });
+                        }
                         remove.addEventListener("click", function () {
-                            write(read().filter(function (item) { return item !== query; }));
+                            write(read().filter(function (stored) { return stored.q !== item.q || stored.scope !== item.scope; }));
                             paint();
                         });
                         chip.append(link, remove);
@@ -265,14 +287,18 @@
                 var input = form.querySelector("input[name=q]");
                 var value = input ? input.value.trim() : "";
                 if (!value) return;
-                var items = read().filter(function (item) { return item !== value; });
-                items.unshift(value);
+                var scope = form.getAttribute("data-search-scope") || "search";
+                if (!paths[scope]) scope = "search";
+                var items = read().filter(function (item) { return item.q !== value || item.scope !== scope; });
+                items.unshift({ q: value, scope: scope });
                 write(items);
             });
             document.addEventListener("click", function (event) {
                 var button = event.target.closest && event.target.closest("[data-recent-clear]");
                 if (!button) return;
-                write([]);
+                var block = button.closest(".search-recent");
+                var scope = block ? block.getAttribute("data-recent-scope") || "all" : "all";
+                write(scope === "all" ? [] : read().filter(function (item) { return item.scope !== scope; }));
                 paint();
             });
             paint();

@@ -1509,6 +1509,11 @@ body.is-search-open .site-header {
     background: #fff;
 }
 
+.search-recent__chip .icon {
+    flex: none;
+    color: #d0ccc8;
+}
+
 .search-recent__chip a {
     color: #17131a;
     font-size: 12px;
@@ -2776,6 +2781,63 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     display: block;
     aspect-ratio: 1;
     background: #f6f4ef;
+}
+
+.artist-tile__photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-cover {
+    position: relative;
+    margin-bottom: 72px;
+}
+
+.profile-banner {
+    display: block;
+    width: 100%;
+    height: 196px;
+    object-fit: cover;
+    border-radius: 16px;
+    background: #e6e2da;
+}
+
+.profile-banner--empty {
+    background: #e6e2da;
+}
+
+.profile-photo {
+    position: absolute;
+    inset-inline-start: 24px;
+    bottom: -52px;
+    width: 128px;
+    height: 128px;
+    border: 4px solid #fff;
+    border-radius: 999px;
+    object-fit: cover;
+    background: #f6f4ef;
+    box-shadow: 0 0 0 1px rgba(23, 19, 26, 0.08);
+}
+
+.profile-photo--empty {
+    display: grid;
+    place-items: center;
+    color: #17131a;
+    font-size: 40px;
+    font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+    .profile-cover { margin-bottom: 56px; }
+    .profile-banner { height: 140px; }
+    .profile-photo {
+        width: 96px;
+        height: 96px;
+        bottom: -40px;
+        inset-inline-start: 16px;
+        font-size: 28px;
+    }
 }
 
 .artist-tile__face {

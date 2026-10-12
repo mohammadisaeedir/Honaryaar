@@ -20,6 +20,7 @@ from ejranow.labels import status_chip_html
 from ejranow.media_files import MediaError
 from ejranow.media_service import (
     assign_file,
+    attach_profile_picture,
     attach_project_image,
     attach_testimonial_image,
     enqueue_delete,
@@ -233,7 +234,25 @@ def _file_preview(obj, field, kind):
     return format_html('<a href="{}">فایل</a>', url)
 
 
+def _picture_preview(obj, field, acl_field):
+    stored = getattr(obj, field, None)
+    if not getattr(obj, "pk", None) or not stored:
+        return ""
+    url = url_for_key(stored.name, public=True, public_acl=getattr(obj, acl_field, False), kind="photo")
+    if not url:
+        return ""
+    return format_html('<img src="{}" alt="" style="max-height:72px;border-radius:8px">', url)
+
+
 def finalize_admin_media(user, obj):
+    if isinstance(obj, Profile):
+        list_id = parse_upload_id(getattr(obj, "_pending_list", ""))
+        banner_id = parse_upload_id(getattr(obj, "_pending_banner", ""))
+        if list_id or getattr(obj, "_remove_list", False):
+            attach_profile_picture(user, obj, list_id, field="list_image", remove=not list_id)
+        if banner_id or getattr(obj, "_remove_banner", False):
+            attach_profile_picture(user, obj, banner_id, field="banner", remove=not banner_id)
+        return
     upload_id = parse_upload_id(getattr(obj, "_pending_upload", ""))
     remove = bool(getattr(obj, "_remove_image", False)) and not upload_id
     if isinstance(obj, ProfileMedia) and upload_id:
@@ -337,10 +356,43 @@ class ProfileAdminForm(forms.ModelForm):
         label="Arts",
         help_text="Arts this person works in or is interested in.",
     )
+    list_upload = forms.CharField(required=False, label="Main image")
+    list_remove = forms.BooleanField(required=False, label="Remove main image")
+    banner_upload = forms.CharField(required=False, label="Banner")
+    banner_remove = forms.BooleanField(required=False, label="Remove banner")
 
     class Meta:
         model = Profile
-        fields = "__all__"
+        exclude = (
+            "list_image",
+            "list_thumb",
+            "list_public_acl",
+            "banner",
+            "banner_thumb",
+            "banner_public_acl",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        target = self.instance.pk or ""
+        self.fields["list_upload"].widget = DirectUploadWidget(
+            purpose="profile_list", kind="photo", fixed=True, target=target
+        )
+        self.fields["banner_upload"].widget = DirectUploadWidget(
+            purpose="profile_banner", kind="photo", fixed=True, target=target
+        )
+        self.fields["list_upload"].help_text = _picture_preview(self.instance, "list_image", "list_public_acl")
+        self.fields["banner_upload"].help_text = _picture_preview(self.instance, "banner", "banner_public_acl")
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj._pending_list = (self.cleaned_data.get("list_upload") or "").strip()
+        obj._remove_list = bool(self.cleaned_data.get("list_remove"))
+        obj._pending_banner = (self.cleaned_data.get("banner_upload") or "").strip()
+        obj._remove_banner = bool(self.cleaned_data.get("banner_remove"))
+        if commit:
+            obj.save()
+        return obj
 
 
 class StatusChipMixin:
@@ -376,6 +428,13 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
     autocomplete_fields = ("user", "city")
     inlines = (ProfileRoleInline, ProfileSkillInline, CreditInline, ProfileMediaInline)
     Media = AdminMedia
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        try:
+            finalize_admin_media(request.user, obj)
+        except MediaError as exc:
+            messages.error(request, exc.message)
 
     def save_formset(self, request, form, formset, change):
         if formset.model is ProfileMedia:

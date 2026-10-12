@@ -1,6 +1,19 @@
 {% load ejranow_ui %}
+{% media_src artist.banner_key 1 artist.banner_public_acl artist.banner_thumb_key "photo" as banner %}
+{% media_src artist.list_image_key 1 artist.list_public_acl artist.list_thumb_key "photo" as face %}
+<div class="profile-cover">
+    {% if banner %}
+        <img class="profile-banner" src="{{ banner }}" alt="">
+    {% else %}
+        <div class="profile-banner profile-banner--empty" aria-hidden="true"></div>
+    {% endif %}
+    {% if face %}
+        <img class="profile-photo" src="{{ face }}" alt="">
+    {% else %}
+        <span class="profile-photo profile-photo--empty" aria-hidden="true">{{ artist.name|slice:":1" }}</span>
+    {% endif %}
+</div>
 <header class="profile-head">
-    {% include "components/avatar.html" with name=artist.name size="size-16 text-[18px]" %}
     <div class="min-w-0">
         <h1 class="text-[28px] font-semibold leading-9">{{ artist.name }}</h1>
         <p class="mt-1 text-sm leading-[22px] text-muted-foreground">{{ artist.role|role_title }} · {{ artist.city }}</p>
