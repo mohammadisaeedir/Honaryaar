@@ -16,6 +16,9 @@
             <form class="mt-6 max-w-lg" method="post" action="{% url 'me-project' project.slug %}">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="project">
+                {% if project_form.non_field_errors %}
+                    <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ project_form.non_field_errors.0 }}</p>
+                {% endif %}
                 <label class="mb-4 block">
                     <span class="field-label">نام</span>
                     <input class="field" type="text" name="title" value="{{ project_form.title.value|default:'' }}" maxlength="160">
@@ -52,6 +55,15 @@
                     <span class="field-label">زمان آغاز</span>
                     {{ project_form.start_date }}
                 </label>
+                <div class="mb-4">
+                    <span class="field-label">تصویر</span>
+                    {% media_src project.image_thumb.name 0 0 project.image.name "photo" as current_image %}
+                    {% include "components/media/upload_control.html" with purpose="project" kind="photo" fixed=1 target=project.pk name="image_upload" initial_url=current_image %}
+                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
+                        <input type="checkbox" name="image_remove" value="1">
+                        حذف تصویر
+                    </label>
+                </div>
                 <label class="mb-4 block">
                     <span class="field-label">وضعیت</span>
                     <select class="field field-select" name="status">

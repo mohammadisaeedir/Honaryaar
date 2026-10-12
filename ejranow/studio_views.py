@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Prefetch
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,6 +15,8 @@ from ejranow.accounts import ensure_profile
 from ejranow.catalog import format_jalali_numeric
 from ejranow.forms import ApplyForm, InviteForm, OpportunityForm, ProjectCreateForm
 from ejranow.labels import APPLICATION_LABELS
+from ejranow.media_files import MediaError
+from ejranow.media_service import attach_project_image, parse_upload_id
 from ejranow.models import (
     Application,
     ApplicationStatus,
@@ -146,18 +149,25 @@ def project_new(request):
         return bounce
     form = ProjectCreateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        project = Project.objects.create(
-            slug=_slug(Project, "p"),
-            title=form.cleaned_data["title"],
-            owner=profile,
-            city=form.cleaned_data["city"],
-            art_category=form.cleaned_data["art_category"],
-            summary=form.cleaned_data["summary"],
-            start_date=form.cleaned_data["start_date"],
-            status=form.cleaned_data["status"],
-        )
-        messages.success(request, f"پروژه «{project.title}» ساخته شد.")
-        return redirect(_project_step(project.slug))
+        upload_id = parse_upload_id(form.cleaned_data.get("image_upload"))
+        try:
+            with transaction.atomic():
+                project = Project.objects.create(
+                    slug=_slug(Project, "p"),
+                    title=form.cleaned_data["title"],
+                    owner=profile,
+                    city=form.cleaned_data["city"],
+                    art_category=form.cleaned_data["art_category"],
+                    summary=form.cleaned_data["summary"],
+                    start_date=form.cleaned_data["start_date"],
+                    status=form.cleaned_data["status"],
+                )
+                attach_project_image(request.user, project, upload_id, required=True)
+        except MediaError as exc:
+            form.add_error(None, exc.message)
+        else:
+            messages.success(request, f"پروژه «{project.title}» ساخته شد.")
+            return redirect(_project_step(project.slug))
     return render(
         request,
         "pages/me_project_new.html",
@@ -196,15 +206,27 @@ def project_manage(request, slug):
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "project" and project_form.is_valid():
-            project.title = project_form.cleaned_data["title"]
-            project.city = project_form.cleaned_data["city"]
-            project.art_category = project_form.cleaned_data["art_category"]
-            project.summary = project_form.cleaned_data["summary"]
-            project.start_date = project_form.cleaned_data["start_date"]
-            project.status = project_form.cleaned_data["status"]
-            project.save(update_fields=["title", "city", "art_category", "summary", "start_date", "status"])
-            messages.success(request, "پروژه ذخیره شد.")
-            return redirect(_project_step(project.slug))
+            upload_id = parse_upload_id(project_form.cleaned_data.get("image_upload"))
+            try:
+                with transaction.atomic():
+                    project.title = project_form.cleaned_data["title"]
+                    project.city = project_form.cleaned_data["city"]
+                    project.art_category = project_form.cleaned_data["art_category"]
+                    project.summary = project_form.cleaned_data["summary"]
+                    project.start_date = project_form.cleaned_data["start_date"]
+                    project.status = project_form.cleaned_data["status"]
+                    project.save(update_fields=["title", "city", "art_category", "summary", "start_date", "status"])
+                    attach_project_image(
+                        request.user,
+                        project,
+                        upload_id,
+                        remove=project_form.cleaned_data.get("image_remove"),
+                    )
+            except MediaError as exc:
+                project_form.add_error(None, exc.message)
+            else:
+                messages.success(request, "پروژه ذخیره شد.")
+                return redirect(_project_step(project.slug))
         if action == "opportunity-city":
             opportunity = get_object_or_404(project.opportunities, pk=request.POST.get("opportunity"))
             city_id = request.POST.get("city") or None

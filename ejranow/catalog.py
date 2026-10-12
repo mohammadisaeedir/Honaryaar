@@ -10,7 +10,7 @@ import time
 from datetime import date
 
 _CACHE_SECONDS = 20
-_SNAPSHOT_KEY = "honaryaar:home:v1"
+_SNAPSHOT_KEY = "honaryaar:home:v2"
 _SNAPSHOT_TTL = 60 * 60 * 24
 _DAILY_LOADERS = {}
 _building = False
@@ -1002,7 +1002,15 @@ def _artist_dict(profile):
         "pk": profile.pk,
         "status": profile.status,
         "media": [
-            {"kind": MEDIA_LABEL.get(item.kind, item.kind), "label": item.label}
+            {
+                "kind": MEDIA_LABEL.get(item.kind, item.kind),
+                "kind_code": item.kind,
+                "label": item.label,
+                "key": item.file.name if item.is_public and item.file else "",
+                "thumb_key": item.thumbnail.name if item.is_public and item.thumbnail else "",
+                "public": bool(item.is_public),
+                "public_acl": bool(item.public_acl),
+            }
             for item in profile.media_items.all()
         ],
     }
@@ -1022,6 +1030,10 @@ def _testimonial_dict(item):
         "project_slug": project.slug if project else "",
         "project_title": project.title if project else "",
         "featured": item.featured,
+        "image_key": item.image.name if item.image else "",
+        "image_thumb_key": item.image_thumb.name if item.image_thumb else "",
+        "image_public": bool(item.image),
+        "image_public_acl": bool(item.image_public_acl),
     }
 
 
@@ -1039,6 +1051,8 @@ def is_urgent(start, today=None):
 
 
 def _project_dict(project):
+    from ejranow.models import PUBLIC_PROJECT_STATUSES
+
     art = project.art_category.art if project.art_category_id else ""
     return {
         "pk": project.pk,
@@ -1056,6 +1070,10 @@ def _project_dict(project):
         "featured": project.featured,
         "status": project.get_status_display(),
         "status_code": project.status,
+        "image_key": project.image.name if project.image else "",
+        "image_thumb_key": project.image_thumb.name if project.image_thumb else "",
+        "image_public": project.status in PUBLIC_PROJECT_STATUSES,
+        "image_public_acl": bool(project.image_public_acl),
         "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
     }
 

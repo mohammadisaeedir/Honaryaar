@@ -15,8 +15,18 @@ from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
-from ejranow.forms import ArtPickerWidget
+from ejranow.forms import ArtPickerWidget, DirectUploadWidget
 from ejranow.labels import status_chip_html
+from ejranow.media_files import MediaError
+from ejranow.media_service import (
+    assign_file,
+    attach_project_image,
+    attach_testimonial_image,
+    enqueue_delete,
+    parse_upload_id,
+    publish_upload,
+    url_for_key,
+)
 from ejranow.models import (
     Application,
     Art,
@@ -113,9 +123,172 @@ class CreditInline(TabularInline):
     extra = 0
 
 
+class ProfileMediaForm(forms.ModelForm):
+    parent_id = ""
+    upload_id = forms.CharField(
+        required=False,
+        label="File",
+        widget=DirectUploadWidget(purpose="profile", fixed=False),
+    )
+
+    class Meta:
+        model = ProfileMedia
+        exclude = ("file", "thumbnail", "public_acl")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        target = self.instance.profile_id or self.parent_id or ""
+        self.fields["upload_id"].widget = DirectUploadWidget(
+            purpose="profile",
+            kind=self.instance.kind or "photo",
+            fixed=False,
+            target=target,
+        )
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj._pending_upload = (self.cleaned_data.get("upload_id") or "").strip()
+        if commit:
+            obj.save()
+        return obj
+
+
+class ProjectAdminForm(forms.ModelForm):
+    image_upload = forms.CharField(
+        required=False,
+        label="Image",
+        widget=DirectUploadWidget(purpose="project", kind="photo", fixed=True),
+    )
+    image_remove = forms.BooleanField(required=False, label="Remove image")
+
+    class Meta:
+        model = Project
+        exclude = ("image", "image_thumb", "image_public_acl")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["image_upload"].widget = DirectUploadWidget(
+            purpose="project",
+            kind="photo",
+            fixed=True,
+            target=self.instance.pk or "",
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        if not self.instance.pk and not (cleaned.get("image_upload") or "").strip():
+            raise forms.ValidationError("تصویر پروژه را بارگذاری کنید.")
+        return cleaned
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj._pending_upload = (self.cleaned_data.get("image_upload") or "").strip()
+        obj._remove_image = bool(self.cleaned_data.get("image_remove"))
+        if commit:
+            obj.save()
+        return obj
+
+
+class TestimonialAdminForm(forms.ModelForm):
+    image_upload = forms.CharField(
+        required=False,
+        label="Image",
+        widget=DirectUploadWidget(purpose="testimonial", kind="photo", fixed=True),
+    )
+    image_remove = forms.BooleanField(required=False, label="Remove image")
+
+    class Meta:
+        model = Testimonial
+        exclude = ("image", "image_thumb", "image_public_acl")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["image_upload"].widget = DirectUploadWidget(
+            purpose="testimonial",
+            kind="photo",
+            fixed=True,
+            target=self.instance.pk or "",
+        )
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj._pending_upload = (self.cleaned_data.get("image_upload") or "").strip()
+        obj._remove_image = bool(self.cleaned_data.get("image_remove"))
+        if commit:
+            obj.save()
+        return obj
+
+
+def _file_preview(obj, field, kind):
+    stored = getattr(obj, field)
+    if not getattr(obj, "pk", None) or not stored:
+        return "—"
+    public = getattr(obj, "is_public", True)
+    public_acl = getattr(obj, "public_acl", getattr(obj, "image_public_acl", False))
+    url = url_for_key(stored.name, public=public, public_acl=public_acl, kind=kind)
+    if not url:
+        return "—"
+    if kind == "photo":
+        return format_html('<img src="{}" alt="" style="max-height:72px;border-radius:8px">', url)
+    return format_html('<a href="{}">فایل</a>', url)
+
+
+def finalize_admin_media(user, obj):
+    upload_id = parse_upload_id(getattr(obj, "_pending_upload", ""))
+    remove = bool(getattr(obj, "_remove_image", False)) and not upload_id
+    if isinstance(obj, ProfileMedia) and upload_id:
+        published = publish_upload(
+            user,
+            upload_id,
+            purpose="profile",
+            target_id=obj.profile_id,
+            public=obj.is_public,
+        )
+        enqueue_delete(obj.file.name, obj.thumbnail.name)
+        obj.kind = published.kind
+        obj.public_acl = published.public_acl
+        assign_file(obj, "file", published.key)
+        assign_file(obj, "thumbnail", published.thumb_key)
+        obj.save()
+        return
+    if isinstance(obj, Project) and (upload_id or remove):
+        attach_project_image(user, obj, upload_id, remove=remove)
+        return
+    if isinstance(obj, Testimonial) and (upload_id or remove):
+        attach_testimonial_image(user, obj, upload_id, remove=remove)
+
+
+def _save_formset_media(request, formset):
+    instances = formset.save(commit=False)
+    for obj in formset.deleted_objects:
+        obj.delete()
+    for obj in instances:
+        obj.save()
+        try:
+            finalize_admin_media(request.user, obj)
+        except MediaError as exc:
+            messages.error(request, exc.message)
+    formset.save_m2m()
+
+
 class ProfileMediaInline(TabularInline):
     model = ProfileMedia
+    form = ProfileMediaForm
     extra = 0
+    fields = ("kind", "label", "position", "is_public", "upload_id", "file_preview")
+    readonly_fields = ("file_preview",)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        ProfileMediaForm.parent_id = str(obj.pk) if obj else ""
+        return super().get_formset(request, obj, **kwargs)
+
+    def file_preview(self, obj):
+        return _file_preview(obj, "file", obj.kind or "photo")
+
+
+class AdminMedia:
+    css = {"all": ("css/media-upload.css",)}
+    js = ("js/media-upload.js",)
 
 
 @admin.register(Skill)
@@ -202,6 +375,13 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
     list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
     inlines = (ProfileRoleInline, ProfileSkillInline, CreditInline, ProfileMediaInline)
+    Media = AdminMedia
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is ProfileMedia:
+            _save_formset_media(request, formset)
+            return
+        super().save_formset(request, form, formset, change)
 
     def get_queryset(self, request):
         return (
@@ -296,10 +476,23 @@ class ProfileRoleAdmin(ModelAdmin):
 
 @admin.register(ProfileMedia)
 class ProfileMediaAdmin(ModelAdmin):
-    list_display = ("profile", "kind", "label")
+    form = ProfileMediaForm
+    list_display = ("profile", "kind", "label", "file_preview")
     list_filter = ("kind",)
     search_fields = ("label", "profile__name")
     autocomplete_fields = ("profile",)
+    readonly_fields = ("file_preview",)
+    Media = AdminMedia
+
+    def file_preview(self, obj):
+        return _file_preview(obj, "file", obj.kind or "photo")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        try:
+            finalize_admin_media(request.user, obj)
+        except MediaError as exc:
+            messages.error(request, exc.message)
 
 
 @admin.register(Credit)
@@ -350,18 +543,36 @@ class OpportunityInline(TabularInline):
 
 class TestimonialInline(TabularInline):
     model = Testimonial
+    form = TestimonialAdminForm
     extra = 0
-    fields = ("quote", "name", "profile", "role_label", "role", "featured", "priority")
+    fields = ("quote", "name", "profile", "role_label", "role", "featured", "priority", "image_upload", "image_remove", "image_preview")
+    readonly_fields = ("image_preview",)
     autocomplete_fields = ("profile", "role")
+
+    def image_preview(self, obj):
+        return _file_preview(obj, "image", "photo")
 
 
 @admin.register(Testimonial)
 class TestimonialAdmin(ModelAdmin):
-    list_display = ("display_name", "profile", "role", "role_label", "project", "featured", "priority")
+    form = TestimonialAdminForm
+    list_display = ("display_name", "profile", "role", "role_label", "project", "featured", "priority", "image_preview")
     list_filter = ("featured",)
     list_select_related = ("profile", "role", "project")
     search_fields = ("name", "quote", "profile__name", "role__title", "project__title")
     autocomplete_fields = ("profile", "role", "project")
+    readonly_fields = ("image_preview",)
+    Media = AdminMedia
+
+    def image_preview(self, obj):
+        return _file_preview(obj, "image", "photo")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        try:
+            finalize_admin_media(request.user, obj)
+        except MediaError as exc:
+            messages.error(request, exc.message)
 
     @admin.display(description="Name")
     def display_name(self, item):
@@ -374,21 +585,38 @@ class TestimonialAdmin(ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(StatusChipMixin, ModelAdmin):
+    form = ProjectAdminForm
     list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link")
     list_filter = ("status", "featured", "art_category__art", "art_category", "city")
     list_editable = ("featured",)
     search_fields = ("title", "owner__user__first_name", "owner__user__last_name", "owner__name", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("owner", "art_category", "lead_role", "city")
     list_select_related = ("owner", "city", "art_category")
+    readonly_fields = ("image_preview",)
+    Media = AdminMedia
 
     @admin.display(description="Art", ordering="art_category__art")
     def art_name(self, project):
         if project.art_category_id:
             return project.art_category.get_art_display()
         return ""
+
+    def image_preview(self, project):
+        return _file_preview(project, "image", "photo")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        try:
+            finalize_admin_media(request.user, obj)
+        except MediaError as exc:
+            messages.error(request, exc.message)
+
     inlines = [OpportunityInline, TestimonialInline]
 
     def save_formset(self, request, form, formset, change):
+        if formset.model is Testimonial:
+            _save_formset_media(request, formset)
+            return
         if formset.model is not Opportunity:
             return super().save_formset(request, form, formset, change)
         instances = formset.save(commit=False)

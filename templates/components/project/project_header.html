@@ -1,5 +1,13 @@
-{% load ejranow_ui %}
+{% load ejranow_ui static %}
+{% media_src project.image_key project.image_public project.image_public_acl project.image_thumb_key "photo" as hero %}
 <header>
+    <div class="project-hero">
+        {% if hero %}
+            <img src="{{ hero }}" alt="{{ project.title }}">
+        {% else %}
+            <img src="{% static 'brand/project-placeholder.svg' %}" alt="">
+        {% endif %}
+    </div>
     <p class="text-sm leading-[22px] text-muted-foreground"><span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span> · {{ project.city }}</p>
     <div class="pdp-title mt-2">
         <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>

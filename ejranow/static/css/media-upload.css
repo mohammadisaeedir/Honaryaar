@@ -1,0 +1,61 @@
+.media-upload {
+    display: grid;
+    gap: 8px;
+}
+
+.media-upload__preview:empty {
+    display: none;
+}
+
+.media-upload__preview img,
+.media-upload__preview video,
+.media-upload__preview audio {
+    width: 100%;
+    max-height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f6f4ef;
+}
+
+.media-upload__pick input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.media-upload__pick span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid #d9dfe7;
+    border-radius: 8px;
+    background: #fff;
+    color: #252b32;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.media-upload__bar {
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef0f3;
+}
+
+.media-upload__bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: #c13281;
+}
+
+.media-upload__error {
+    margin: 0;
+    color: #b42318;
+    font-size: 12px;
+    line-height: 18px;
+}

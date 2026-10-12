@@ -1,13 +1,18 @@
 from collections import defaultdict
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
+from django.db import transaction
+
 from ejranow.accounts import ensure_profile, user_for_phone
 from ejranow.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
+from ejranow.media_files import MediaError
+from ejranow.media_service import parse_upload_id, save_profile_media, url_for_key
 from ejranow.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillArea
 
 
@@ -85,27 +90,16 @@ def _save_credits(profile, rows):
             )
 
 
-def _save_media(profile, rows):
-    owned = {item.id: item for item in profile.media_items.all()}
+def _save_media(profile, rows, user):
+    prepared = []
     for row in rows:
         if not row:
+            prepared.append(row)
             continue
-        media_id = row.get("media_id")
-        current = owned.get(media_id)
-        if media_id and current is None:
-            continue
-        if row.get("delete"):
-            if current:
-                current.delete()
-            continue
-        if not row.get("label"):
-            continue
-        if current:
-            current.kind = row["kind"]
-            current.label = row["label"]
-            current.save()
-        else:
-            ProfileMedia.objects.create(profile=profile, kind=row["kind"], label=row["label"])
+        item = dict(row)
+        item["upload_id"] = parse_upload_id(row.get("upload_id"))
+        prepared.append(item)
+    save_profile_media(profile, prepared, user)
 
 
 def _skill_levels_from_post(post):
@@ -244,6 +238,20 @@ def me_profile(request):
         ],
         prefix="media",
     )
+    media_by_id = {item.id: item for item in profile.media_items.all()}
+    for media_form in media_formset:
+        raw = media_form["media_id"].value()
+        current = media_by_id.get(int(raw)) if raw and str(raw).isdigit() else None
+        media_form.preview_url = ""
+        media_form.preview_kind = current.kind if current else "photo"
+        if current and current.file:
+            media_form.preview_url = url_for_key(
+                current.thumbnail.name or current.file.name,
+                public=current.is_public,
+                public_acl=current.public_acl,
+                kind=current.kind,
+            )
+    media_error = ""
     if request.method == "POST":
         editing = True
         if (
@@ -252,25 +260,33 @@ def me_profile(request):
             and credit_formset.is_valid()
             and media_formset.is_valid()
         ):
-            profile.name = form.cleaned_data["name"]
-            profile.city = form.cleaned_data["city"]
-            profile.about = form.cleaned_data["about"]
-            profile.birth_date = form.cleaned_data["birth_date"]
-            profile.gender = form.cleaned_data["gender"]
-            profile.arts = form.cleaned_data["arts"]
-            profile.save()
-            _save_skills(profile, skill_levels)
-            chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
-            _save_roles(profile, chosen_roles, primary_role)
-            _save_credits(profile, credit_formset.cleaned_data)
-            _save_media(profile, media_formset.cleaned_data)
-            request.user.first_name = form.cleaned_data["first_name"]
-            request.user.last_name = form.cleaned_data["last_name"]
-            request.user.save(update_fields=["first_name", "last_name"])
-            messages.success(request, "پروفایل ذخیره شد.")
-            return redirect("me-profile")
+            try:
+                with transaction.atomic():
+                    profile.name = form.cleaned_data["name"]
+                    profile.city = form.cleaned_data["city"]
+                    profile.about = form.cleaned_data["about"]
+                    profile.birth_date = form.cleaned_data["birth_date"]
+                    profile.gender = form.cleaned_data["gender"]
+                    profile.arts = form.cleaned_data["arts"]
+                    profile.save()
+                    _save_skills(profile, skill_levels)
+                    chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
+                    _save_roles(profile, chosen_roles, primary_role)
+                    _save_credits(profile, credit_formset.cleaned_data)
+                    _save_media(profile, media_formset.cleaned_data, request.user)
+                    request.user.first_name = form.cleaned_data["first_name"]
+                    request.user.last_name = form.cleaned_data["last_name"]
+                    request.user.save(update_fields=["first_name", "last_name"])
+            except MediaError as exc:
+                media_error = exc.message
+                messages.error(request, exc.message)
+            else:
+                messages.success(request, "پروفایل ذخیره شد.")
+                return redirect("me-profile")
     edit_tab = "identity"
-    if request.method == "POST" and form.errors:
+    if media_error:
+        edit_tab = "media"
+    elif request.method == "POST" and form.errors:
         edit_tab = "identity"
     elif request.method == "POST" and not role_formset.is_valid():
         edit_tab = "roles"
@@ -294,5 +310,10 @@ def me_profile(request):
             "credit_formset": credit_formset,
             "media_formset": media_formset,
             "edit_tab": edit_tab,
+            "media_error": media_error,
+            "media_max_items": settings.MEDIA_PROFILE_MAX_ITEMS,
+            "media_max_photo": settings.MEDIA_MAX_IMAGE_BYTES,
+            "media_max_video": settings.MEDIA_MAX_VIDEO_BYTES,
+            "media_max_audio": settings.MEDIA_MAX_AUDIO_BYTES,
         },
     )

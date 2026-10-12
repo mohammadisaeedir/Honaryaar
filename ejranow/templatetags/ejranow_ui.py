@@ -75,6 +75,37 @@ def media_label(value):
     return MEDIA_LABELS.get(value, value)
 
 
+@register.simple_tag
+def media_src(key, public=False, public_acl=False, fallback="", kind="photo"):
+    from ejranow.media_service import url_for_key
+
+    chosen = key or fallback or ""
+    return url_for_key(
+        chosen,
+        public=str(public).lower() in {"1", "true", "yes", "on"},
+        public_acl=str(public_acl).lower() in {"1", "true", "yes", "on"},
+        kind=kind or "photo",
+    )
+
+
+@register.simple_tag
+def media_limit(kind):
+    from django.conf import settings
+
+    return {
+        "photo": settings.MEDIA_MAX_IMAGE_BYTES,
+        "video": settings.MEDIA_MAX_VIDEO_BYTES,
+        "audio": settings.MEDIA_MAX_AUDIO_BYTES,
+    }.get(kind, 0)
+
+
+@register.simple_tag
+def media_start_url():
+    from django.urls import reverse
+
+    return reverse("media-upload-start")
+
+
 @register.filter
 def skill_level_label(value):
     try:

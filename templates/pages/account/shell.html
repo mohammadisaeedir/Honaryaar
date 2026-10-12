@@ -4,6 +4,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/profile.css' %}?v={{ asset_v }}">
     <link rel="stylesheet" href="{% static 'css/art-picker.css' %}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{% static 'css/media-upload.css' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block body_class %}account-page min-h-dvh overflow-x-clip text-sm leading-[22px] antialiased{% endblock %}
@@ -60,4 +61,5 @@
     </div>
     <form x-ref="logoutForm" method="post" action="{% url 'logout' %}">{% csrf_token %}</form>
 </div>
+<script src="{% static 'js/media-upload.js' %}?v={{ asset_v }}"></script>
 {% endblock %}

@@ -2130,6 +2130,8 @@ button.site-account {
 
 .site-account--desk { display: none; }
 
+.site-header { z-index: 60; }
+
 .site-account-wrap { position: relative; }
 
 .site-account__panel {
@@ -3377,4 +3379,66 @@ body.pf-logout-open { overflow: hidden; }
     }
     .pf-logoutDialog__btn { flex: 0 0 auto; padding: 8px 24px; }
     .pf-logoutDialog__btn--ghost { padding-inline: 16px; }
+}
+
+.media-tile {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid #ececee;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.media-tile--wide {
+    grid-column: 1 / -1;
+}
+
+.media-tile img,
+.media-tile video {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    background: #f6f4ef;
+}
+
+.media-tile audio {
+    display: block;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.media-tile figcaption {
+    padding: 8px 12px 12px;
+    color: #5c6570;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.project-card {
+    overflow: hidden;
+}
+
+.project-card__media {
+    margin: -16px -16px 12px;
+}
+
+.project-card__media img {
+    display: block;
+    width: 100%;
+    height: 148px;
+    object-fit: cover;
+}
+
+.project-hero {
+    margin-bottom: 16px;
+}
+
+.project-hero img {
+    display: block;
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    border-radius: 16px;
+    background: #f6f4ef;
 }

@@ -1,4 +1,7 @@
 Django==6.1.1
 django-unfold==0.108.0
+django-storages==1.14.6
+boto3==1.40.61
+Pillow==11.3.0
 psycopg[binary]==3.3.6
 redis==6.4.0

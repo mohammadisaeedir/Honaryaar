@@ -533,6 +533,7 @@
     color: #c13281;
     font-size: 16px;
     font-weight: 800;
+    object-fit: cover;
 }
 
 .t-card figcaption strong {

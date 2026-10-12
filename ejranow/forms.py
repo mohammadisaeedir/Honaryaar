@@ -146,6 +146,7 @@ class CreditRowForm(forms.Form):
 
 class MediaRowForm(forms.Form):
     media_id = forms.IntegerField(required=False)
+    upload_id = forms.CharField(required=False)
     kind = forms.ChoiceField(choices=[(key, label) for key, label in MEDIA_LABELS.items()], required=False)
     label = forms.CharField(required=False, max_length=160)
     delete = forms.BooleanField(required=False)
@@ -185,6 +186,8 @@ class ProjectCreateForm(forms.Form):
         choices=[(value, CHIP_LABELS[value]) for value, _label in ProjectStatus.choices],
         initial=ProjectStatus.DRAFT,
     )
+    image_upload = forms.CharField(required=False)
+    image_remove = forms.BooleanField(required=False)
 
     def clean_title(self):
         value = self.cleaned_data["title"].strip()
@@ -336,3 +339,33 @@ class TicketForm(forms.Form):
 
     def clean_body(self):
         return self.cleaned_data["body"].strip()
+
+
+class DirectUploadWidget(forms.Widget):
+    template_name = "widgets/direct_upload.html"
+
+    def __init__(self, purpose, kind="photo", fixed=True, target="", attrs=None):
+        self.purpose = purpose
+        self.kind = kind
+        self.fixed = fixed
+        self.target = target
+        super().__init__(attrs)
+
+    def get_context(self, name, value, attrs):
+        from django.conf import settings
+        from django.urls import reverse
+
+        context = super().get_context(name, value, attrs)
+        context["widget"].update(
+            {
+                "purpose": self.purpose,
+                "kind": self.kind,
+                "fixed": self.fixed,
+                "target": self.target or "",
+                "start_url": reverse("media-upload-start"),
+                "max_photo": settings.MEDIA_MAX_IMAGE_BYTES,
+                "max_video": settings.MEDIA_MAX_VIDEO_BYTES,
+                "max_audio": settings.MEDIA_MAX_AUDIO_BYTES,
+            }
+        )
+        return context

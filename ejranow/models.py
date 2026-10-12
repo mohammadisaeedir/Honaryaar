@@ -1,9 +1,13 @@
+import uuid
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
+
+from ejranow.storage import MediaStorage
 
 
 class Role(models.Model):
@@ -238,9 +242,14 @@ class ProfileMedia(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="media_items")
     kind = models.CharField(max_length=20, choices=MediaKind.choices, default=MediaKind.PHOTO)
     label = models.CharField(max_length=160)
+    file = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    thumbnail = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    position = models.PositiveIntegerField(default=0)
+    is_public = models.BooleanField(default=True)
+    public_acl = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["position", "id"]
         verbose_name_plural = "profile media"
 
     def __str__(self):
@@ -313,6 +322,9 @@ class Project(models.Model):
         choices=ProjectStatus.choices,
         default=ProjectStatus.DRAFT,
     )
+    image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    image_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    image_public_acl = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["title"]
@@ -348,6 +360,9 @@ class Testimonial(models.Model):
     role_label = models.CharField(max_length=80, blank=True)
     featured = models.BooleanField(default=False)
     priority = models.PositiveSmallIntegerField(default=100)
+    image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    image_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
+    image_public_acl = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["priority", "id"]
@@ -358,6 +373,87 @@ class Testimonial(models.Model):
             who = self.profile.public_name()
         where = self.project.title if self.project_id else "عمومی"
         return f"{who or '—'} · {where}"
+
+
+class UploadStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    VALIDATED = "validated", "Validated"
+    PUBLISHED = "published", "Published"
+    FAILED = "failed", "Failed"
+    EXPIRED = "expired", "Expired"
+    ABANDONED = "abandoned", "Abandoned"
+
+
+class PendingUpload(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="media_uploads",
+    )
+    purpose = models.CharField(max_length=20)
+    target_id = models.PositiveBigIntegerField(null=True, blank=True)
+    key = models.CharField(max_length=300)
+    thumb_key = models.CharField(max_length=300, blank=True)
+    requested_kind = models.CharField(max_length=20, default="photo")
+    kind = models.CharField(max_length=20, blank=True)
+    content_type = models.CharField(max_length=80, blank=True)
+    declared_size = models.PositiveBigIntegerField()
+    actual_size = models.PositiveBigIntegerField(null=True, blank=True)
+    checksum = models.CharField(max_length=64, blank=True)
+    status = models.CharField(max_length=20, choices=UploadStatus.choices, default=UploadStatus.PENDING)
+    error = models.CharField(max_length=200, blank=True)
+    public_acl = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    validated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status", "expires_at"]),
+            models.Index(fields=["purpose", "target_id", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.purpose} · {self.status}"
+
+
+class StorageCleanup(models.Model):
+    key = models.CharField(max_length=300, unique=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_error = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.key
+
+
+class MediaMigrationRecord(models.Model):
+    model_label = models.CharField(max_length=80)
+    object_id = models.CharField(max_length=64)
+    field_name = models.CharField(max_length=40)
+    source = models.TextField()
+    source_hash = models.CharField(max_length=64)
+    previous_value = models.TextField(blank=True)
+    destination_key = models.CharField(max_length=300, blank=True)
+    thumb_key = models.CharField(max_length=300, blank=True)
+    checksum = models.CharField(max_length=64, blank=True)
+    byte_size = models.PositiveBigIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=20, default="planned")
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["model_label", "object_id", "field_name", "source_hash"],
+                name="unique_media_migration_source",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.model_label}#{self.object_id} · {self.status}"
 
 
 class OpportunityStatus(models.TextChoices):

@@ -12,3 +12,4 @@ class EjranowConfig(AppConfig):
 
         install()
         install_error_pages()
+        from . import media_signals  # noqa: F401

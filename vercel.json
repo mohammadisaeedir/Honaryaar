@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "media.honaryaar.ir" }],
+      "destination": "https://c791474.parspack.net/c791474/:path*"
+    }
+  ]
+}

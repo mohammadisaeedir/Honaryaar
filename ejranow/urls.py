@@ -14,10 +14,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
 from ejranow.document_views import superuser_document, superuser_documents
+from ejranow.media_views import media_upload_complete, media_upload_start
 from ejranow.auth_views import login_code, login_phone, logout_view, me_profile
 from ejranow.studio_views import (
     application_detail,
@@ -83,6 +86,8 @@ urlpatterns = [
     path("login/code/", login_code, name="login-code"),
     path("logout/", logout_view, name="logout"),
     path("me/profile/", me_profile, name="me-profile"),
+    path("me/media/uploads/", media_upload_start, name="media-upload-start"),
+    path("me/media/uploads/<uuid:upload_id>/complete/", media_upload_complete, name="media-upload-complete"),
     path("me/tickets/", my_tickets, name="me-tickets"),
     path("me/tickets/<int:pk>/", my_ticket, name="me-ticket"),
     path("me/projects/new/", project_new, name="me-project-new"),
@@ -107,3 +112,8 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
 ]
+
+from ejranow.storage import parspack_configured
+
+if settings.DEBUG and not parspack_configured():
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

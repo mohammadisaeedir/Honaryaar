@@ -1,10 +1,16 @@
+{% load ejranow_ui %}
+{% media_src item.image_thumb_key item.image_public item.image_public_acl item.image_key "photo" as portrait %}
 <figure class="t-card">
     <div class="t-card__quote">
         <span class="t-card__mark" aria-hidden="true">”</span>
         <blockquote>{{ item.quote }}</blockquote>
     </div>
     <figcaption>
-        <span class="t-card__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
+        {% if portrait %}
+            <img class="t-card__avatar" src="{{ portrait }}" alt="">
+        {% else %}
+            <span class="t-card__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
+        {% endif %}
         <span>
             <strong>{{ item.name }}</strong>
             <span class="t-card__meta">

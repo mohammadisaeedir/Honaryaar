@@ -1,8 +1,17 @@
+{% load ejranow_ui %}
 <ul class="grid grid-cols-2 gap-3">
     {% for item in media %}
-        <li class="flex min-h-24 items-end rounded-card border border-border bg-surface p-3">
-            <p class="text-xs leading-[18px] text-muted-foreground">{{ item.kind }} · {{ item.label }}</p>
-        </li>
+        {% media_src item.key item.public item.public_acl "" item.kind_code as src %}
+        {% media_src item.thumb_key item.public item.public_acl "" "photo" as thumb %}
+        {% if src %}
+            <li class="{% if item.kind_code != 'photo' %}col-span-2{% endif %}">
+                {% include "components/media/player.html" with kind=item.kind_code label=item.label src=src thumb=thumb %}
+            </li>
+        {% else %}
+            <li class="flex min-h-24 items-end rounded-card border border-border bg-surface p-3">
+                <p class="text-xs leading-[18px] text-muted-foreground">{{ item.kind }} · {{ item.label }}</p>
+            </li>
+        {% endif %}
     {% empty %}
         <li class="col-span-2 text-sm leading-[22px] text-muted-foreground">مدیایی ثبت نشده.</li>
     {% endfor %}

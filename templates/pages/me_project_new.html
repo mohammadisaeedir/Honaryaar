@@ -1,4 +1,5 @@
 {% extends "pages/account/shell.html" %}
+{% load ejranow_ui %}
 
 {% block title %}ساخت پروژه · هنریار{% endblock %}
 {% block account_title %}ساخت پروژه{% endblock %}
@@ -50,6 +51,11 @@
             <span class="field-label">زمان آغاز</span>
             {{ form.start_date }}
         </label>
+        <div class="mb-4">
+            <span class="field-label">تصویر</span>
+            {% include "components/media/upload_control.html" with purpose="project" kind="photo" fixed=1 name="image_upload" require=1 %}
+            <p class="mt-2 text-xs leading-[18px] text-muted-foreground">برای پروژهٔ جدید تصویر لازم است.</p>
+        </div>
         <label class="mb-4 block">
             <span class="field-label">وضعیت</span>
             <select class="field field-select" name="status">

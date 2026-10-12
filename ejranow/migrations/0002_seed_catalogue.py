@@ -64,25 +64,36 @@ def load_catalogue(apps, schema_editor):
             )
     projects = {}
     for item in PROJECTS:
+        category = categories.get(item.get("category") or item.get("art"))
+        role = roles_by_slug.get(item.get("lead_role"))
+        if category is None or role is None:
+            continue
+        status = PROJECT_STATUS.get(item.get("status"), "casting")
+        if status not in {"casting", "open_call"}:
+            status = "casting"
         projects[item["slug"]], _created = Project.objects.get_or_create(
             slug=item["slug"],
             defaults={
                 "title": item["title"],
-                "city": item["city"],
-                "category": categories[item["category"]],
-                "lead_name": item["lead"],
-                "lead_role": roles_by_slug[item["lead_role"]],
-                "summary": item["summary"],
-                "status": PROJECT_STATUS[item["status"]],
+                "city": item.get("city", ""),
+                "category": category,
+                "lead_name": item.get("lead", ""),
+                "lead_role": role,
+                "summary": item.get("summary", ""),
+                "status": status,
             },
         )
     for item in OPPORTUNITIES:
+        project = projects.get(item.get("project"))
+        role = roles_by_slug.get(item.get("role"))
+        if project is None or role is None:
+            continue
         Opportunity.objects.get_or_create(
             slug=item["slug"],
             defaults={
                 "title": item["title"],
-                "project": projects[item["project"]],
-                "role": roles_by_slug[item["role"]],
+                "project": project,
+                "role": role,
                 "production": item["production"],
                 "city": item["city"],
                 "age_min": item["age_min"],

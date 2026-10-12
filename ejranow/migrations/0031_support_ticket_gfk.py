@@ -6,11 +6,13 @@ from django.db import migrations, models
 def copy_targets(apps, schema_editor):
     SupportTicket = apps.get_model("ejranow", "SupportTicket")
     ContentType = apps.get_model("contenttypes", "ContentType")
-    type_ids = {
-        "profile": ContentType.objects.get(app_label="ejranow", model="profile").pk,
-        "project": ContentType.objects.get(app_label="ejranow", model="project").pk,
-        "opportunity": ContentType.objects.get(app_label="ejranow", model="opportunity").pk,
-    }
+    type_ids = {}
+    for model_name in ("profile", "project", "opportunity"):
+        content_type, _created = ContentType.objects.get_or_create(
+            app_label="ejranow",
+            model=model_name,
+        )
+        type_ids[model_name] = content_type.pk
     for row in SupportTicket.objects.all():
         body = row.body or ""
         content_type_id = None

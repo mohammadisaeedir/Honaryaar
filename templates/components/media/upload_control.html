@@ -1,0 +1,39 @@
+{% load ejranow_ui %}
+{% media_start_url as start_url %}
+{% media_limit "photo" as max_photo %}
+{% media_limit "video" as max_video %}
+{% media_limit "audio" as max_audio %}
+<div
+    class="media-upload"
+    data-media-upload
+    data-purpose="{{ purpose }}"
+    data-kind="{{ kind|default:'photo' }}"
+    {% if fixed %}data-fixed-kind="1"{% endif %}
+    {% if target %}data-target="{{ target }}"{% endif %}
+    {% if require %}data-require="1"{% endif %}
+    {% if replacing %}data-replacing="1"{% endif %}
+    {% if initial_url %}data-initial-url="{{ initial_url }}"{% endif %}
+    data-start="{{ start_url }}"
+    data-max-photo="{{ max_photo }}"
+    data-max-video="{{ max_video }}"
+    data-max-audio="{{ max_audio }}"
+>
+    <input type="hidden" name="{{ name }}" value="{{ value|default:'' }}" data-upload-id>
+    <div class="media-upload__preview" data-preview>
+        {% if initial_url %}
+            {% if kind == "video" %}
+                <video controls playsinline preload="metadata" src="{{ initial_url }}"></video>
+            {% elif kind == "audio" %}
+                <audio controls preload="metadata" src="{{ initial_url }}"></audio>
+            {% else %}
+                <img src="{{ initial_url }}" alt="">
+            {% endif %}
+        {% endif %}
+    </div>
+    <label class="media-upload__pick">
+        <input type="file" data-file {% if fixed and kind == "photo" %}accept="image/jpeg,image/png,image/webp,image/gif"{% endif %}>
+        <span>انتخاب فایل</span>
+    </label>
+    <div class="media-upload__bar" data-bar hidden><span data-progress></span></div>
+    <p class="media-upload__error" data-error hidden></p>
+</div>

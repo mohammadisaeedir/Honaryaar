@@ -1,0 +1,12 @@
+<figure class="media-tile{% if kind != 'photo' %} media-tile--wide{% endif %}">
+    {% if kind == "video" %}
+        <video controls playsinline preload="metadata"{% if thumb %} poster="{{ thumb }}"{% endif %}>
+            <source src="{{ src }}">
+        </video>
+    {% elif kind == "audio" %}
+        <audio controls preload="metadata" src="{{ src }}"></audio>
+    {% else %}
+        <img src="{{ thumb|default:src }}" alt="{{ label }}">
+    {% endif %}
+    {% if label %}<figcaption>{{ label }}</figcaption>{% endif %}
+</figure>

@@ -22,11 +22,50 @@ mimetypes.add_type("font/woff2", ".woff2", strict=True)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_local_env():
+    """Fill unset variables from local env files.
+
+    The process environment and Vercel both win. Vercel injects variables
+    itself, so these files are not read there.
+    """
+    if os.environ.get("VERCEL") == "1":
+        return
+    loaded = {}
+    for name in (".env", ".env.local"):
+        path = BASE_DIR / name
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            text = line.strip()
+            if not text or text.startswith("#") or "=" not in text:
+                continue
+            key, value = text.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and value:
+                loaded[key] = value
+    for key, value in loaded.items():
+        os.environ.setdefault(key, value)
+
+
+_load_local_env()
+
+
+def _int_env(name, default):
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "django-insecure-dev-only-change-me")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or "django-insecure-dev-only-change-me"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in {"1", "true", "yes"}
@@ -69,6 +108,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.postgres",
+    "storages",
     "django.forms",
     "ejranow",
 ]
@@ -353,6 +393,29 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Uploaded media. Static brand files stay on the static-file setup above.
+# Object storage is used only when every ParsPack value below is set.
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+PARSPACK_ACCESS_KEY_ID = os.environ.get("PARSPACK_ACCESS_KEY_ID", "").strip()
+PARSPACK_SECRET_ACCESS_KEY = os.environ.get("PARSPACK_SECRET_ACCESS_KEY", "").strip()
+PARSPACK_ENDPOINT_URL = os.environ.get("PARSPACK_ENDPOINT_URL", "").strip().rstrip("/")
+PARSPACK_BUCKET_NAME = os.environ.get("PARSPACK_BUCKET_NAME", "").strip()
+PARSPACK_REGION_NAME = os.environ.get("PARSPACK_REGION_NAME", "").strip()
+PARSPACK_PUBLIC_MEDIA_BASE_URL = os.environ.get(
+    "PARSPACK_PUBLIC_MEDIA_BASE_URL",
+    "https://media.honaryaar.ir",
+).strip().rstrip("/")
+MEDIA_STORAGE_PREFIX = os.environ.get("MEDIA_STORAGE_PREFIX", "").strip().strip("/")
+MEDIA_UPLOAD_ORIGINS = os.environ.get("MEDIA_UPLOAD_ORIGINS", "")
+MEDIA_MIGRATION_HOSTS = os.environ.get("MEDIA_MIGRATION_HOSTS", "")
+MEDIA_PROFILE_MAX_ITEMS = _int_env("MEDIA_PROFILE_MAX_ITEMS", 12)
+MEDIA_MAX_IMAGE_BYTES = _int_env("MEDIA_MAX_IMAGE_BYTES", 5 * 1024 * 1024)
+MEDIA_MAX_VIDEO_BYTES = _int_env("MEDIA_MAX_VIDEO_BYTES", 50 * 1024 * 1024)
+MEDIA_MAX_AUDIO_BYTES = _int_env("MEDIA_MAX_AUDIO_BYTES", 15 * 1024 * 1024)
+MEDIA_PRESIGN_SECONDS = _int_env("MEDIA_PRESIGN_SECONDS", 600)
+MEDIA_ABANDON_HOURS = _int_env("MEDIA_ABANDON_HOURS", 24)
 
 
 # Email

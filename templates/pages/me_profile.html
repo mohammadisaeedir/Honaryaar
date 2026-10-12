@@ -270,13 +270,15 @@
             <div class="profile-pane{% if edit_tab == 'media' %} is-on{% endif %}" :class="{ 'is-on': tab === 'media' }">
             <fieldset class="mb-6">
                 <legend class="field-label">مدیای پروفایل</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">نوع و عنوان را ثبت کنید.</p>
+                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">حداکثر {{ media_max_items }} فایل. عنوان، ترتیب و نوع حفظ می‌شود.</p>
+                {% if media_error %}<p class="mb-3 text-xs leading-[18px]" style="color:#B42318">{{ media_error }}</p>{% endif %}
                 <div class="repeat-wrap">
                     <table class="repeat-table">
                         <thead>
                             <tr>
                                 <th>نوع</th>
                                 <th>عنوان</th>
+                                <th>فایل</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -293,6 +295,9 @@
                                     </td>
                                     <td>
                                         <input class="field" type="text" name="{{ row.label.html_name }}" value="{{ row.label.value|default:'' }}" maxlength="160">
+                                    </td>
+                                    <td>
+                                        {% include "components/media/upload_control.html" with purpose="profile" kind=row.preview_kind fixed="" target=profile.pk name=row.upload_id.html_name value=row.upload_id.value replacing=row.media_id.value initial_url=row.preview_url %}
                                     </td>
                                     <td>
                                         <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
@@ -316,6 +321,9 @@
                         </td>
                         <td>
                             <input class="field" type="text" name="{{ media_formset.empty_form.label.html_name }}" maxlength="160">
+                        </td>
+                        <td>
+                            {% include "components/media/upload_control.html" with purpose="profile" kind="photo" fixed="" target=profile.pk name=media_formset.empty_form.upload_id.html_name value="" %}
                         </td>
                         <td>
                             <input type="checkbox" name="{{ media_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
@@ -464,14 +472,22 @@
             </div>
             <div class="profile-pane" :class="{ 'is-on': tab === 'media' }">
                 {% if profile.media_items.all %}
-                    <ul class="support-list">
+                    <ul class="grid grid-cols-2 gap-3">
                         {% for item in profile.media_items.all %}
-                            <li class="support-item">
-                                <div class="support-item__head">
-                                    <h2>{% if item.label %}{{ item.label }}{% else %}بدون عنوان{% endif %}</h2>
-                                    <span>{{ item.kind|media_label }}</span>
-                                </div>
-                            </li>
+                            {% media_src item.file.name item.is_public item.public_acl "" item.kind as src %}
+                            {% media_src item.thumbnail.name item.is_public item.public_acl "" "photo" as thumb %}
+                            {% if src %}
+                                <li class="{% if item.kind != 'photo' %}col-span-2{% endif %}">
+                                    {% include "components/media/player.html" with kind=item.kind label=item.label src=src thumb=thumb %}
+                                </li>
+                            {% else %}
+                                <li class="support-item">
+                                    <div class="support-item__head">
+                                        <h2>{% if item.label %}{{ item.label }}{% else %}بدون عنوان{% endif %}</h2>
+                                        <span>{{ item.kind|media_label }}</span>
+                                    </div>
+                                </li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 {% else %}
