@@ -1,3 +1,6 @@
-<span class="pf-avatar {% if large %}pf-avatar--lg{% endif %}" aria-hidden="true">
+{% load ejranow_ui %}
+{% account_photo request.user as face %}
+<span class="pf-avatar {% if large %}pf-avatar--lg{% endif %}{% if face %} is-loading{% endif %}">
+    {% if face %}<img src="{{ face }}" alt="" data-account-photo>{% endif %}
     {% include "components/icon.html" with name="user" size=28 %}
 </span>

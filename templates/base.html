@@ -27,7 +27,7 @@
     <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}">
     <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
     <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";document.documentElement.classList.add("is-booting");</script>
-    <link rel="preload" href="{% static 'fonts/vazirmatn-arabic.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% static 'fonts/PeydaWeb-Regular.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v={{ asset_v }}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ asset_v }}">
     {% block extra_css %}{% endblock %}
@@ -146,13 +146,34 @@
             }
             document.addEventListener("load", function (event) {
                 var img = event.target;
-                if (img && img.hasAttribute && img.hasAttribute("data-card-photo")) show(img);
+                if (!img || !img.hasAttribute) return;
+                if (img.hasAttribute("data-card-photo")) show(img);
+                if (img.hasAttribute("data-account-photo")) {
+                    var avatar = img.closest(".pf-avatar");
+                    if (avatar) avatar.classList.remove("is-loading");
+                }
             }, true);
             document.addEventListener("error", function (event) {
                 var img = event.target;
-                if (img && img.hasAttribute && img.hasAttribute("data-card-photo")) fail(img);
+                if (!img || !img.hasAttribute) return;
+                if (img.hasAttribute("data-card-photo")) fail(img);
+                if (img.hasAttribute("data-account-photo")) {
+                    var avatar = img.closest(".pf-avatar");
+                    if (avatar) avatar.classList.remove("is-loading");
+                    img.remove();
+                }
             }, true);
             document.querySelectorAll("[data-card-photo]").forEach(settle);
+            document.querySelectorAll("[data-account-photo]").forEach(function (img) {
+                if (!img.complete) return;
+                var avatar = img.closest(".pf-avatar");
+                if (!avatar) return;
+                if (img.naturalWidth) avatar.classList.remove("is-loading");
+                else {
+                    avatar.classList.remove("is-loading");
+                    img.remove();
+                }
+            });
         })();
         document.addEventListener("click", function (event) {
             var link = event.target.closest && event.target.closest("a");

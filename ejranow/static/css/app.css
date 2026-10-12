@@ -3,7 +3,7 @@
 @layer theme, base, components, utilities;
 @layer theme {
   :root, :host {
-    --font-sans: "Vazirmatn", Tahoma, sans-serif;
+    --font-sans: "Peyda", Tahoma, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
     --color-white: #fff;
@@ -44,7 +44,7 @@
     --color-muted: #f3f1ef;
     --color-muted-foreground: #6f6863;
     --color-border: #e7e4e2;
-    --font-latin: "Outfit", "Vazirmatn", sans-serif;
+    --font-latin: "Outfit", "Peyda", sans-serif;
     --font-editorial: "Fraunces", Georgia, serif;
     --radius-input: 10px;
     --radius-card: 16px;

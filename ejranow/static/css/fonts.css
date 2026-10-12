@@ -1,4 +1,44 @@
-/* Vazirmatn and Outfit, SIL Open Font License. Served from this project. */
+/* Peyda for Persian and Latin text. Outfit stays for the Latin display face. */
+
+@font-face {
+    font-family: Peyda;
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url("../fonts/PeydaWeb-Regular.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: Peyda;
+    font-style: normal;
+    font-display: swap;
+    font-weight: 500;
+    src: url("../fonts/PeydaWeb-Medium.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: Peyda;
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url("../fonts/PeydaWeb-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: Peyda;
+    font-style: normal;
+    font-display: swap;
+    font-weight: 700;
+    src: url("../fonts/PeydaWeb-Bold.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: Peyda;
+    font-style: normal;
+    font-display: swap;
+    font-weight: 800;
+    src: url("../fonts/PeydaWeb-ExtraBold.woff2") format("woff2");
+}
 
 @font-face {
     font-family: Vazirmatn;

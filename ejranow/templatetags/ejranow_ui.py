@@ -163,6 +163,19 @@ def project_of(slug):
 
 
 @register.simple_tag
+def account_photo(user):
+    from ejranow.media_service import url_for_key
+
+    profile = current_profile(user)
+    if profile is None:
+        return ""
+    key = profile.list_thumb.name or profile.list_image.name
+    if not key:
+        return ""
+    return url_for_key(key, public=True, public_acl=bool(profile.list_public_acl), kind="photo")
+
+
+@register.simple_tag
 def account_name(user):
     profile = current_profile(user)
     if profile is not None:
