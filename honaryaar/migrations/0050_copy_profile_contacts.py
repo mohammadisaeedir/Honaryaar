@@ -51,7 +51,7 @@ def copy_profile_contacts(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("honaryaar", "0048_profile_contact"),
+        ("honaryaar", "0049_profile_contact"),
     ]
 
     operations = [

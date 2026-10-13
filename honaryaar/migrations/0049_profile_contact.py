@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('honaryaar', '0047_profile_pinterest'),
+        ('honaryaar', '0048_profile_pinterest'),
     ]
 
     operations = [
