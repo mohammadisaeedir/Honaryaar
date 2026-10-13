@@ -209,6 +209,59 @@ class Profile(models.Model):
         return self.public_name()
 
 
+class ContactKind(models.TextChoices):
+    PHONE = "phone", "Phone"
+    WHATSAPP = "whatsapp", "WhatsApp"
+    TELEGRAM = "telegram", "Telegram"
+    INSTAGRAM = "instagram", "Instagram"
+    EMAIL = "email", "Email"
+    WEBSITE = "website", "Website"
+    YOUTUBE = "youtube", "YouTube"
+    APARAT = "aparat", "Aparat"
+    TWITCH = "twitch", "Twitch"
+    SPOTIFY = "spotify", "Spotify"
+    SOUNDCLOUD = "soundcloud", "SoundCloud"
+    IMDB = "imdb", "IMDb"
+    LINKEDIN = "linkedin", "LinkedIn"
+    PINTEREST = "pinterest", "Pinterest"
+
+
+class ProfileContact(models.Model):
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="contacts")
+    kind = models.CharField(max_length=20, choices=ContactKind.choices)
+    value = models.CharField(max_length=200)
+    is_public = models.BooleanField(default=True)
+    position = models.PositiveSmallIntegerField(default=0)
+    source = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["profile_id", "position", "id"]
+        verbose_name = "Contact"
+        verbose_name_plural = "Contacts"
+        constraints = [
+            models.UniqueConstraint(fields=["profile", "kind", "value"], name="unique_profile_contact"),
+        ]
+        indexes = [
+            models.Index(fields=["kind"]),
+        ]
+
+    def clean(self):
+        super().clean()
+        from ejranow.contacts import normalize_contact
+
+        self.value = normalize_contact(self.kind, self.value)
+
+    def save(self, *args, **kwargs):
+        from ejranow.contacts import normalize_contact
+
+        self.value = normalize_contact(self.kind, self.value)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.kind}: {self.value}"
+
+
 class ProfileSkill(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="skill_links")
     skill = models.ForeignKey(Skill, on_delete=models.PROTECT, related_name="profile_links")
