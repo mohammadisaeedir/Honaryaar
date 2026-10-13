@@ -970,12 +970,67 @@ def _contains(value, query):
     return query.casefold() in value.casefold()
 
 
+_CHANNEL_LABELS = {
+    "phone": "تلفن",
+    "whatsapp": "واتساپ",
+    "telegram": "تلگرام",
+    "instagram": "اینستاگرام",
+    "email": "ایمیل",
+    "website": "وب‌سایت",
+}
+_LINK_LABELS = {
+    "youtube": "یوتیوب",
+    "aparat": "آپارات",
+    "twitch": "توییچ",
+    "spotify": "اسپاتیفای",
+    "soundcloud": "ساندکلاد",
+    "imdb": "IMDb",
+    "linkedin": "لینکدین",
+    "pinterest": "پینترست",
+}
+
+
+def _contact_href(kind, value):
+    if kind == "phone":
+        return f"tel:{value}"
+    if kind == "whatsapp":
+        return f"https://wa.me/98{value[1:]}"
+    if kind == "telegram":
+        return f"https://t.me/{value}"
+    if kind == "instagram":
+        return f"https://instagram.com/{value}"
+    if kind == "email":
+        return f"mailto:{value}"
+    return value
+
+
+def _contact_groups(profile):
+    channels = []
+    links = []
+    for item in profile.contacts.all():
+        if not item.is_public:
+            continue
+        row = {
+            "kind": item.kind,
+            "value": item.value,
+            "href": _contact_href(item.kind, item.value),
+        }
+        if item.kind in _CHANNEL_LABELS:
+            row["label"] = _CHANNEL_LABELS[item.kind]
+            channels.append(row)
+        elif item.kind in _LINK_LABELS:
+            row["label"] = _LINK_LABELS[item.kind]
+            links.append(row)
+    return channels, links
+
+
 def _artist_dict(profile):
     links = list(profile.profile_roles.all())
     primary = next((link.role for link in links if link.is_primary), None)
     if primary is None and links:
         primary = links[0].role
     ordered = sorted(links, key=lambda link: (not link.is_primary, link.role.title))
+    contact_channels, contact_links = _contact_groups(profile)
     user = profile.user
     legal_name = " ".join(part for part in (user.first_name, user.last_name) if part).strip()
     return {
@@ -1007,6 +1062,8 @@ def _artist_dict(profile):
         "banner_key": profile.banner.name if profile.banner else "",
         "banner_thumb_key": profile.banner_thumb.name if profile.banner_thumb else "",
         "banner_public_acl": bool(profile.banner_public_acl),
+        "contact_channels": contact_channels,
+        "contact_links": contact_links,
         "media": [
             {
                 "kind": MEDIA_LABEL.get(item.kind, item.kind),
@@ -1122,7 +1179,7 @@ def _artists():
     profiles = (
         Profile.objects.filter(profile_roles__isnull=False)
         .select_related("city", "user")
-        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill")
+        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill", "contacts")
         .distinct()
     )
     return [_artist_dict(item) for item in profiles]
@@ -1166,7 +1223,7 @@ def artist_by_slug(slug):
     profile = (
         Profile.objects.filter(slug=slug)
         .select_related("city", "user")
-        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill")
+        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill", "contacts")
         .first()
     )
     if profile is None:

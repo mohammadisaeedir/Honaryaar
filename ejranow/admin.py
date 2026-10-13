@@ -42,6 +42,7 @@ from ejranow.models import (
     ArtCategory,
     SpecialCondition,
     Profile,
+    ProfileContact,
     ProfileMedia,
     ProfileRole,
     ProfileSkill,
@@ -420,10 +421,11 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
         "application_link",
         "invite_link",
         "match_link",
+        "contacts_link",
     )
     list_filter = ("status", "gender", "city")
     search_fields = ("name", "user__first_name", "user__last_name", "user__username", "city__title", "slug")
-    readonly_fields = ("first_name", "last_name")
+    readonly_fields = ("first_name", "last_name", "contacts_link")
     list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
     inlines = (ProfileRoleInline, ProfileSkillInline, CreditInline, ProfileMediaInline)
@@ -453,6 +455,7 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
                 application_count=Count("applications", distinct=True),
                 invite_count=Count("invites", distinct=True),
                 match_count=Count("matches", distinct=True),
+                contact_count=Count("contacts", distinct=True),
             )
         )
 
@@ -512,6 +515,24 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
     @admin.display(description="Matches")
     def match_link(self, profile):
         return _count_link("admin:ejranow_match_changelist", {"profile__id__exact": profile.pk}, profile.match_count)
+
+    @admin.display(description="Contacts")
+    def contacts_link(self, profile):
+        count = profile.contact_count if hasattr(profile, "contact_count") else profile.contacts.count()
+        return _count_link(
+            "admin:ejranow_profilecontact_changelist",
+            {"profile__id__exact": profile.pk},
+            f"Contacts ({count})",
+        )
+
+
+@admin.register(ProfileContact)
+class ProfileContactAdmin(ModelAdmin):
+    list_display = ("profile", "kind", "value", "is_public", "source", "position")
+    list_filter = ("kind", "is_public", "source")
+    search_fields = ("value", "kind", "profile__name", "profile__slug")
+    autocomplete_fields = ("profile",)
+    list_select_related = ("profile",)
 
 
 @admin.register(Bookmark)

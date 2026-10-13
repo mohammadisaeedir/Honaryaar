@@ -161,6 +161,7 @@ def _sidebar(request):
                         _nav("Profile skills", "star", "admin:ejranow_profileskill_changelist"),
                         _nav("Credits", "history_edu", "admin:ejranow_credit_changelist"),
                         _nav("Media", "perm_media", "admin:ejranow_profilemedia_changelist"),
+                        _nav("Contacts", "contacts", "admin:ejranow_profilecontact_changelist"),
                     ],
                 },
                 {
