@@ -1,4 +1,4 @@
-{% load ejranow_ui %}
+{% load honaryaar_ui %}
 <article class="artist-tile">
     <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
         {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}

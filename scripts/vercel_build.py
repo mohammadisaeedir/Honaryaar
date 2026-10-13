@@ -6,6 +6,10 @@ unpooled = os.environ.get("DATABASE_URL_UNPOOLED")
 if unpooled:
     os.environ["DATABASE_URL"] = unpooled
 
+rename = subprocess.call([sys.executable, "manage.py", "rename_legacy_app"])
+if rename != 0:
+    raise SystemExit(rename)
+
 migrate = subprocess.call([sys.executable, "manage.py", "migrate", "--noinput"])
 if migrate != 0:
     raise SystemExit(migrate)

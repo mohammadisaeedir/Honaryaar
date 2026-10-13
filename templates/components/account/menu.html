@@ -1,4 +1,4 @@
-{% load ejranow_ui %}
+{% load honaryaar_ui %}
 {% with name=request.resolver_match.url_name %}
 <nav class="pf-mobile-menu" dir="rtl" aria-label="حساب کاربری">
     <a class="pf-mobile-menu__row {% if name == 'me-projects' or name == 'me-project' or name == 'me-project-new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-projects' %}">
