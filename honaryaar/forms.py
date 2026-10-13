@@ -54,6 +54,48 @@ class ArtPickerWidget(forms.CheckboxSelectMultiple):
     template_name = "widgets/art_picker.html"
 
 
+class GenderPickerWidget(forms.RadioSelect):
+    template_name = "widgets/gender_picker.html"
+
+
+class SkillPickerWidget(forms.Widget):
+    template_name = "components/skill_picker.html"
+
+    class Media:
+        css = {"all": ("css/skill-picker.css",)}
+        js = ("js/skill-picker.js",)
+
+    def __init__(self, catalog=None, chosen=None, attrs=None):
+        super().__init__(attrs)
+        self.catalog = catalog or []
+        self.chosen = chosen or []
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["skill_catalog"] = self.catalog
+        context["skill_chosen"] = self.chosen
+        return context
+
+
+class RolePickerWidget(forms.Widget):
+    template_name = "components/role_picker.html"
+
+    class Media:
+        css = {"all": ("css/skill-picker.css",)}
+        js = ("js/role-picker.js",)
+
+    def __init__(self, catalog=None, chosen=None, attrs=None):
+        super().__init__(attrs)
+        self.catalog = catalog or []
+        self.chosen = chosen or []
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["role_catalog"] = self.catalog
+        context["role_chosen"] = self.chosen
+        return context
+
+
 class ReasonPickerWidget(forms.RadioSelect):
     template_name = "widgets/reason_picker.html"
 
@@ -76,6 +118,7 @@ class ProfileForm(forms.Form):
     gender = forms.ChoiceField(
         required=False,
         choices=[("", "انتخاب جنسیت"), ("male", "مرد"), ("female", "زن")],
+        widget=GenderPickerWidget,
     )
     arts = forms.MultipleChoiceField(choices=Art.choices, required=False, widget=ArtPickerWidget)
 

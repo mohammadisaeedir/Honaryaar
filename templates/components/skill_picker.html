@@ -1,0 +1,31 @@
+<div class="skill-picker" data-skill-picker data-levels="5">
+    {{ skill_catalog|json_script:"skill-catalog" }}
+    {{ skill_chosen|json_script:"skill-chosen" }}
+    <input type="hidden" name="skill_picker" value="1">
+    <div data-skill-inputs>
+        {% for item in skill_chosen %}
+            <input type="hidden" name="skill-{{ item.id }}" value="{{ item.level }}">
+        {% endfor %}
+    </div>
+    <p class="skill-picker__lead">مهارت را با نام یا دسته پیدا کنید، سطح را از ۱ تا ۵ انتخاب کنید و یکی‌یکی اضافه کنید. در پایان فرم را ذخیره کنید.</p>
+    <div class="skill-picker__list" data-skill-chosen-list></div>
+    <p class="skill-picker__empty" data-skill-empty {% if skill_chosen %}hidden{% endif %}>هنوز مهارتی اضافه نشده.</p>
+    <button class="skill-picker__open" type="button" data-skill-open>افزودن مهارت</button>
+    <div class="skill-modal" data-skill-modal hidden>
+        <div class="skill-modal__backdrop" data-skill-backdrop></div>
+        <div class="skill-modal__panel" role="dialog" aria-modal="true" aria-labelledby="skill-modal-title">
+            <div class="skill-modal__head">
+                <h2 id="skill-modal-title">انتخاب مهارت</h2>
+                <button class="skill-modal__close" type="button" data-skill-close aria-label="بستن">×</button>
+            </div>
+            <label class="skill-modal__search">
+                <span class="skill-picker__sr">جستجو</span>
+                <input type="search" data-skill-search placeholder="جستجوی نام مهارت یا دسته" autocomplete="off" enterkeyhint="search">
+            </label>
+            <div class="skill-modal__results" data-skill-results></div>
+            <div class="skill-modal__draft" data-skill-draft>
+                <p class="skill-modal__hint">از فهرست یک مهارت را انتخاب کنید.</p>
+            </div>
+        </div>
+    </div>
+</div>

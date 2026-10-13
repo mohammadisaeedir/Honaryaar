@@ -1,0 +1,353 @@
+.skill-picker {
+    width: 100%;
+    max-width: 40rem;
+    color: #17131a;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.skill-picker__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skill-picker__lead,
+.skill-picker__empty {
+    margin: 0 0 12px;
+    color: #6f6863;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.skill-picker__list {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.skill-picker__list:empty {
+    display: none;
+    margin: 0;
+}
+
+.skill-picker__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e7e4e2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.skill-picker__text {
+    min-width: 0;
+}
+
+.skill-picker__name,
+.skill-modal__pick-name,
+.skill-modal__group,
+.skill-modal__head h2 {
+    margin: 0;
+    color: #17131a;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 22px;
+}
+
+.skill-picker__meta,
+.skill-modal__pick-meta,
+.skill-modal__hint,
+.skill-modal__empty {
+    margin: 0;
+    color: #6f6863;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.skill-picker button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.skill-picker__open,
+.skill-modal__confirm {
+    min-height: 40px;
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #c13281;
+    color: #fff;
+    font-weight: 700;
+}
+
+.skill-picker__open:hover,
+.skill-modal__confirm:hover {
+    background: #a4286c;
+}
+
+.skill-modal__confirm:disabled {
+    background: #f0d4e2;
+    color: #8a6678;
+    cursor: default;
+}
+
+.skill-picker__primary {
+    min-height: 32px;
+    padding: 4px 10px;
+    border: 1px solid #e7e4e2;
+    border-radius: 999px;
+    background: #fff;
+    color: #6f6863;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.skill-picker__primary.is-on {
+    border-color: #c13281;
+    background: #fbeaf2;
+    color: #17131a;
+}
+
+.skill-picker__remove {
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #8a4a68;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.skill-picker__rate {
+    display: flex;
+    flex-direction: row-reverse;
+    flex-shrink: 0;
+    gap: 2px;
+}
+
+.skill-picker__dot {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.skill-picker__dot::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: #f0d4e2;
+}
+
+.skill-picker__rate:hover .skill-picker__dot::before {
+    background: #f0d4e2;
+}
+
+.skill-picker__dot:hover::before,
+.skill-picker__dot:hover ~ .skill-picker__dot::before,
+.skill-picker__rate:not(:hover) .skill-picker__dot.is-on::before,
+.skill-picker__rate:not(:hover) .skill-picker__dot.is-on ~ .skill-picker__dot::before {
+    background: #c13281;
+}
+
+.skill-modal[hidden] {
+    display: none !important;
+}
+
+.skill-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+}
+
+.skill-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(23, 19, 26, 0.45);
+}
+
+.skill-modal__panel {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, 36rem);
+    max-height: min(40rem, 100dvh);
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+    background: #fff;
+    color: #17131a;
+    font: inherit;
+    box-shadow: 0 16px 48px rgba(23, 19, 26, 0.18);
+}
+
+.skill-modal button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.skill-modal__head,
+.skill-modal__search,
+.skill-modal__draft {
+    flex-shrink: 0;
+}
+
+.skill-modal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 16px 8px;
+}
+
+.skill-modal__close {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: #f6f3f2;
+    color: #17131a;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.skill-modal__search {
+    display: block;
+    padding: 0 16px 12px;
+}
+
+.skill-modal__search input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid #e7e4e2;
+    border-radius: 12px;
+    background: #fff;
+    color: #17131a;
+    font: inherit;
+    outline: none;
+}
+
+.skill-modal__search input:focus {
+    border-color: #c13281;
+    box-shadow: 0 0 0 3px rgba(193, 50, 129, 0.15);
+}
+
+.skill-modal__results {
+    flex: 1;
+    min-height: 12rem;
+    overflow: auto;
+    padding: 0 8px 8px;
+}
+
+.skill-modal__group {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 8px 8px 4px;
+    background: #fff;
+    color: #c13281;
+    font-size: 12px;
+}
+
+.skill-modal__skill {
+    display: flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #17131a;
+    text-align: right;
+}
+
+.skill-modal__skill:hover,
+.skill-modal__skill.is-on {
+    background: #fbeaf2;
+}
+
+.skill-modal__skill.is-on .skill-modal__skill-name {
+    font-weight: 700;
+}
+
+.skill-modal__empty,
+.skill-modal__hint {
+    padding: 16px 8px;
+}
+
+.skill-modal__draft {
+    padding: 12px 16px 16px;
+    border-top: 1px solid #efe8ec;
+    background: #fff;
+}
+
+.skill-modal__pick {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.skill-modal__pick-meta {
+    grid-column: 1;
+}
+
+.skill-modal__pick .skill-picker__rate {
+    grid-column: 1;
+    justify-content: flex-start;
+}
+
+.skill-modal__confirm {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+}
+
+body.skill-modal-open {
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .skill-modal {
+        align-items: center;
+        padding: 24px;
+    }
+
+    .skill-modal__panel {
+        max-height: min(40rem, calc(100dvh - 48px));
+        border-radius: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .skill-picker__row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .skill-picker__rate {
+        grid-column: 1 / -1;
+    }
+}

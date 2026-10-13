@@ -1,0 +1,32 @@
+<div class="skill-picker" data-role-picker>
+    {{ role_catalog|json_script:"role-catalog" }}
+    {{ role_chosen|json_script:"role-chosen" }}
+    <input type="hidden" name="{{ widget.name|default:'role_picker' }}" value="1">
+    <div data-role-inputs>
+        {% for item in role_chosen %}
+            <input type="hidden" name="role-{{ item.id }}" value="1">
+            {% if item.primary %}<input type="hidden" name="role_primary" value="{{ item.id }}">{% endif %}
+        {% endfor %}
+    </div>
+    <p class="skill-picker__lead">نقش را با نام یا دسته پیدا کنید و یکی‌یکی اضافه کنید. یکی را اصلی بگذارید تا پروفایل در فهرست هنرمندان دیده شود. در پایان فرم را ذخیره کنید.</p>
+    <div class="skill-picker__list" data-role-chosen-list></div>
+    <p class="skill-picker__empty" data-role-empty {% if role_chosen %}hidden{% endif %}>هنوز نقشی اضافه نشده.</p>
+    <button class="skill-picker__open" type="button" data-role-open>افزودن نقش</button>
+    <div class="skill-modal" data-role-modal hidden>
+        <div class="skill-modal__backdrop" data-role-backdrop></div>
+        <div class="skill-modal__panel" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
+            <div class="skill-modal__head">
+                <h2 id="role-modal-title">انتخاب نقش</h2>
+                <button class="skill-modal__close" type="button" data-role-close aria-label="بستن">×</button>
+            </div>
+            <label class="skill-modal__search">
+                <span class="skill-picker__sr">جستجو</span>
+                <input type="search" data-role-search placeholder="جستجوی نام نقش یا دسته" autocomplete="off" enterkeyhint="search">
+            </label>
+            <div class="skill-modal__results" data-role-results></div>
+            <div class="skill-modal__draft" data-role-draft>
+                <p class="skill-modal__hint">نام نقش یا دسته را بنویسید.</p>
+            </div>
+        </div>
+    </div>
+</div>

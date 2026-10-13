@@ -217,6 +217,7 @@ UNFOLD = {
         _static_file("css/fonts.css"),
         _static_file("css/admin-font.css"),
         _static_file("css/art-picker.css"),
+        _static_file("css/skill-picker.css"),
     ],
     "SIDEBAR": {
         "navigation": _sidebar,

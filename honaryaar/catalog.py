@@ -1047,7 +1047,7 @@ def _artist_dict(profile):
         "arts": list(profile.arts or []),
         "art_titles": [art_title(slug) for slug in _art_order() if slug in set(profile.arts or [])],
         "skills": [
-            {"label": link.skill.label, "level": link.level}
+            {"label": link.skill.title, "level": link.level}
             for link in profile.skill_links.all()
         ],
         "credits": [

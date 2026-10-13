@@ -760,6 +760,23 @@ body.account-page main.account-main {
     text-align: left;
 }
 
+.pf-record__face,
+.pf-record__banner {
+    display: block;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.pf-record__face {
+    width: 72px;
+    height: 72px;
+}
+
+.pf-record__banner {
+    width: 220px;
+    height: 88px;
+}
+
 .pf-record__lead,
 .pf-record__note p {
     margin: 8px 0 0;
@@ -915,88 +932,20 @@ body.account-page main.account-main {
     margin-inline: 0;
 }
 
-.skill-group {
-    border-bottom: 1px solid #e6ebf1;
-}
-
-.skill-group summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    cursor: pointer;
-    font-weight: 600;
-    list-style: none;
-}
-
-.skill-group summary::-webkit-details-marker {
-    display: none;
-}
-
-.skill-group__count {
-    margin-inline-start: auto;
-    color: #778aa2;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.skill-pick {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-width: 0;
-    min-height: 44px;
-    border-top: 1px solid #e6ebf1;
-}
-
-.skill-pick__name {
-    min-width: 0;
-    font-size: 12px;
-    line-height: 22px;
-}
-
-.skill-pick__levels {
-    display: flex;
-    flex-shrink: 0;
-    gap: 4px;
-}
-
-.skill-level {
-    position: relative;
+.skill-dots {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 44px;
-    min-height: 32px;
-    border: 1px solid transparent;
+    gap: 3px;
+}
+
+.skill-dots i {
+    width: 7px;
+    height: 7px;
     border-radius: 999px;
+    background: #f0d4e2;
 }
 
-.skill-level input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.skill-level:has(input:checked) {
-    border-color: #c13281;
-    background: #fbeaf2;
-}
-
-.skill-level--clear {
-    min-width: 32px;
-    color: #778aa2;
-    font-size: 12px;
-    line-height: 1;
-}
-
-.skill-level--clear:has(input:checked) {
-    border-color: transparent;
-    background: transparent;
+.skill-dots i.is-on {
+    background: #c13281;
 }
 
 body.pf-logout-open { overflow: hidden; }

@@ -14,10 +14,22 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
-from unfold.admin import ModelAdmin, TabularInline
+from django.contrib.admin.options import ActionLocation
+from unfold.admin import ModelAdmin as UnfoldModelAdmin
+from unfold.admin import TabularInline
+
+from honaryaar.admin_export import csv_response
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
-from honaryaar.forms import ArtPickerWidget, DirectUploadWidget
+from honaryaar.auth_views import (
+    _roles_from_picker,
+    _save_roles,
+    _save_skills,
+    _skill_levels_from_post,
+    role_picker_payload,
+    skill_picker_payload,
+)
+from honaryaar.forms import ArtPickerWidget, DirectUploadWidget, GenderPickerWidget, RolePickerWidget, SkillPickerWidget
 from honaryaar.labels import status_chip_html
 from honaryaar.media_files import MediaError
 from honaryaar.media_service import (
@@ -79,7 +91,7 @@ class HonaryaarUserCreationForm(UserCreationForm):
 
 class HonaryaarUserChangeForm(UserChangeForm):
     def clean_username(self):
-        username = super().clean_username()
+        username = self.cleaned_data.get("username")
         if self.instance.pk and Profile.objects.filter(user_id=self.instance.pk).exists():
             try:
                 validate_slug(username)
@@ -87,12 +99,39 @@ class HonaryaarUserChangeForm(UserChangeForm):
                 raise forms.ValidationError(
                     "Use only letters, numbers, hyphens, and underscores. This username is the profile address."
                 )
-        if _username_blocks_profile(username, self.instance.pk):
+        if username and _username_blocks_profile(username, self.instance.pk):
             raise forms.ValidationError("Another profile already uses this username as its address.")
         return username
 
 
 admin.site.index_title = "Honaryaar"
+
+
+class ModelAdmin(UnfoldModelAdmin):
+    def get_actions(self, request, action_location=ActionLocation.CHANGE_LIST):
+        actions = super().get_actions(request, action_location=action_location)
+        if not request.user.is_superuser:
+            actions.pop("export_csv", None)
+            return actions
+        if not actions:
+            return actions
+        export = self.get_action("export_csv", action_location)
+        if export is None:
+            return actions
+        ordered = {}
+        placed = False
+        for name, action in actions.items():
+            ordered[name] = action
+            if name == "delete_selected":
+                ordered["export_csv"] = export
+                placed = True
+        if not placed:
+            ordered["export_csv"] = export
+        return ordered
+
+    @admin.action(description="Export to CSV")
+    def export_csv(self, request, queryset):
+        return csv_response(queryset)
 
 
 def _count_link(url_name, params, count):
@@ -160,11 +199,6 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin):
     pass
 
 
-class ProfileRoleInline(TabularInline):
-    model = ProfileRole
-    extra = 0
-
-
 @admin.register(ProfileSkill)
 class ProfileSkillAdmin(ModelAdmin):
     list_display = ("profile", "skill", "level")
@@ -172,12 +206,6 @@ class ProfileSkillAdmin(ModelAdmin):
     search_fields = ("profile__name", "skill__title", "skill__group")
     list_select_related = ("profile", "skill")
     autocomplete_fields = ("profile", "skill")
-
-
-class ProfileSkillInline(TabularInline):
-    model = ProfileSkill
-    extra = 0
-    autocomplete_fields = ("skill",)
 
 
 class CreditInline(TabularInline):
@@ -410,6 +438,12 @@ class ArtCategoryAdmin(ModelAdmin):
 
 
 class ProfileAdminForm(forms.ModelForm):
+    gender = forms.ChoiceField(
+        choices=[("", "—"), ("male", "مرد"), ("female", "زن")],
+        required=False,
+        widget=GenderPickerWidget,
+        label="Gender",
+    )
     arts = forms.MultipleChoiceField(
         choices=Art.choices,
         widget=ArtPickerWidget,
@@ -421,6 +455,8 @@ class ProfileAdminForm(forms.ModelForm):
     list_remove = forms.BooleanField(required=False, label="Remove main image")
     banner_upload = forms.CharField(required=False, label="Banner")
     banner_remove = forms.BooleanField(required=False, label="Remove banner")
+    skills = forms.CharField(required=False, label="Skills", widget=SkillPickerWidget())
+    role_picker = forms.CharField(required=False, label="Roles", widget=RolePickerWidget())
 
     class Meta:
         model = Profile
@@ -431,6 +467,7 @@ class ProfileAdminForm(forms.ModelForm):
             "banner",
             "banner_thumb",
             "banner_public_acl",
+            "roles",
         )
 
     def __init__(self, *args, **kwargs):
@@ -444,6 +481,25 @@ class ProfileAdminForm(forms.ModelForm):
         )
         self.fields["list_upload"].help_text = _picture_preview(self.instance, "list_image", "list_public_acl")
         self.fields["banner_upload"].help_text = _picture_preview(self.instance, "banner", "banner_public_acl")
+        if self.is_bound and "skill_picker" in self.data:
+            skill_levels = _skill_levels_from_post(self.data)
+        elif self.instance.pk:
+            skill_levels = {link.skill_id: link.level for link in self.instance.skill_links.all()}
+        else:
+            skill_levels = {}
+        catalog, chosen = skill_picker_payload(skill_levels)
+        self.fields["skills"].widget.catalog = catalog
+        self.fields["skills"].widget.chosen = chosen
+        if self.is_bound and "role_picker" in self.data:
+            picked_roles, primary_role = _roles_from_picker(self.data)
+            role_state = {role.pk: primary_role is not None and role.pk == primary_role.pk for role in picked_roles}
+        elif self.instance.pk:
+            role_state = {link.role_id: link.is_primary for link in self.instance.profile_roles.all()}
+        else:
+            role_state = {}
+        role_catalog, role_chosen = role_picker_payload(role_state)
+        self.fields["role_picker"].widget.catalog = role_catalog
+        self.fields["role_picker"].widget.chosen = role_chosen
 
     def save(self, commit=True):
         obj = super().save(commit=False)
@@ -488,11 +544,16 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
     readonly_fields = ("first_name", "last_name", "slug", "contacts_link")
     list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
-    inlines = (ProfileRoleInline, ProfileSkillInline, CreditInline, ProfileMediaInline)
+    inlines = (CreditInline, ProfileMediaInline)
     Media = AdminMedia
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
+        if request.POST.get("skill_picker") == "1":
+            _save_skills(obj, _skill_levels_from_post(request.POST))
+        if request.POST.get("role_picker") == "1":
+            picked_roles, primary_role = _roles_from_picker(request.POST)
+            _save_roles(obj, picked_roles, primary_role)
         try:
             finalize_admin_media(request.user, obj)
         except MediaError as exc:

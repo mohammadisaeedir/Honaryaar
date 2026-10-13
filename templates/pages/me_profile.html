@@ -19,7 +19,6 @@
         <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">هر بخشی را که خواستید پر کنید. خالی گذاشتن هم ممکن است.</p>
         <form class="profile-edit mt-6" method="post" action="{% url 'me-profile' %}" x-data="{ tab: '{{ edit_tab }}' }">
             {% csrf_token %}
-            {{ role_formset.management_form }}
             {{ credit_formset.management_form }}
             {{ media_formset.management_form }}
             <div class="profile-tabs" role="tablist" aria-label="بخش‌های پروفایل">
@@ -30,6 +29,28 @@
                 <button class="profile-tabs__tab{% if edit_tab == 'media' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
             </div>
             <div class="profile-pane{% if edit_tab == 'identity' %} is-on{% endif %}" :class="{ 'is-on': tab === 'identity' }">
+            {% media_src profile.list_thumb.name 1 profile.list_public_acl profile.list_image.name "photo" as face %}
+            {% media_src profile.banner_thumb.name 1 profile.banner_public_acl profile.banner.name "photo" as banner %}
+            <div class="mb-4">
+                <span class="field-label">تصویر پروفایل</span>
+                {% include "components/media/upload_control.html" with purpose="profile_list" kind="photo" fixed=1 target=profile.pk name="list_upload" initial_url=face %}
+                {% if face %}
+                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
+                        <input type="checkbox" name="list_remove" value="1">
+                        حذف تصویر
+                    </label>
+                {% endif %}
+            </div>
+            <div class="mb-4">
+                <span class="field-label">تصویر بنر</span>
+                {% include "components/media/upload_control.html" with purpose="profile_banner" kind="photo" fixed=1 target=profile.pk name="banner_upload" initial_url=banner %}
+                {% if banner %}
+                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
+                        <input type="checkbox" name="banner_remove" value="1">
+                        حذف بنر
+                    </label>
+                {% endif %}
+            </div>
             <label class="mb-4 block">
                 <span class="field-label">نام</span>
                 <input class="field" type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" maxlength="60">
@@ -71,14 +92,10 @@
                     <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.birth_date.errors.0 }}</p>
                 {% endif %}
             </label>
-            <label class="mb-4 block">
-                <span class="field-label">جنسیت</span>
-                <select class="field field-select" name="gender">
-                    {% for value, label in form.fields.gender.choices %}
-                        <option value="{{ value }}" {% if form.gender.value|default:"" == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </label>
+            <fieldset class="mb-4">
+                <legend class="field-label">جنسیت</legend>
+                {{ form.gender }}
+            </fieldset>
             <label class="mb-4 block">
                 <span class="field-label">درباره</span>
                 <textarea class="field" style="min-height: 7rem" name="about" rows="4">{{ form.about.value|default:'' }}</textarea>
@@ -100,100 +117,14 @@
             <div class="profile-pane{% if edit_tab == 'skills' %} is-on{% endif %}" :class="{ 'is-on': tab === 'skills' }">
             <fieldset class="mb-6">
                 <legend class="field-label">مهارت‌ها</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">مهارت را از فهرست انتخاب کنید. یک نقطه مبتدی، دو نقطه متوسط و سه نقطه پیشرفته است.</p>
-                {% for group in skill_groups %}
-                    <details class="skill-group" {% if group.selected %}open{% endif %}>
-                        <summary>
-                            {{ group.group.title }}
-                            {% if group.selected %}<span class="skill-group__count">{{ group.selected }}</span>{% endif %}
-                        </summary>
-                        {% for row in group.rows %}
-                            <div class="skill-pick">
-                                <span class="skill-pick__name">{{ row.skill.label }}</span>
-                                <span class="skill-pick__levels">
-                                    <label class="skill-level">
-                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="1" {% if row.level == 1 %}checked{% endif %}>
-                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i></i><i></i></span>
-                                        <span class="sr-only">مبتدی</span>
-                                    </label>
-                                    <label class="skill-level">
-                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="2" {% if row.level == 2 %}checked{% endif %}>
-                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i class="is-on"></i><i></i></span>
-                                        <span class="sr-only">متوسط</span>
-                                    </label>
-                                    <label class="skill-level">
-                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="3" {% if row.level == 3 %}checked{% endif %}>
-                                        <span class="skill-dots" aria-hidden="true"><i class="is-on"></i><i class="is-on"></i><i class="is-on"></i></span>
-                                        <span class="sr-only">پیشرفته</span>
-                                    </label>
-                                    <label class="skill-level skill-level--clear">
-                                        <input type="radio" name="skill-{{ row.skill.pk }}" value="" {% if not row.level %}checked{% endif %}>
-                                        <span aria-hidden="true">×</span>
-                                        <span class="sr-only">بدون این مهارت</span>
-                                    </label>
-                                </span>
-                            </div>
-                        {% endfor %}
-                    </details>
-                {% endfor %}
+                {% include "components/skill_picker.html" %}
             </fieldset>
             </div>
 
             <div class="profile-pane{% if edit_tab == 'roles' %} is-on{% endif %}" :class="{ 'is-on': tab === 'roles' }">
             <fieldset class="mb-6">
                 <legend class="field-label">نقش‌ها</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هر نقش یک ردیف است. یکی را اصلی بگذارید. با انتخاب نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
-                <div class="repeat-wrap">
-                    <table class="repeat-table">
-                        <thead>
-                            <tr>
-                                <th>نقش</th>
-                                <th>اصلی</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="role-rows">
-                            {% for row in role_formset %}
-                                <tr {% if row.delete.value %}hidden{% endif %}>
-                                    <td>
-                                        <select class="field field-select" name="{{ row.role.html_name }}">
-                                            <option value="">انتخاب نقش</option>
-                                            {% include "components/account/role_options.html" with selected=row.role.value %}
-                                        </select>
-                                        {% for error in row.role.errors %}
-                                            <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
-                                        {% endfor %}
-                                    </td>
-                                    <td>
-                                        <input type="radio" name="role_primary" value="{{ forloop.counter0 }}" {% if primary_index == forloop.counter0|stringformat:"s" %}checked{% endif %} aria-label="نقش اصلی">
-                                    </td>
-                                    <td>
-                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
-                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <button class="repeat-add" type="button" data-repeat-add="role">افزودن نقش</button>
-                <template id="role-empty">
-                    <tr>
-                        <td>
-                            <select class="field field-select" name="{{ role_formset.empty_form.role.html_name }}">
-                                <option value="">انتخاب نقش</option>
-                                {% include "components/account/role_options.html" with selected="" %}
-                            </select>
-                        </td>
-                        <td>
-                            <input type="radio" name="role_primary" value="__prefix__" aria-label="نقش اصلی">
-                        </td>
-                        <td>
-                            <input type="checkbox" name="{{ role_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
-                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                        </td>
-                    </tr>
-                </template>
+                {% include "components/role_picker.html" %}
             </fieldset>
             </div>
 
@@ -381,7 +312,17 @@
                 <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
             </div>
             <div class="profile-pane is-on" :class="{ 'is-on': tab === 'identity' }">
+                {% media_src profile.list_thumb.name 1 profile.list_public_acl profile.list_image.name "photo" as face %}
+                {% media_src profile.banner_thumb.name 1 profile.banner_public_acl profile.banner.name "photo" as banner %}
                 <dl class="pf-record">
+                    <div>
+                        <dt>تصویر پروفایل</dt>
+                        <dd>{% if face %}<img class="pf-record__face" src="{{ face }}" alt="">{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>تصویر بنر</dt>
+                        <dd>{% if banner %}<img class="pf-record__banner" src="{{ banner }}" alt="">{% else %}ثبت نشده{% endif %}</dd>
+                    </div>
                     <div>
                         <dt>نام</dt>
                         <dd>{% if profile.user.first_name %}{{ profile.user.first_name }}{% else %}ثبت نشده{% endif %}</dd>
@@ -430,8 +371,8 @@
                         {% for link in skill_links %}
                             <li class="support-item">
                                 <div class="support-item__head">
-                                    <h2>{{ link.skill.label }}</h2>
-                                    <span>{{ link.level|skill_level_label }}</span>
+                                    <h2>{{ link.skill.title }}</h2>
+                                    <span class="skill-dots" aria-label="سطح {{ link.level }}">{% for n in "12345" %}<i class="{% if link.level|stringformat:"s" >= n %}is-on{% endif %}"></i>{% endfor %}</span>
                                 </div>
                             </li>
                         {% endfor %}

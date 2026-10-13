@@ -5,6 +5,8 @@
 .art-architecture { --art: #3d4a5c; --art-bg: #e8eef3; }
 .art-sculpture { --art: #8a4030; --art-bg: #f8ebe6; }
 .art-literature { --art: #4a3d78; --art-bg: #eeeaf6; }
+.gender-male { --art: #3a5278; --art-bg: #e7eef6; }
+.gender-female { --art: #c13281; --art-bg: #f8e6f0; }
 
 .art-picker {
     display: grid;
@@ -12,6 +14,12 @@
     grid-auto-columns: minmax(4.75rem, 1fr);
     gap: 8px;
     overflow-x: auto;
+}
+
+.art-picker--pair {
+    grid-auto-columns: 4.75rem;
+    justify-content: start;
+    overflow: visible;
 }
 
 .art-picker__btn {
