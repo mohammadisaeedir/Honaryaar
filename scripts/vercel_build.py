@@ -14,6 +14,11 @@ migrate = subprocess.call([sys.executable, "manage.py", "migrate", "--noinput"])
 if migrate != 0:
     raise SystemExit(migrate)
 
+if os.environ.get("CLEAR_CONTENT") == "1":
+    cleared = subprocess.call([sys.executable, "manage.py", "clear_content"])
+    if cleared != 0:
+        raise SystemExit(cleared)
+
 username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
 password = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
 if not username or not password:
