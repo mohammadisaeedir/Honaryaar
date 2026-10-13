@@ -176,6 +176,14 @@ def account_photo(user):
 
 
 @register.simple_tag
+def account_phone(user):
+    profile = current_profile(user)
+    if profile is None:
+        return ""
+    return profile.mobile or ""
+
+
+@register.simple_tag
 def account_name(user):
     profile = current_profile(user)
     if profile is not None:

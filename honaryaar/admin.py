@@ -7,6 +7,8 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_slug
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import redirect
@@ -58,6 +60,37 @@ from honaryaar.support_views import close_ticket, open_thread, post_ticket_messa
 admin.site.unregister(User)
 admin.site.unregister(Group)
 
+
+def _username_blocks_profile(username, user_id):
+    taken = Profile.objects.filter(slug=username)
+    if user_id:
+        taken = taken.exclude(user_id=user_id)
+    return taken.exists()
+
+
+class HonaryaarUserCreationForm(UserCreationForm):
+    def clean_username(self):
+        username = super().clean_username()
+        if _username_blocks_profile(username, None):
+            raise forms.ValidationError("Another profile already uses this username as its address.")
+        return username
+
+
+class HonaryaarUserChangeForm(UserChangeForm):
+    def clean_username(self):
+        username = super().clean_username()
+        if self.instance.pk and Profile.objects.filter(user_id=self.instance.pk).exists():
+            try:
+                validate_slug(username)
+            except ValidationError:
+                raise forms.ValidationError(
+                    "Use only letters, numbers, hyphens, and underscores. This username is the profile address."
+                )
+        if _username_blocks_profile(username, self.instance.pk):
+            raise forms.ValidationError("Another profile already uses this username as its address.")
+        return username
+
+
 admin.site.index_title = "Honaryaar"
 
 
@@ -70,11 +103,12 @@ def _count_link(url_name, params, count):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin, ModelAdmin):
-    form = UserChangeForm
-    add_form = UserCreationForm
+    form = HonaryaarUserChangeForm
+    add_form = HonaryaarUserCreationForm
     change_password_form = AdminPasswordChangeForm
     list_display = (
         "username",
+        "profile_mobile",
         "profile_link",
         "email",
         "first_name",
@@ -82,6 +116,32 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "is_staff",
     )
     list_select_related = ("profile",)
+    search_fields = ("username", "first_name", "last_name", "email", "profile__mobile")
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if obj is not None and "profile_mobile" not in fields:
+            fields.append("profile_mobile")
+        return fields
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if obj is None:
+            return fieldsets
+        fieldsets = list(fieldsets)
+        title, options = fieldsets[0]
+        fields = list(options["fields"])
+        if "profile_mobile" not in fields:
+            fields.append("profile_mobile")
+        fieldsets[0] = (title, {**options, "fields": tuple(fields)})
+        return fieldsets
+
+    @admin.display(description="Mobile")
+    def profile_mobile(self, user):
+        try:
+            return user.profile.mobile or ""
+        except Profile.DoesNotExist:
+            return ""
 
     @admin.display(description="Profile")
     def profile_link(self, user):
@@ -422,8 +482,8 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
         "match_link",
     )
     list_filter = ("status", "gender", "city")
-    search_fields = ("name", "user__first_name", "user__last_name", "user__username", "city__title", "slug")
-    readonly_fields = ("first_name", "last_name")
+    search_fields = ("name", "user__first_name", "user__last_name", "user__username", "mobile", "city__title", "slug")
+    readonly_fields = ("first_name", "last_name", "slug")
     list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
     inlines = (ProfileRoleInline, ProfileSkillInline, CreditInline, ProfileMediaInline)
@@ -475,11 +535,9 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
             return ""
         return profile.user.last_name
 
-    @admin.display(description="Mobile")
+    @admin.display(description="Mobile", ordering="mobile")
     def mobile(self, profile):
-        if profile.user_id:
-            return profile.user.username
-        return ""
+        return profile.mobile or ""
 
     @admin.display(description="Projects")
     def project_link(self, profile):

@@ -13,3 +13,6 @@ class HonaryaarConfig(AppConfig):
         install()
         install_error_pages()
         from . import media_signals  # noqa: F401
+        from .accounts import connect_user_signals
+
+        connect_user_signals()

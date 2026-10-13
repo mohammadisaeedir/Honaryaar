@@ -51,6 +51,10 @@
                     <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.name.errors.0 }}</p>
                 {% endif %}
             </label>
+            <div class="mb-4">
+                <p class="field-label">موبایل</p>
+                <p class="mt-1" dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</p>
+            </div>
             <label class="mb-4 block">
                 <span class="field-label">شهر</span>
                 <select class="field field-select" name="city">
@@ -392,7 +396,7 @@
                     </div>
                     <div>
                         <dt>موبایل</dt>
-                        <dd dir="ltr">{{ request.user.username|phone_fa }}</dd>
+                        <dd dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</dd>
                     </div>
                     <div>
                         <dt>شهر</dt>

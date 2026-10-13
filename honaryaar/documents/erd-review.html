@@ -125,7 +125,7 @@ erDiagram
     <article class="ent">
       <header><h3>User</h3><span>جنگو، نه مدل خودمان</span></header>
       <ul>
-        <li><code>username</code> شمارهٔ موبایل است</li>
+        <li><code>username</code> یکتا است و با شمارهٔ موبایل یکی نیست</li>
         <li><code>first_name</code> و <code>last_name</code> فقط اینجا ذخیره می‌شوند</li>
       </ul>
     </article>
@@ -133,7 +133,8 @@ erDiagram
       <header><h3>Profile</h3><span>هنرمند</span></header>
       <ul>
         <li><code>user</code> یک‌به‌یک و اجباری. کاربر بدون پروفایل ممکن است، مثل کارمند و اپراتور</li>
-        <li><code>slug</code> یکتا</li>
+        <li><code>slug</code> یکتا و برابر با <code>username</code> کاربر</li>
+        <li><code>mobile</code> شمارهٔ موبایل، یکتا. هنگام ثبت‌نام در سایت پر می‌شود و می‌تواند خالی بماند</li>
         <li><code>name</code> نام هنری. نام و نام خانوادگی از کاربر خوانده می‌شود و اینجا ذخیره نمی‌شود</li>
         <li><code>city</code> → City، اختیاری</li>
         <li><code>about</code></li>

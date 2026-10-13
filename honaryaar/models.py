@@ -159,7 +159,19 @@ class Profile(models.Model):
         on_delete=models.PROTECT,
         related_name="profile",
     )
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(
+        max_length=150,
+        unique=True,
+        help_text="Public address. Always the same as the user's username.",
+    )
+    mobile = models.CharField(
+        max_length=11,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Mobile",
+        help_text="Phone number from registration. Separate from the username.",
+    )
     name = models.CharField(max_length=120, blank=True, verbose_name="Art name")
     city = models.ForeignKey(
         "City",
@@ -193,6 +205,40 @@ class Profile(models.Model):
 
     class Meta:
         ordering = ["name"]
+
+    def _assign_identity(self):
+        from honaryaar.accounts import normalize_phone
+
+        raw = (self.mobile or "").strip()
+        if raw:
+            phone = normalize_phone(raw)
+            if not phone:
+                raise ValidationError({"mobile": "Enter a mobile number like 09123456789."})
+            self.mobile = phone
+        else:
+            self.mobile = None
+        if self.user_id:
+            username = self.user.username
+            if username:
+                self.slug = username
+
+    def clean(self):
+        super().clean()
+        self._assign_identity()
+
+    def save(self, *args, **kwargs):
+        slug_before = self.slug
+        mobile_before = self.mobile
+        self._assign_identity()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            fields = set(update_fields)
+            if self.slug != slug_before:
+                fields.add("slug")
+            if self.mobile != mobile_before:
+                fields.add("mobile")
+            kwargs["update_fields"] = list(fields)
+        super().save(*args, **kwargs)
 
     def public_name(self):
         art_name = (self.name or "").strip()

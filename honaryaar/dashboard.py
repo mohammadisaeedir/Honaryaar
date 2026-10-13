@@ -136,7 +136,7 @@ def dashboard_callback(request, context):
                     [
                         [
                             _link(_change("profile", item.pk), str(item)),
-                            item.user.username if item.user_id else "",
+                            item.mobile or "",
                             item.city.title if item.city_id else "",
                         ]
                         for item in missing_roles
