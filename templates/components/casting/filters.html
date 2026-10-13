@@ -1,4 +1,4 @@
-{% load ejranow_ui %}
+{% load honaryaar_ui %}
 <div x-data="{ open: false }">
     <div class="flex max-w-full gap-2 overflow-x-auto pb-1">
         <a class="inline-flex min-h-11 shrink-0 items-center rounded-full border px-3 text-xs {% if not filters.city and not filters.paid %}border-foreground text-foreground{% else %}border-border text-muted-foreground{% endif %}" href="{% url 'opportunities' %}" hx-get="{% url 'opportunities' %}" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">همه</a>

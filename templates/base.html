@@ -266,7 +266,7 @@
             navigator.serviceWorker.register("{% url 'service-worker' %}");
         }
         (function () {
-            var key = "ejranow-recent-searches";
+            var key = "honaryaar-recent-searches";
             var paths = { artists: "/artists/", projects: "/projects/", opportunities: "/opportunities/", search: "/search/" };
             function normalize(item) {
                 if (typeof item === "string" && item) return { q: item, scope: "search" };
@@ -275,7 +275,12 @@
             }
             function read() {
                 try {
-                    var items = JSON.parse(localStorage.getItem(key) || "[]");
+                    var raw = localStorage.getItem(key);
+                    if (!raw) {
+                        raw = localStorage.getItem("ejranow-recent-searches");
+                        if (raw) localStorage.setItem(key, raw);
+                    }
+                    var items = JSON.parse(raw || "[]");
                     return Array.isArray(items) ? items.map(normalize).filter(Boolean) : [];
                 } catch (error) {
                     return [];

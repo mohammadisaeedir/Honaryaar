@@ -1,4 +1,4 @@
-{% load ejranow_ui static %}
+{% load honaryaar_ui static %}
 {% if original %}
     <link rel="stylesheet" href="{% static 'css/admin-ticket.css' %}">
     <section class="ticket-thread">
@@ -33,7 +33,7 @@
         {% if original.status == "closed" %}
             <p class="ticket-thread__note">This ticket is closed.</p>
         {% else %}
-            <form class="ticket-thread__reply" method="post" action="{% url 'admin:ejranow_supportticket_reply' original.pk %}">
+            <form class="ticket-thread__reply" method="post" action="{% url 'admin:honaryaar_supportticket_reply' original.pk %}">
                 {% csrf_token %}
                 <label>
                     <span>Reply</span>
