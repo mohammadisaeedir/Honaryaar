@@ -112,9 +112,11 @@ class ProfileStatus(models.TextChoices):
 
 
 class SkillLevel(models.IntegerChoices):
-    BEGINNER = 1, "Beginner"
-    INTERMEDIATE = 2, "Intermediate"
-    ADVANCED = 3, "Advanced"
+    ONE = 1, "1"
+    TWO = 2, "2"
+    THREE = 3, "3"
+    FOUR = 4, "4"
+    FIVE = 5, "5"
 
 
 class SkillArea(models.TextChoices):
@@ -258,7 +260,7 @@ class Profile(models.Model):
 class ProfileSkill(models.Model):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="skill_links")
     skill = models.ForeignKey(Skill, on_delete=models.PROTECT, related_name="profile_links")
-    level = models.PositiveSmallIntegerField(choices=SkillLevel.choices, default=SkillLevel.INTERMEDIATE)
+    level = models.PositiveSmallIntegerField(choices=SkillLevel.choices, default=SkillLevel.TWO)
 
     class Meta:
         ordering = ["skill__group", "skill__title"]

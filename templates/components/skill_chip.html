@@ -2,8 +2,6 @@
 <span class="skill-chip">
     <span>{{ label }}</span>
     <span class="skill-dots" aria-label="{{ level|skill_level_label }}">
-        <i class="{% if level >= 1 %}is-on{% endif %}"></i>
-        <i class="{% if level >= 2 %}is-on{% endif %}"></i>
-        <i class="{% if level >= 3 %}is-on{% endif %}"></i>
+        {% for n in "12345" %}<i class="{% if level|stringformat:"s" >= n %}is-on{% endif %}"></i>{% endfor %}
     </span>
 </span>

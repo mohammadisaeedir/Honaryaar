@@ -16,6 +16,7 @@ from honaryaar.admin import ProjectAdminForm
 from honaryaar.catalog import _artist_dict, _project_dict
 from honaryaar.media_files import MediaError, detect, process_image
 from honaryaar.media_service import (
+    attach_profile_picture,
     attach_project_image,
     attach_testimonial_image,
     complete_upload,
@@ -206,6 +207,46 @@ class MediaStorageTests(TestCase):
         self.assertTrue(item.file.name.startswith(f"dev/profiles/{self.profile.id}/"))
         self.assertTrue((MEDIA_ROOT / item.file.name).is_file())
         self.assertFalse((MEDIA_ROOT / old).exists())
+
+    def test_owner_can_set_profile_pictures(self):
+        self.client.force_login(self.user)
+        page = self.client.get(reverse("me-profile") + "?edit=1")
+        self.assertContains(page, 'data-purpose="profile_list"')
+        face = self._start(self.user, "profile_list", "photo", jpeg(), target=self.profile.id)
+        banner = self._start(self.user, "profile_banner", "photo", jpeg(), target=self.profile.id)
+        with self.captureOnCommitCallbacks(execute=True):
+            complete_upload(self.user, face.id)
+            complete_upload(self.user, banner.id)
+        saved = self.client.post(
+            reverse("me-profile"),
+            {
+                "first_name": "علی",
+                "last_name": "رضایی",
+                "name": "هنرمند",
+                "city": "",
+                "about": "",
+                "birth_date": "",
+                "gender": "",
+                "list_upload": str(face.id),
+                "banner_upload": str(banner.id),
+                "role-TOTAL_FORMS": "0",
+                "role-INITIAL_FORMS": "0",
+                "role-MIN_NUM_FORMS": "0",
+                "role-MAX_NUM_FORMS": "1000",
+                "credit-TOTAL_FORMS": "0",
+                "credit-INITIAL_FORMS": "0",
+                "credit-MIN_NUM_FORMS": "0",
+                "credit-MAX_NUM_FORMS": "1000",
+                "media-TOTAL_FORMS": "0",
+                "media-INITIAL_FORMS": "0",
+                "media-MIN_NUM_FORMS": "0",
+                "media-MAX_NUM_FORMS": "1000",
+            },
+        )
+        self.assertEqual(saved.status_code, 302)
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.list_image.name.startswith(f"dev/profiles/{self.profile.id}/"))
+        self.assertTrue(self.profile.banner.name.startswith(f"dev/profiles/{self.profile.id}/"))
 
     def test_project_and_testimonial_images(self):
         self.client.force_login(self.user)

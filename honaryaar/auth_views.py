@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
@@ -12,7 +10,7 @@ from django.db import transaction
 from honaryaar.accounts import ensure_profile, user_for_phone
 from honaryaar.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
 from honaryaar.media_files import MediaError
-from honaryaar.media_service import parse_upload_id, save_profile_media, url_for_key
+from honaryaar.media_service import attach_profile_picture, parse_upload_id, save_profile_media, url_for_key
 from honaryaar.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillArea
 
 
@@ -108,27 +106,24 @@ def _skill_levels_from_post(post):
         if not key.startswith("skill-"):
             continue
         raw_id = key.removeprefix("skill-")
-        if raw_id.isdigit() and value in {"1", "2", "3"}:
+        if raw_id.isdigit() and value in {"1", "2", "3", "4", "5"}:
             levels[int(raw_id)] = int(value)
     return levels
 
 
-def _skill_groups(levels):
-    grouped = defaultdict(list)
-    for skill in Skill.objects.all():
-        grouped[skill.group].append(skill)
-    groups = []
-    for value, label in SkillArea.choices:
-        rows = []
-        selected = 0
-        for skill in grouped.get(value, []):
-            level = levels.get(skill.pk, 0)
-            rows.append({"skill": skill, "level": level})
-            if level:
-                selected += 1
-        if rows:
-            groups.append({"group": {"title": label}, "rows": rows, "selected": selected})
-    return groups
+def skill_picker_payload(levels):
+    labels = dict(SkillArea.choices)
+    catalog = [
+        {"id": skill.pk, "title": skill.title, "category": labels.get(skill.group, skill.group)}
+        for skill in Skill.objects.all()
+    ]
+    by_id = {item["id"]: item for item in catalog}
+    chosen = []
+    for skill_id, level in levels.items():
+        item = by_id.get(skill_id)
+        if item and level:
+            chosen.append({**item, "level": int(level)})
+    return catalog, chosen
 
 
 def _save_skills(profile, levels):
@@ -168,6 +163,41 @@ def _roles_from_rows(rows, primary_index):
     if primary not in chosen and chosen:
         primary = chosen[0]
     return chosen, primary
+
+
+def _roles_from_picker(post):
+    ids = []
+    for key, value in post.items():
+        if not key.startswith("role-"):
+            continue
+        raw_id = key.removeprefix("role-")
+        if raw_id.isdigit() and value == "1":
+            ids.append(int(raw_id))
+    found = {role.pk: role for role in Role.objects.filter(pk__in=ids)}
+    chosen = [found[pk] for pk in ids if pk in found]
+    primary = None
+    raw_primary = str(post.get("role_primary") or "")
+    if raw_primary.isdigit():
+        primary = found.get(int(raw_primary))
+    if primary not in chosen and chosen:
+        primary = chosen[0]
+    return chosen, primary
+
+
+def role_picker_payload(chosen):
+    catalog = [
+        {"id": role.pk, "title": role.title, "category": role.group}
+        for role in Role.objects.all()
+    ]
+    by_id = {item["id"]: item for item in catalog}
+    selected = []
+    for role_id, is_primary in chosen.items():
+        item = by_id.get(role_id)
+        if item:
+            selected.append({**item, "primary": bool(is_primary)})
+    if selected and not any(item["primary"] for item in selected):
+        selected[0]["primary"] = True
+    return catalog, selected
 
 
 def _save_roles(profile, roles, primary):
@@ -252,14 +282,17 @@ def me_profile(request):
                 kind=current.kind,
             )
     media_error = ""
+    save_error_tab = ""
+    use_role_picker = request.method == "POST" and request.POST.get("role_picker") == "1"
     if request.method == "POST":
         editing = True
         if (
             form.is_valid()
-            and role_formset.is_valid()
+            and (use_role_picker or role_formset.is_valid())
             and credit_formset.is_valid()
             and media_formset.is_valid()
         ):
+            save_error_tab = "identity"
             try:
                 with transaction.atomic():
                     profile.name = form.cleaned_data["name"]
@@ -269,10 +302,28 @@ def me_profile(request):
                     profile.gender = form.cleaned_data["gender"]
                     profile.arts = form.cleaned_data["arts"]
                     profile.save()
+                    attach_profile_picture(
+                        request.user,
+                        profile,
+                        parse_upload_id(request.POST.get("list_upload")),
+                        field="list_image",
+                        remove=request.POST.get("list_remove") == "1",
+                    )
+                    attach_profile_picture(
+                        request.user,
+                        profile,
+                        parse_upload_id(request.POST.get("banner_upload")),
+                        field="banner",
+                        remove=request.POST.get("banner_remove") == "1",
+                    )
                     _save_skills(profile, skill_levels)
-                    chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
+                    if use_role_picker:
+                        chosen_roles, primary_role = _roles_from_picker(request.POST)
+                    else:
+                        chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
                     _save_roles(profile, chosen_roles, primary_role)
                     _save_credits(profile, credit_formset.cleaned_data)
+                    save_error_tab = "media"
                     _save_media(profile, media_formset.cleaned_data, request.user)
                     request.user.first_name = form.cleaned_data["first_name"]
                     request.user.last_name = form.cleaned_data["last_name"]
@@ -285,15 +336,24 @@ def me_profile(request):
                 return redirect("me-profile")
     edit_tab = "identity"
     if media_error:
-        edit_tab = "media"
+        edit_tab = save_error_tab or "media"
     elif request.method == "POST" and form.errors:
         edit_tab = "identity"
-    elif request.method == "POST" and not role_formset.is_valid():
+    elif request.method == "POST" and not use_role_picker and not role_formset.is_valid():
         edit_tab = "roles"
     elif request.method == "POST" and not credit_formset.is_valid():
         edit_tab = "credits"
     elif request.method == "POST" and not media_formset.is_valid():
         edit_tab = "media"
+    skill_catalog, skill_chosen = skill_picker_payload(skill_levels) if editing else ([], [])
+    if editing and use_role_picker:
+        picked_roles, primary_role = _roles_from_picker(request.POST)
+        role_state = {role.pk: primary_role is not None and role.pk == primary_role.pk for role in picked_roles}
+    elif editing:
+        role_state = {link.role_id: link.is_primary for link in role_links}
+    else:
+        role_state = {}
+    role_catalog, role_chosen = role_picker_payload(role_state) if editing else ([], [])
     return render(
         request,
         "pages/me_profile.html",
@@ -302,10 +362,11 @@ def me_profile(request):
             "profile": profile,
             "editing": editing,
             "role_links": role_links,
-            "role_formset": role_formset,
-            "primary_index": primary_index,
+            "role_catalog": role_catalog,
+            "role_chosen": role_chosen,
             "skill_links": skill_links,
-            "skill_groups": _skill_groups(skill_levels),
+            "skill_catalog": skill_catalog,
+            "skill_chosen": skill_chosen,
             "roles": Role.objects.all(),
             "credit_formset": credit_formset,
             "media_formset": media_formset,
