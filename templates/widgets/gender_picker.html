@@ -5,9 +5,9 @@
                 <label class="art-picker__btn gender-{{ item.value }}">
                     <input type="radio" name="{{ item.name }}" value="{{ item.value }}" {% if item.selected %}checked data-picked="1"{% endif %} onclick="if (this.dataset.picked) { this.checked = false; this.dataset.picked = ''; } else { this.closest('.art-picker').querySelectorAll('input').forEach(function (el) { el.dataset.picked = ''; }); this.dataset.picked = '1'; }">
                     {% if item.value == "female" %}
-                        {% include "components/icon.html" with name="woman" size="18" %}
+                        {% include "components/icon.html" with name="woman" size="16" %}
                     {% else %}
-                        {% include "components/icon.html" with name="man" size="18" %}
+                        {% include "components/icon.html" with name="man" size="16" %}
                     {% endif %}
                     <span>{{ item.label }}</span>
                 </label>

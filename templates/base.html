@@ -119,9 +119,19 @@
                 server.remove();
             }
         })();
-        function revealPage() { document.documentElement.classList.remove("is-booting"); }
+        function revealPage() {
+            document.documentElement.classList.remove("is-booting");
+            var main = document.querySelector("main");
+            if (!main) return;
+            main.classList.remove("is-skel-cover");
+            main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
+        }
         if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", revealPage);
         else revealPage();
+        window.addEventListener("pagehide", revealPage);
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) revealPage();
+        });
         (function () {
             var fallback = "{% static 'brand/mark-fallback.svg' %}";
             function boxOf(img) { return img.closest && img.closest(".card-photo"); }
@@ -193,9 +203,12 @@
                 : "skel-src-" + parts[0];
             var source = document.getElementById(id);
             if (!source) return;
-            main.querySelectorAll(":scope > .skel-pane").forEach(function (node) { node.remove(); });
+            main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
             main.classList.add("is-skel-cover");
-            main.appendChild(source.content.cloneNode(true));
+            var copy = source.content.cloneNode(true);
+            var pane = copy.querySelector(".skel-pane");
+            if (pane) pane.classList.add("is-skel-temp");
+            main.appendChild(copy);
         }, true);
         document.addEventListener("submit", function (event) {
             var form = event.target;

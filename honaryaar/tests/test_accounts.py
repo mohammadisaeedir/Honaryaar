@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import re
 
 from django.contrib.auth.models import Permission, User
@@ -10,6 +11,13 @@ from django.urls import reverse
 from honaryaar.accounts import ensure_profile, user_for_phone
 from honaryaar.admin import HonaryaarUserChangeForm
 from honaryaar.models import Profile
+
+
+def catalog_json(page, element_id):
+    html = page.content.decode()
+    marker = f'id="{element_id}" type="application/json">'
+    start = html.index(marker) + len(marker)
+    return json.loads(html[start:html.index("</script>", start)])
 
 
 class AccountIdentityTests(TestCase):
@@ -85,7 +93,7 @@ class AccountIdentityTests(TestCase):
     def test_gender_is_two_icon_buttons(self):
         user = user_for_phone("09127778899")
         self.client.force_login(user)
-        page = self.client.get(reverse("me-profile") + "?edit=1")
+        page = self.client.get(reverse("me-profile") + "?edit=about")
         self.assertContains(page, "gender-male")
         self.assertContains(page, "gender-female")
         self.assertContains(page, "مرد")
@@ -132,13 +140,16 @@ class AccountIdentityTests(TestCase):
         skill = Skill.objects.filter(group="acting").first()
         self.assertIsNotNone(skill)
         self.client.force_login(user)
-        page = self.client.get(reverse("me-profile") + "?edit=1")
+        page = self.client.get(reverse("me-profile") + "?edit=skills")
         self.assertContains(page, "data-skill-picker")
         self.assertContains(page, "data-levels=\"5\"")
-        self.assertContains(page, "جستجوی نام مهارت یا دسته")
+        self.assertContains(page, "data-search-typewriter")
+        self.assertContains(page, "مثلاً: گیتار")
         self.assertContains(page, "افزودن مهارت")
-        self.assertContains(page, skill.title)
-        self.assertContains(page, skill.get_group_display())
+        self.assertIn(
+            {"id": skill.pk, "title": skill.title, "category": skill.get_group_display()},
+            catalog_json(page, "skill-catalog"),
+        )
         self.assertNotContains(page, f"{skill.get_group_display()}: {skill.title}")
         self.assertNotContains(page, "skill-cats")
         saved = self.client.post(
@@ -216,12 +227,15 @@ class AccountIdentityTests(TestCase):
         first = Role.objects.order_by("group", "title").first()
         second = Role.objects.exclude(group=first.group).order_by("group", "title").first()
         self.client.force_login(user)
-        page = self.client.get(reverse("me-profile") + "?edit=1")
+        page = self.client.get(reverse("me-profile") + "?edit=roles")
         self.assertContains(page, "data-role-picker")
-        self.assertContains(page, "جستجوی نام نقش یا دسته")
+        self.assertContains(page, "data-search-typewriter")
+        self.assertContains(page, "مثلاً: بازیگر")
         self.assertContains(page, "افزودن نقش")
-        self.assertContains(page, first.title)
-        self.assertContains(page, first.group)
+        self.assertIn(
+            {"id": first.pk, "title": first.title, "category": first.group},
+            catalog_json(page, "role-catalog"),
+        )
         self.assertNotContains(page, 'data-repeat-add="role"')
         self.assertNotContains(page, 'id="role-rows"')
         saved = self.client.post(
@@ -294,12 +308,81 @@ class AccountIdentityTests(TestCase):
 
     def test_profile_edit_offers_image_upload(self):
         user = user_for_phone("09125556677")
+        user.first_name = "سارا"
+        user.save(update_fields=["first_name"])
         self.client.force_login(user)
-        response = self.client.get(reverse("me-profile") + "?edit=1")
+        response = self.client.get(reverse("me-profile"))
         self.assertContains(response, 'data-purpose="profile_list"')
         self.assertContains(response, 'data-purpose="profile_banner"')
-        self.assertContains(response, "تصویر پروفایل")
-        self.assertContains(response, "تصویر بنر")
+        self.assertContains(response, 'aria-label="ویرایش بنر"')
+        self.assertContains(response, 'aria-label="ویرایش تصویر اصلی"')
+        self.assertContains(response, 'aria-label="ویرایش اطلاعات"')
+        self.assertContains(response, "اطلاعات اصلی")
+        opened = self.client.get(reverse("me-profile") + "?edit=1")
+        self.assertContains(opened, "info: true")
+        saved = self.client.post(
+            reverse("me-profile"),
+            {"section": "hero", "first_name": "آوا", "last_name": "راد", "name": "آوا", "arts": "theatre"},
+        )
+        self.assertEqual(saved.status_code, 302)
+        user.refresh_from_db()
+        user.profile.refresh_from_db()
+        self.assertEqual(user.first_name, "آوا")
+        self.assertEqual(user.last_name, "راد")
+        self.assertEqual(user.profile.name, "آوا")
+        self.assertEqual(user.profile.arts, ["theatre"])
+
+    def test_profile_page_is_one_layout_with_section_edits(self):
+        user = user_for_phone("09127770011")
+        user.first_name = "نرگس"
+        user.last_name = "کریمی"
+        user.save(update_fields=["first_name", "last_name"])
+        user.profile.name = "نام هنری"
+        user.profile.about = "چند خط"
+        user.profile.arts = ["film"]
+        user.profile.save(update_fields=["name", "about", "arts"])
+        self.client.force_login(user)
+        page = self.client.get(reverse("me-profile"))
+        self.assertContains(page, "me-hero")
+        self.assertContains(page, "me-grid")
+        self.assertContains(page, "نرگس")
+        self.assertContains(page, "نام هنری")
+        self.assertContains(page, "سینما")
+        self.assertContains(page, "اطلاعات تماس")
+        self.assertNotContains(page, "profile-tabs")
+        self.assertContains(page, "sheet = 'about'")
+        saved = self.client.post(
+            reverse("me-profile"),
+            {"section": "about", "city": "", "about": "متن تازه", "birth_date": "", "gender": "female"},
+        )
+        self.assertEqual(saved.status_code, 302)
+        user.refresh_from_db()
+        user.profile.refresh_from_db()
+        self.assertEqual(user.first_name, "نرگس")
+        self.assertEqual(user.profile.name, "نام هنری")
+        self.assertEqual(user.profile.arts, ["film"])
+        self.assertEqual(user.profile.about, "متن تازه")
+        self.assertEqual(user.profile.gender, "female")
+
+    def test_profile_files_use_edit_and_delete_icons(self):
+        from honaryaar.models import ProfileMedia
+
+        user = user_for_phone("09120002233")
+        item = ProfileMedia.objects.create(profile=user.profile, kind="photo", label="نمونه", is_public=True)
+        self.client.force_login(user)
+        page = self.client.get(reverse("me-profile"))
+        self.assertContains(page, 'aria-label="افزودن فایل"')
+        self.assertContains(page, 'aria-label="ویرایش"')
+        self.assertContains(page, 'aria-label="حذف"')
+        self.assertNotContains(page, "انتخاب فایل")
+        self.assertNotContains(page, ">حذف تصویر<")
+        self.assertNotContains(page, 'type="checkbox" name="list_remove"')
+        removed = self.client.post(
+            reverse("me-profile"),
+            {"section": "media", "media_action": "delete", "media_id": item.pk},
+        )
+        self.assertEqual(removed.status_code, 302)
+        self.assertFalse(ProfileMedia.objects.filter(pk=item.pk).exists())
 
     def test_account_pages_show_the_mobile_number(self):
         user = user_for_phone("09123334455")

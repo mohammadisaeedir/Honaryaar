@@ -7,62 +7,190 @@
 {% block og_description %}{{ artist.name }}، {{ artist.role|role_title }} در {{ artist.city }}. پروفایل هنریار.{% endblock %}
 
 {% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}?v={{ asset_v }}">
+    <link rel="stylesheet" href="{% static 'css/art-picker.css' %}?v={{ asset_v }}">
     <link rel="stylesheet" href="{% static 'css/skills.css' %}?v={{ asset_v }}">
 {% endblock %}
 
 {% block content %}
     {% include "components/skeleton/artist_page.html" %}
     <div class="live-pane">
-    <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'artists' %}">هنرمندان</a></p>
-    <div class="mt-4">
-        {% include "components/artist/profile_header.html" %}
-    </div>
+        <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'artists' %}">هنرمندان</a></p>
+        <div class="me-profile mt-4" dir="rtl">
+            <section class="me-hero">
+                {% media_src artist.banner_key 1 artist.banner_public_acl artist.banner_thumb_key "photo" as banner %}
+                {% media_src artist.list_image_key 1 artist.list_public_acl artist.list_thumb_key "photo" as face %}
+                <div class="me-hero__cover">
+                    {% if banner %}
+                        <img class="me-hero__banner" src="{{ banner }}" alt="">
+                    {% else %}
+                        <div class="me-hero__banner me-hero__banner--empty" aria-hidden="true"></div>
+                    {% endif %}
+                </div>
+                <div class="me-hero__person">
+                    <div class="me-hero__photo-slot">
+                        {% if face %}
+                            <img class="me-hero__photo" src="{{ face }}" alt="">
+                        {% else %}
+                            <span class="me-hero__photo me-hero__photo--empty" aria-hidden="true">{{ artist.name|slice:":1" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="me-hero__text">
+                        <div class="me-hero__title-row">
+                            <div>
+                                {% if artist.legal_name and artist.legal_name != artist.name %}
+                                    <h1>{{ artist.legal_name }}</h1>
+                                    <p class="me-hero__art-name">{{ artist.name }}</p>
+                                {% else %}
+                                    <h1>{{ artist.name }}</h1>
+                                {% endif %}
+                            </div>
+                            {% include "components/pdp_actions.html" with kind="profile" slug=artist.slug title=artist.name %}
+                        </div>
+                        {% if artist.arts %}
+                            <ul class="me-arts">
+                                {% for slug in artist.arts %}
+                                    <li class="art-{{ slug }}">
+                                        {% include "components/art_icon.html" with slug=slug size="14" %}
+                                        <span>{{ slug|art_title }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
 
-    {% if artist.status == "indexed" %}
-        <section class="mt-8 max-w-2xl rounded-box border border-border bg-surface p-4" id="claim">
-            <p class="text-sm leading-[22px]">این صفحه از اطلاعات عمومی ساخته شده و به معنی عضویت در هنریار نیست.</p>
-            <div class="mt-4">
-                {% include "components/button.html" with href="#claim" label="این پروفایل متعلق به من است" variant="secondary" %}
+            <div class="me-grid">
+                <div class="me-stack">
+                    {% if artist.status == "indexed" %}
+                        <section class="me-card" id="claim">
+                            <p class="me-about">این صفحه از اطلاعات عمومی ساخته شده و به معنی عضویت در هنریار نیست.</p>
+                            <div class="mt-4">
+                                {% include "components/button.html" with href="#claim" label="این پروفایل متعلق به من است" variant="secondary" %}
+                            </div>
+                            <p class="me-note mt-3">ثبت مالکیت پروفایل در گام بعدی، همراه با ورود، فعال می‌شود.</p>
+                        </section>
+                    {% endif %}
+
+                    <section class="me-card" id="about">
+                        <div class="me-card__head"><h2>اطلاعات</h2></div>
+                        {% if artist.about %}
+                            <p class="me-about">{{ artist.about }}</p>
+                        {% else %}
+                            <p class="me-note">هنوز توضیحی نوشته نشده.</p>
+                        {% endif %}
+                        <dl class="me-facts">
+                            <div>
+                                <dt>شهر</dt>
+                                <dd>{% if artist.city %}{{ artist.city }}{% else %}ثبت نشده{% endif %}</dd>
+                            </div>
+                            {% if artist.age != None %}
+                                <div>
+                                    <dt>سن</dt>
+                                    <dd>{{ artist.age }} سال</dd>
+                                </div>
+                            {% endif %}
+                            {% if artist.gender %}
+                                <div>
+                                    <dt>جنسیت</dt>
+                                    <dd>{{ artist.gender|gender_label }}</dd>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <dt>وضعیت</dt>
+                                <dd>{% status_chip artist.status %}</dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="me-card" id="roles">
+                        <div class="me-card__head"><h2>نقش‌ها</h2></div>
+                        {% if artist.roles %}
+                            <ul class="me-list">
+                                {% for link in artist.roles %}
+                                    <li>
+                                        <p class="me-role">{% if link.group %}{{ link.group }} | {% endif %}{{ link.title }}</p>
+                                        {% if link.primary %}<span class="me-badge">اصلی</span>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز نقشی ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="me-card" id="credits">
+                        <div class="me-card__head"><h2>سوابق</h2></div>
+                        {% if artist.credits %}
+                            <ul class="me-list">
+                                {% for credit in artist.credits %}
+                                    <li>
+                                        <div>
+                                            <strong>{{ credit.title }}</strong>
+                                            {% if credit.role %}<span>{{ credit.role }}</span>{% endif %}
+                                        </div>
+                                        {% if credit.year %}<em>{{ credit.year }}</em>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز سابقه‌ای ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="me-card" id="media">
+                        <div class="me-card__head"><h2>مدیا</h2></div>
+                        {% if artist.media %}
+                            <div class="me-slides" {% if artist.media|length > 1 %}x-data="{ i: 0, n: {{ artist.media|length }}, fa(v) { return String(v).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; }); } }"{% endif %}>
+                                {% for item in artist.media %}
+                                    {% media_src item.key item.public item.public_acl "" item.kind_code as src %}
+                                    {% media_src item.thumb_key item.public item.public_acl "" "photo" as thumb %}
+                                    <div class="me-slides__item" {% if artist.media|length > 1 and not forloop.first %}x-show="i === {{ forloop.counter0 }}" x-cloak{% elif artist.media|length > 1 %}x-show="i === 0"{% endif %}>
+                                        {% if src %}
+                                            {% include "components/media/player.html" with kind=item.kind_code label="" src=src thumb=thumb %}
+                                        {% else %}
+                                            <p class="me-note">{{ item.kind }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                {% if artist.media|length > 1 %}
+                                    <div class="me-slides__nav">
+                                        <button type="button" @click="i = (i + n - 1) % n" aria-label="قبلی">
+                                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                                        </button>
+                                        <span x-text="fa(i + 1) + ' / ' + fa(n)"></span>
+                                        <button class="is-next" type="button" @click="i = (i + 1) % n" aria-label="بعدی">
+                                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="me-note">هنوز مدیایی ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+                </div>
+
+                <div class="me-stack">
+                    <section class="me-card" id="skills">
+                        <div class="me-card__head"><h2>مهارت‌ها</h2></div>
+                        {% if artist.skills %}
+                            <ul class="me-skills">
+                                {% for skill in artist.skills %}
+                                    <li>
+                                        <span>{{ skill.label }}</span>
+                                        <span class="skill-dots" aria-label="سطح {{ skill.level }}">{% for n in "12345" %}<i class="{% if skill.level|stringformat:"s" >= n %}is-on{% endif %}"></i>{% endfor %}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز مهارتی ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+                </div>
             </div>
-            <p class="mt-3 text-xs leading-[18px] text-muted-foreground">ثبت مالکیت پروفایل در گام بعدی، همراه با ورود، فعال می‌شود.</p>
-        </section>
-    {% endif %}
-
-    <section class="mt-8 max-w-2xl">
-        <h2 class="text-[18px] font-semibold leading-[26px]">درباره من</h2>
-        <p class="mt-3 text-sm leading-[22px]">{{ artist.about }}</p>
-    </section>
-
-    <section class="mt-8 max-w-2xl">
-        <h2 class="text-[18px] font-semibold leading-[26px]">نقش‌ها و مهارت‌ها</h2>
-        <p class="mt-3 text-sm leading-[22px]">{{ artist.role|role_title }}</p>
-        <div class="skill-list mt-3">
-            {% for skill in artist.skills %}
-                {% include "components/skill_chip.html" with label=skill.label level=skill.level %}
-            {% endfor %}
         </div>
-    </section>
-
-    <section class="mt-8 max-w-2xl">
-        <h2 class="text-[18px] font-semibold leading-[26px]">مدیا</h2>
-        <div class="mt-3">
-            {% include "components/artist/media_gallery.html" with media=artist.media %}
-        </div>
-    </section>
-
-    <section class="mt-8 max-w-2xl">
-        <h2 class="text-[18px] font-semibold leading-[26px]">سوابق حرفه‌ای</h2>
-        <ul class="mt-3">
-            {% for credit in artist.credits %}
-                {% include "components/artist/credit_item.html" %}
-            {% endfor %}
-        </ul>
-    </section>
-
-    <section class="mt-8 max-w-2xl">
-        <h2 class="text-[18px] font-semibold leading-[26px]">وضعیت پروفایل</h2>
-        <div class="mt-3">{% status_chip artist.status %}</div>
-    </section>
-    {% include "components/report_modal.html" %}
+        {% include "components/report_modal.html" %}
     </div>
 {% endblock %}

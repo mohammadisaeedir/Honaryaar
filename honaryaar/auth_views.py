@@ -3,13 +3,14 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from django.db import transaction
 
 from honaryaar.accounts import ensure_profile, user_for_phone
 from honaryaar.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
-from honaryaar.media_files import MediaError
+from honaryaar.media_files import NEED_FILE, MediaError
 from honaryaar.media_service import attach_profile_picture, parse_upload_id, save_profile_media, url_for_key
 from honaryaar.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillArea
 
@@ -216,6 +217,66 @@ def _save_roles(profile, roles, primary):
             link.save(update_fields=["is_primary"])
 
 
+PROFILE_SECTIONS = {"hero", "about", "skills", "roles", "credits", "media"}
+
+
+def _file_label(value):
+    name = (value or "").strip().replace("\\", "/").split("/")[-1]
+    if "." in name:
+        name = name.rsplit(".", 1)[0]
+    return (name.strip() or "فایل")[:160]
+
+
+def _apply_profile_media_action(profile, user, post):
+    action = post.get("media_action")
+    if action == "delete":
+        raw = str(post.get("media_id") or "")
+        if raw.isdigit():
+            profile.media_items.filter(pk=int(raw)).delete()
+        return
+    if action not in {"add", "replace"}:
+        return
+    upload_id = parse_upload_id(post.get("upload_id"))
+    if not upload_id:
+        raise MediaError(NEED_FILE)
+    label = _file_label(post.get("label"))
+    if action == "add":
+        if profile.media_items.count() >= settings.MEDIA_PROFILE_MAX_ITEMS:
+            raise MediaError(f"حداکثر {settings.MEDIA_PROFILE_MAX_ITEMS} فایل برای پروفایل مجاز است.")
+        before = set(profile.media_items.values_list("pk", flat=True))
+        _save_media(profile, [{"upload_id": upload_id, "label": label, "kind": "photo"}], user)
+        created = profile.media_items.exclude(pk__in=before).first()
+        if created is not None:
+            created.position = max(profile.media_items.count() - 1, 0)
+            created.save(update_fields=["position"])
+        return
+    raw = str(post.get("media_id") or "")
+    if not raw.isdigit():
+        return
+    current = profile.media_items.filter(pk=int(raw)).first()
+    if current is None:
+        return
+    kept = (post.get("label") or "").strip() or current.label or label
+    previous = current.position
+    _save_media(
+        profile,
+        [{"media_id": current.pk, "upload_id": upload_id, "label": kept[:160], "kind": current.kind}],
+        user,
+    )
+    current.refresh_from_db()
+    if current.position != previous:
+        current.position = previous
+        current.save(update_fields=["position"])
+
+
+def _requested_section(value):
+    if value == "1":
+        return "hero"
+    if value in PROFILE_SECTIONS:
+        return value
+    return ""
+
+
 @login_required
 def me_profile(request):
     profile = ensure_profile(request.user)
@@ -223,19 +284,26 @@ def me_profile(request):
         return render(
             request,
             "pages/me_profile.html",
-            {"profile": None, "editing": False},
+            {"profile": None, "editing": False, "edit_section": ""},
         )
-    editing = request.GET.get("edit") == "1"
     role_links = list(profile.profile_roles.select_related("role"))
     skill_links = list(profile.skill_links.select_related("skill"))
-    if request.method == "POST":
-        skill_levels = _skill_levels_from_post(request.POST)
-        primary_index = request.POST.get("role_primary", "")
+    credits = list(profile.credits.select_related("role"))
+    media_items = list(profile.media_items.all())
+    posted = request.POST if request.method == "POST" else None
+    legacy = posted is not None and "section" not in posted
+    posted_section = posted.get("section", "") if posted is not None and not legacy else ""
+    if posted is not None and (legacy or posted_section == "skills"):
+        skill_levels = _skill_levels_from_post(posted)
     else:
         skill_levels = {link.skill_id: link.level for link in skill_links}
+    if posted is not None:
+        primary_index = posted.get("role_primary", "")
+    else:
         primary_index = next((str(index) for index, link in enumerate(role_links) if link.is_primary), "")
+    profile_data = posted if legacy or posted_section in {"hero", "about"} else None
     form = ProfileForm(
-        request.POST or None,
+        profile_data,
         initial={
             "first_name": profile.user.first_name,
             "last_name": profile.user.last_name,
@@ -248,27 +316,27 @@ def me_profile(request):
         },
     )
     role_formset = RoleFormSet(
-        request.POST or None,
+        posted if legacy else None,
         initial=[{"role": link.role_id} for link in role_links],
         prefix="role",
     )
     credit_formset = CreditFormSet(
-        request.POST or None,
+        posted if legacy or posted_section == "credits" else None,
         initial=[
             {"credit_id": item.id, "title": item.title, "role": item.role_id, "role_name": item.role_name, "year": item.year}
-            for item in profile.credits.all()
+            for item in credits
         ],
         prefix="credit",
     )
     media_formset = MediaFormSet(
-        request.POST or None,
+        posted if legacy or posted_section == "media" else None,
         initial=[
             {"media_id": item.id, "kind": item.kind, "label": item.label}
-            for item in profile.media_items.all()
+            for item in media_items
         ],
         prefix="media",
     )
-    media_by_id = {item.id: item for item in profile.media_items.all()}
+    media_by_id = {item.id: item for item in media_items}
     for media_form in media_formset:
         raw = media_form["media_id"].value()
         current = media_by_id.get(int(raw)) if raw and str(raw).isdigit() else None
@@ -282,95 +350,158 @@ def me_profile(request):
                 kind=current.kind,
             )
     media_error = ""
-    save_error_tab = ""
-    use_role_picker = request.method == "POST" and request.POST.get("role_picker") == "1"
-    if request.method == "POST":
-        editing = True
-        if (
-            form.is_valid()
-            and (use_role_picker or role_formset.is_valid())
-            and credit_formset.is_valid()
-            and media_formset.is_valid()
-        ):
-            save_error_tab = "identity"
+    edit_section = _requested_section(request.GET.get("edit", ""))
+    use_role_picker = posted is not None and posted.get("role_picker") == "1"
+    if posted is not None and not legacy and posted_section not in PROFILE_SECTIONS:
+        messages.error(request, "این بخش پروفایل شناخته نشد.")
+    elif posted is not None and not legacy and posted_section == "hero" and posted.get("hero_action") in {"list", "banner"}:
+        action = posted.get("hero_action")
+        field = "list_image" if action == "list" else "banner"
+        upload_name = "list_upload" if action == "list" else "banner_upload"
+        remove_name = "list_remove" if action == "list" else "banner_remove"
+        try:
+            with transaction.atomic():
+                attach_profile_picture(
+                    request.user,
+                    profile,
+                    parse_upload_id(posted.get(upload_name)),
+                    field=field,
+                    remove=posted.get(remove_name) == "1",
+                )
+        except MediaError as exc:
+            messages.error(request, exc.message)
+        else:
+            messages.success(request, "تصویر حذف شد." if posted.get(remove_name) == "1" else "تصویر ذخیره شد.")
+        return redirect(reverse("me-profile") + "#hero")
+    elif posted is not None and not legacy and posted_section == "media" and posted.get("media_action"):
+        try:
+            with transaction.atomic():
+                _apply_profile_media_action(profile, request.user, posted)
+        except MediaError as exc:
+            messages.error(request, exc.message)
+        else:
+            messages.success(request, "فایل حذف شد." if posted.get("media_action") == "delete" else "فایل ذخیره شد.")
+        return redirect(reverse("me-profile") + "?edit=media")
+    elif posted is not None:
+        section = "" if legacy else posted_section
+        if legacy:
+            valid = (
+                form.is_valid()
+                and (use_role_picker or role_formset.is_valid())
+                and credit_formset.is_valid()
+                and media_formset.is_valid()
+            )
+        elif section in {"hero", "about"}:
+            valid = form.is_valid()
+        elif section == "skills":
+            valid = True
+        elif section == "roles":
+            valid = use_role_picker or role_formset.is_valid()
+        elif section == "credits":
+            valid = credit_formset.is_valid()
+        else:
+            valid = media_formset.is_valid()
+        if valid:
+            error_section = "hero" if section in {"", "hero"} else section
             try:
                 with transaction.atomic():
-                    profile.name = form.cleaned_data["name"]
-                    profile.city = form.cleaned_data["city"]
-                    profile.about = form.cleaned_data["about"]
-                    profile.birth_date = form.cleaned_data["birth_date"]
-                    profile.gender = form.cleaned_data["gender"]
-                    profile.arts = form.cleaned_data["arts"]
-                    profile.save()
-                    attach_profile_picture(
-                        request.user,
-                        profile,
-                        parse_upload_id(request.POST.get("list_upload")),
-                        field="list_image",
-                        remove=request.POST.get("list_remove") == "1",
-                    )
-                    attach_profile_picture(
-                        request.user,
-                        profile,
-                        parse_upload_id(request.POST.get("banner_upload")),
-                        field="banner",
-                        remove=request.POST.get("banner_remove") == "1",
-                    )
-                    _save_skills(profile, skill_levels)
-                    if use_role_picker:
-                        chosen_roles, primary_role = _roles_from_picker(request.POST)
-                    else:
-                        chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
-                    _save_roles(profile, chosen_roles, primary_role)
-                    _save_credits(profile, credit_formset.cleaned_data)
-                    save_error_tab = "media"
-                    _save_media(profile, media_formset.cleaned_data, request.user)
-                    request.user.first_name = form.cleaned_data["first_name"]
-                    request.user.last_name = form.cleaned_data["last_name"]
-                    request.user.save(update_fields=["first_name", "last_name"])
+                    if section in {"", "hero"}:
+                        profile.name = form.cleaned_data["name"]
+                        profile.arts = form.cleaned_data["arts"]
+                        request.user.first_name = form.cleaned_data["first_name"]
+                        request.user.last_name = form.cleaned_data["last_name"]
+                        request.user.save(update_fields=["first_name", "last_name"])
+                    if section in {"", "about"}:
+                        profile.city = form.cleaned_data["city"]
+                        profile.about = form.cleaned_data["about"]
+                        profile.birth_date = form.cleaned_data["birth_date"]
+                        profile.gender = form.cleaned_data["gender"]
+                    if section == "":
+                        profile.save()
+                    elif section == "hero":
+                        profile.save(update_fields=["name", "arts"])
+                    elif section == "about":
+                        profile.save(update_fields=["city", "about", "birth_date", "gender"])
+                    if section in {"", "hero"}:
+                        attach_profile_picture(
+                            request.user,
+                            profile,
+                            parse_upload_id(posted.get("list_upload")),
+                            field="list_image",
+                            remove=posted.get("list_remove") == "1",
+                        )
+                        attach_profile_picture(
+                            request.user,
+                            profile,
+                            parse_upload_id(posted.get("banner_upload")),
+                            field="banner",
+                            remove=posted.get("banner_remove") == "1",
+                        )
+                    if section in {"", "skills"}:
+                        _save_skills(profile, skill_levels)
+                    if section in {"", "roles"}:
+                        if use_role_picker:
+                            chosen_roles, primary_role = _roles_from_picker(posted)
+                        else:
+                            chosen_roles, primary_role = _roles_from_rows(role_formset.cleaned_data, primary_index)
+                        _save_roles(profile, chosen_roles, primary_role)
+                    if section in {"", "credits"}:
+                        _save_credits(profile, credit_formset.cleaned_data)
+                    if section in {"", "media"}:
+                        error_section = "media"
+                        _save_media(profile, media_formset.cleaned_data, request.user)
             except MediaError as exc:
                 media_error = exc.message
                 messages.error(request, exc.message)
+                edit_section = error_section
             else:
                 messages.success(request, "پروفایل ذخیره شد.")
+                if section in {"hero", "about"}:
+                    return redirect("me-profile")
+                if section:
+                    return redirect(reverse("me-profile") + "?edit=" + section)
                 return redirect("me-profile")
-    edit_tab = "identity"
-    if media_error:
-        edit_tab = save_error_tab or "media"
-    elif request.method == "POST" and form.errors:
-        edit_tab = "identity"
-    elif request.method == "POST" and not use_role_picker and not role_formset.is_valid():
-        edit_tab = "roles"
-    elif request.method == "POST" and not credit_formset.is_valid():
-        edit_tab = "credits"
-    elif request.method == "POST" and not media_formset.is_valid():
-        edit_tab = "media"
-    skill_catalog, skill_chosen = skill_picker_payload(skill_levels) if editing else ([], [])
-    if editing and use_role_picker:
+        elif legacy:
+            if form.errors:
+                edit_section = "hero"
+            elif not use_role_picker and not role_formset.is_valid():
+                edit_section = "roles"
+            elif not credit_formset.is_valid():
+                edit_section = "credits"
+            elif not media_formset.is_valid():
+                edit_section = "media"
+            else:
+                edit_section = "about"
+        else:
+            edit_section = section
+    skill_catalog, skill_chosen = skill_picker_payload(skill_levels)
+    if posted is not None and (legacy or posted_section == "roles") and use_role_picker:
         picked_roles, primary_role = _roles_from_picker(request.POST)
         role_state = {role.pk: primary_role is not None and role.pk == primary_role.pk for role in picked_roles}
-    elif editing:
-        role_state = {link.role_id: link.is_primary for link in role_links}
     else:
-        role_state = {}
-    role_catalog, role_chosen = role_picker_payload(role_state) if editing else ([], [])
+        role_state = {link.role_id: link.is_primary for link in role_links}
+    role_catalog, role_chosen = role_picker_payload(role_state)
     return render(
         request,
         "pages/me_profile.html",
         {
             "form": form,
             "profile": profile,
-            "editing": editing,
+            "editing": False,
+            "open_info": edit_section == "hero",
+            "open_sheet": edit_section if edit_section in {"about", "skills", "roles", "credits", "media"} else "",
+            "edit_section": edit_section,
             "role_links": role_links,
             "role_catalog": role_catalog,
             "role_chosen": role_chosen,
             "skill_links": skill_links,
             "skill_catalog": skill_catalog,
             "skill_chosen": skill_chosen,
-            "roles": Role.objects.all(),
+            "roles": Role.objects.order_by("group", "title"),
+            "credits": credits,
+            "media_items": media_items,
             "credit_formset": credit_formset,
             "media_formset": media_formset,
-            "edit_tab": edit_tab,
             "media_error": media_error,
             "media_max_items": settings.MEDIA_PROFILE_MAX_ITEMS,
             "media_max_photo": settings.MEDIA_MAX_IMAGE_BYTES,

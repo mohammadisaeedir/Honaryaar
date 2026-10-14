@@ -9,33 +9,27 @@
 .gender-female { --art: #c13281; --art-bg: #f8e6f0; }
 
 .art-picker {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(4.75rem, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    overflow-x: auto;
 }
 
-.art-picker--pair {
-    grid-auto-columns: 4.75rem;
-    justify-content: start;
-    overflow: visible;
-}
+.art-picker--pair { justify-content: flex-start; }
 
 .art-picker__btn {
     position: relative;
-    display: flex;
-    flex-direction: column;
+    display: inline-flex;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    min-height: 76px;
+    min-height: 32px;
     margin: 0;
-    padding: 10px 6px;
-    border: 1px solid #e7e4e2;
-    border-radius: 12px;
-    background: #fff;
-    color: #6f6863;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--art-bg, #f6f4ef);
+    color: var(--art, #6f6863);
     font: inherit;
     font-size: 12px;
     font-weight: 700;
@@ -54,19 +48,40 @@
 }
 
 .art-picker__btn .icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
-    color: #8a847e;
+    color: var(--art, #8a847e);
 }
 
 .art-picker__btn:has(input:checked) {
     border-color: var(--art, #c13281);
-    background: var(--art-bg, #f8e6f0);
-    color: #17131a;
+    box-shadow: inset 0 0 0 1px var(--art, #c13281);
 }
 
-.art-picker__btn:has(input:checked) .icon {
+.art-picker--pair .art-picker__btn {
+    flex-direction: row;
+    gap: 6px;
+    width: auto;
+    min-height: 32px;
+    padding: 0 12px;
+    border-color: #e7e4e2;
+    border-radius: 12px;
+    background: #fff;
+    color: #6f6863;
+    box-shadow: none;
+}
+
+.art-picker--pair .art-picker__btn .icon { color: #8a847e; }
+
+.art-picker--pair .art-picker__btn:has(input:checked) {
+    border-color: var(--art, #c13281);
+    background: var(--art-bg, #f8e6f0);
+    color: #17131a;
+    box-shadow: none;
+}
+
+.art-picker--pair .art-picker__btn:has(input:checked) .icon {
     color: var(--art, #c13281);
 }
 

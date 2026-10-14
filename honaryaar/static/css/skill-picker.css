@@ -159,10 +159,19 @@
     background: #f0d4e2;
 }
 
-.skill-picker__dot:hover::before,
-.skill-picker__dot:hover ~ .skill-picker__dot::before,
+.skill-picker__rate:hover .skill-picker__dot:hover::before,
+.skill-picker__rate:hover .skill-picker__dot:hover ~ .skill-picker__dot::before,
 .skill-picker__rate:not(:hover) .skill-picker__dot.is-on::before,
 .skill-picker__rate:not(:hover) .skill-picker__dot.is-on ~ .skill-picker__dot::before {
+    background: #c13281;
+}
+
+.skill-picker__rate.is-static .skill-picker__dot { pointer-events: none; }
+
+.skill-picker__rate.is-static:hover .skill-picker__dot::before { background: #f0d4e2; }
+
+.skill-picker__rate.is-static:hover .skill-picker__dot.is-on::before,
+.skill-picker__rate.is-static:hover .skill-picker__dot.is-on ~ .skill-picker__dot::before {
     background: #c13281;
 }
 
@@ -324,6 +333,162 @@
 .skill-modal__confirm {
     grid-column: 2;
     grid-row: 1 / span 3;
+}
+
+.role-search {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    padding: 0 16px 12px;
+}
+
+.role-search .icon {
+    position: absolute;
+    inset-inline-start: 28px;
+    top: 11px;
+    width: 18px;
+    height: 18px;
+    color: #6f6863;
+    pointer-events: none;
+}
+
+.role-search input {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding-block: 8px;
+    padding-inline: 36px 12px;
+    border: 1px solid var(--color-border, #e7e4e2);
+    border-radius: var(--radius-input, 12px);
+    background: #ececee;
+    color: #17131a;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+}
+
+.role-search input::placeholder { color: #6f6863; }
+
+.role-pick__category,
+.role-pick__back,
+.role-pick__item {
+    border: 0;
+    background: transparent;
+    color: #17131a;
+    text-align: right;
+}
+
+.role-pick__category,
+.role-pick__back {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.role-pick__category:hover,
+.role-pick__back:hover,
+.role-pick__row:hover,
+.role-pick__row.is-on { background: #f6f4ef; }
+
+.role-pick__back { justify-content: flex-start; color: #6f6863; }
+
+.role-pick__back .icon { transform: scaleX(-1); }
+
+.role-pick__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 4px 8px 4px 12px;
+    border-radius: 10px;
+}
+
+.role-pick__item {
+    flex: 1;
+    min-height: 36px;
+    padding: 0;
+}
+
+.skill-pick__tools {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.skill-pick__tools .role-pick__add { display: inline-flex; }
+
+.skill-pick__tools .role-pick__add:disabled {
+    background: #f0d4e2;
+    color: #8a6678;
+    cursor: default;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .skill-pick__tools { pointer-events: none; }
+    .role-pick__row:hover .skill-pick__tools,
+    .role-pick__row:focus-within .skill-pick__tools,
+    .role-pick__row.is-on .skill-pick__tools {
+        display: inline-flex;
+        pointer-events: auto;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .role-pick__row.is-on .skill-pick__tools { display: inline-flex; }
+}
+
+.role-pick__add,
+.role-pick__bar button {
+    display: none;
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 4px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #c13281;
+    color: #fff;
+    font-weight: 700;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .role-pick__row:hover .role-pick__add,
+    .role-pick__row:focus-within .role-pick__add { display: inline-flex; }
+}
+
+.role-pick__bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid #efe8ec;
+    background: #fff;
+}
+
+.role-pick__bar p {
+    margin: 0;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.role-pick__bar button { display: inline-flex; }
+
+@media (max-width: 767.98px) {
+    .role-pick__bar:not([hidden]) { display: flex; }
+}
+
+@media (min-width: 768px) {
+    .role-pick__bar { display: none !important; }
 }
 
 body.skill-modal-open {

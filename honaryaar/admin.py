@@ -227,11 +227,20 @@ class ProfileMediaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         target = self.instance.profile_id or self.parent_id or ""
+        preview = ""
+        if self.instance.pk and self.instance.file:
+            preview = url_for_key(
+                self.instance.thumbnail.name or self.instance.file.name,
+                public=self.instance.is_public,
+                public_acl=self.instance.public_acl,
+                kind=self.instance.kind or "photo",
+            )
         self.fields["upload_id"].widget = DirectUploadWidget(
             purpose="profile",
             kind=self.instance.kind or "photo",
             fixed=False,
             target=target,
+            initial_url=preview or "",
         )
 
     def save(self, commit=True):
@@ -242,13 +251,27 @@ class ProfileMediaForm(forms.ModelForm):
         return obj
 
 
+def _preview_url(obj, file_field, thumb_field, kind, *, public, acl):
+    if not getattr(obj, "pk", None):
+        return ""
+    thumb = getattr(obj, thumb_field, None)
+    main = getattr(obj, file_field, None)
+    key = thumb.name if thumb and thumb.name else (main.name if main and main.name else "")
+    if not key:
+        return ""
+    return url_for_key(key, public=public, public_acl=acl, kind=kind) or ""
+
+
+def _posted_flag(form, name):
+    return form.data.get(form.add_prefix(name)) == "1"
+
+
 class ProjectAdminForm(forms.ModelForm):
     image_upload = forms.CharField(
         required=False,
         label="Image",
         widget=DirectUploadWidget(purpose="project", kind="photo", fixed=True),
     )
-    image_remove = forms.BooleanField(required=False, label="Remove image")
 
     class Meta:
         model = Project
@@ -261,6 +284,10 @@ class ProjectAdminForm(forms.ModelForm):
             kind="photo",
             fixed=True,
             target=self.instance.pk or "",
+            initial_url=_preview_url(
+                self.instance, "image", "image_thumb", "photo", public=True, acl=self.instance.image_public_acl
+            ),
+            remove_name="image_remove",
         )
 
     def clean(self):
@@ -272,7 +299,7 @@ class ProjectAdminForm(forms.ModelForm):
     def save(self, commit=True):
         obj = super().save(commit=False)
         obj._pending_upload = (self.cleaned_data.get("image_upload") or "").strip()
-        obj._remove_image = bool(self.cleaned_data.get("image_remove"))
+        obj._remove_image = _posted_flag(self, "image_remove")
         if commit:
             obj.save()
         return obj
@@ -284,7 +311,6 @@ class TestimonialAdminForm(forms.ModelForm):
         label="Image",
         widget=DirectUploadWidget(purpose="testimonial", kind="photo", fixed=True),
     )
-    image_remove = forms.BooleanField(required=False, label="Remove image")
 
     class Meta:
         model = Testimonial
@@ -297,12 +323,16 @@ class TestimonialAdminForm(forms.ModelForm):
             kind="photo",
             fixed=True,
             target=self.instance.pk or "",
+            initial_url=_preview_url(
+                self.instance, "image", "image_thumb", "photo", public=True, acl=self.instance.image_public_acl
+            ),
+            remove_name="image_remove",
         )
 
     def save(self, commit=True):
         obj = super().save(commit=False)
         obj._pending_upload = (self.cleaned_data.get("image_upload") or "").strip()
-        obj._remove_image = bool(self.cleaned_data.get("image_remove"))
+        obj._remove_image = _posted_flag(self, "image_remove")
         if commit:
             obj.save()
         return obj
@@ -382,8 +412,8 @@ class ProfileMediaInline(TabularInline):
     model = ProfileMedia
     form = ProfileMediaForm
     extra = 0
-    fields = ("kind", "label", "position", "is_public", "upload_id", "file_preview")
-    readonly_fields = ("file_preview",)
+    fields = ("kind", "label", "position", "is_public", "upload_id")
+    readonly_fields = ()
 
     def get_formset(self, request, obj=None, **kwargs):
         ProfileMediaForm.parent_id = str(obj.pk) if obj else ""
@@ -451,9 +481,7 @@ class ProfileAdminForm(forms.ModelForm):
         help_text="Arts this person works in or is interested in.",
     )
     list_upload = forms.CharField(required=False, label="Main image")
-    list_remove = forms.BooleanField(required=False, label="Remove main image")
     banner_upload = forms.CharField(required=False, label="Banner")
-    banner_remove = forms.BooleanField(required=False, label="Remove banner")
     skills = forms.CharField(required=False, label="Skills", widget=SkillPickerWidget())
     role_picker = forms.CharField(required=False, label="Roles", widget=RolePickerWidget())
 
@@ -473,13 +501,25 @@ class ProfileAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         target = self.instance.pk or ""
         self.fields["list_upload"].widget = DirectUploadWidget(
-            purpose="profile_list", kind="photo", fixed=True, target=target
+            purpose="profile_list",
+            kind="photo",
+            fixed=True,
+            target=target,
+            initial_url=_preview_url(
+                self.instance, "list_image", "list_thumb", "photo", public=True, acl=self.instance.list_public_acl
+            ),
+            remove_name="list_remove",
         )
         self.fields["banner_upload"].widget = DirectUploadWidget(
-            purpose="profile_banner", kind="photo", fixed=True, target=target
+            purpose="profile_banner",
+            kind="photo",
+            fixed=True,
+            target=target,
+            initial_url=_preview_url(
+                self.instance, "banner", "banner_thumb", "photo", public=True, acl=self.instance.banner_public_acl
+            ),
+            remove_name="banner_remove",
         )
-        self.fields["list_upload"].help_text = _picture_preview(self.instance, "list_image", "list_public_acl")
-        self.fields["banner_upload"].help_text = _picture_preview(self.instance, "banner", "banner_public_acl")
         if self.is_bound and "skill_picker" in self.data:
             skill_levels = _skill_levels_from_post(self.data)
         elif self.instance.pk:
@@ -503,9 +543,9 @@ class ProfileAdminForm(forms.ModelForm):
     def save(self, commit=True):
         obj = super().save(commit=False)
         obj._pending_list = (self.cleaned_data.get("list_upload") or "").strip()
-        obj._remove_list = bool(self.cleaned_data.get("list_remove"))
+        obj._remove_list = _posted_flag(self, "list_remove")
         obj._pending_banner = (self.cleaned_data.get("banner_upload") or "").strip()
-        obj._remove_banner = bool(self.cleaned_data.get("banner_remove"))
+        obj._remove_banner = _posted_flag(self, "banner_remove")
         if commit:
             obj.save()
         return obj
@@ -723,7 +763,7 @@ class TestimonialInline(TabularInline):
     model = Testimonial
     form = TestimonialAdminForm
     extra = 0
-    fields = ("quote", "name", "profile", "role_label", "role", "featured", "priority", "image_upload", "image_remove", "image_preview")
+    fields = ("quote", "name", "profile", "role_label", "role", "featured", "priority", "image_upload", "image_preview")
     readonly_fields = ("image_preview",)
     autocomplete_fields = ("profile", "role")
 

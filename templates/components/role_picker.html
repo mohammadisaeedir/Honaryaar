@@ -1,4 +1,4 @@
-<div class="skill-picker" data-role-picker>
+<div class="skill-picker" data-role-picker {% if layout == "table" %}data-layout="table"{% endif %}>
     {{ role_catalog|json_script:"role-catalog" }}
     {{ role_chosen|json_script:"role-chosen" }}
     <input type="hidden" name="{{ widget.name|default:'role_picker' }}" value="1">
@@ -8,10 +8,27 @@
             {% if item.primary %}<input type="hidden" name="role_primary" value="{{ item.id }}">{% endif %}
         {% endfor %}
     </div>
-    <p class="skill-picker__lead">نقش را با نام یا دسته پیدا کنید و یکی‌یکی اضافه کنید. یکی را اصلی بگذارید تا پروفایل در فهرست هنرمندان دیده شود. در پایان فرم را ذخیره کنید.</p>
-    <div class="skill-picker__list" data-role-chosen-list></div>
+    {% if not quiet %}<p class="skill-picker__lead">نقش را با نام یا دسته پیدا کنید و یکی‌یکی اضافه کنید. یکی را اصلی بگذارید تا پروفایل در فهرست هنرمندان دیده شود. در پایان فرم را ذخیره کنید.</p>{% endif %}
+    <template data-icon="pencil">{% include "components/icon.html" with name="pencil" size="16" %}</template>
+    <template data-icon="trash">{% include "components/icon.html" with name="trash" size="16" %}</template>
+    <template data-icon="chevron">{% include "components/icon.html" with name="chevron-right" size="16" %}</template>
+    {% if layout == "table" %}
+        <table class="me-sheet">
+            <thead>
+                <tr>
+                    <th>نقش</th>
+                    <th>دسته</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody data-role-chosen-list></tbody>
+        </table>
+        <button type="button" data-role-open aria-label="افزودن نقش" hidden></button>
+    {% else %}
+        <div class="skill-picker__list" data-role-chosen-list></div>
+        <button class="skill-picker__open" type="button" data-role-open>افزودن نقش</button>
+    {% endif %}
     <p class="skill-picker__empty" data-role-empty {% if role_chosen %}hidden{% endif %}>هنوز نقشی اضافه نشده.</p>
-    <button class="skill-picker__open" type="button" data-role-open>افزودن نقش</button>
     <div class="skill-modal" data-role-modal hidden>
         <div class="skill-modal__backdrop" data-role-backdrop></div>
         <div class="skill-modal__panel" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
@@ -19,13 +36,15 @@
                 <h2 id="role-modal-title">انتخاب نقش</h2>
                 <button class="skill-modal__close" type="button" data-role-close aria-label="بستن">×</button>
             </div>
-            <label class="skill-modal__search">
-                <span class="skill-picker__sr">جستجو</span>
-                <input type="search" data-role-search placeholder="جستجوی نام نقش یا دسته" autocomplete="off" enterkeyhint="search">
+            <label class="role-search">
+                <span class="sr-only">جستجو</span>
+                {% include "components/icon.html" with name="search" size="18" %}
+                <input type="search" data-role-search data-search-typewriter placeholder="مثلاً: بازیگر" autocomplete="off" enterkeyhint="search" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
             </label>
             <div class="skill-modal__results" data-role-results></div>
-            <div class="skill-modal__draft" data-role-draft>
-                <p class="skill-modal__hint">نام نقش یا دسته را بنویسید.</p>
+            <div class="role-pick__bar" data-role-bar hidden>
+                <p data-role-bar-name></p>
+                <button type="button" data-role-confirm>افزودن</button>
             </div>
         </div>
     </div>

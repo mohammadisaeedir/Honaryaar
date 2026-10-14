@@ -985,6 +985,10 @@ def _artist_dict(profile):
         "role": primary.slug if primary else "",
         "role_slugs": [link.role.slug for link in ordered],
         "role_titles": [link.role.title for link in ordered],
+        "roles": [
+            {"title": link.role.title, "group": link.role.group, "primary": link.is_primary}
+            for link in ordered
+        ],
         "city": profile.city.title if profile.city_id else "",
         "about": profile.about,
         "age": years_old(profile.birth_date),

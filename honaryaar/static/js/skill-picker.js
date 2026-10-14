@@ -28,6 +28,19 @@
         return wrap;
     }
 
+    function staticDots(level) {
+        var wrap = document.createElement("span");
+        wrap.className = "skill-picker__rate is-static";
+        wrap.dir = "ltr";
+        wrap.setAttribute("aria-label", "سطح " + LEVELS[level - 1]);
+        for (var n = 5; n >= 1; n -= 1) {
+            var mark = document.createElement("span");
+            mark.className = "skill-picker__dot" + (n <= level ? " is-on" : "");
+            wrap.append(mark);
+        }
+        return wrap;
+    }
+
     function mount(root) {
         if (root.dataset.skillReady === "1") return;
         root.dataset.skillReady = "1";
@@ -41,22 +54,41 @@
         } catch (error) {
             return;
         }
-        var state = { chosen: chosen, query: "", draftId: null, draftLevel: 0, notice: "", open: false };
+        var state = { chosen: chosen, query: "", category: "", draftId: null, draftLevel: 0, notice: "", open: false, editId: null };
+        var mobileQuery = window.matchMedia("(max-width: 767.98px)");
+
+        function iconButton(label, name) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "me-icon-btn" + (name === "trash" ? " is-danger" : "");
+            button.setAttribute("aria-label", label);
+            var source = root.querySelector("template[data-icon='" + name + "']");
+            if (source) button.append(source.content.cloneNode(true));
+            return button;
+        }
         var list = root.querySelector("[data-skill-chosen-list]");
         var empty = root.querySelector("[data-skill-empty]");
         var inputs = root.querySelector("[data-skill-inputs]");
         var modal = root.querySelector("[data-skill-modal]");
         var search = root.querySelector("[data-skill-search]");
         var results = root.querySelector("[data-skill-results]");
-        var draft = root.querySelector("[data-skill-draft]");
         var panel = root.querySelector(".skill-modal__panel");
+        var title = modal.querySelector("#skill-modal-title");
 
         function taken() {
             var ids = {};
             state.chosen.forEach(function (item) {
-                ids[item.id] = true;
+                if (item.id !== state.editId) ids[item.id] = true;
             });
             return ids;
+        }
+
+        function skillById(id) {
+            var skill = null;
+            catalog.forEach(function (item) {
+                if (item.id === id) skill = item;
+            });
+            return skill;
         }
 
         function renderChosen() {
@@ -64,6 +96,50 @@
             inputs.replaceChildren();
             empty.hidden = state.chosen.length > 0;
             state.chosen.forEach(function (item) {
+                if (root.dataset.layout === "table") {
+                    var tr = document.createElement("tr");
+                    var nameCell = document.createElement("td");
+                    nameCell.textContent = item.title;
+                    var categoryCell = document.createElement("td");
+                    categoryCell.textContent = item.category;
+                    var levelCell = document.createElement("td");
+                    levelCell.append(staticDots(item.level));
+                    var actions = document.createElement("td");
+                    actions.className = "me-sheet__actions";
+                    var edit = iconButton("ویرایش", "pencil");
+                    edit.addEventListener("click", function () {
+                        state.editId = item.id;
+                        state.category = item.category || "";
+                        state.draftId = item.id;
+                        state.draftLevel = item.level;
+                        state.query = "";
+                        state.notice = "";
+                        search.value = "";
+                        open();
+                    });
+                    var remove = iconButton("حذف", "trash");
+                    remove.addEventListener("click", function () {
+                        var drop = function () {
+                            state.chosen = state.chosen.filter(function (rowItem) {
+                                return rowItem.id !== item.id;
+                            });
+                            renderChosen();
+                            if (state.open) renderResults();
+                            persist();
+                        };
+                        if (window.honarAskRemove) window.honarAskRemove(drop, "حذف مهارت", "این مهارت حذف شود؟");
+                        else drop();
+                    });
+                    actions.append(edit, remove);
+                    tr.append(nameCell, categoryCell, levelCell, actions);
+                    list.append(tr);
+                    var input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = "skill-" + item.id;
+                    input.value = String(item.level);
+                    inputs.append(input);
+                    return;
+                }
                 var row = document.createElement("div");
                 row.className = "skill-picker__row";
                 var text = document.createElement("div");
@@ -105,53 +181,78 @@
             var used = taken();
             return catalog.filter(function (skill) {
                 if (used[skill.id]) return false;
-                if (!query) return true;
-                return fold(skill.title).indexOf(query) !== -1 || fold(skill.category).indexOf(query) !== -1;
+                if (query) return fold(skill.title).indexOf(query) !== -1 || fold(skill.category).indexOf(query) !== -1;
+                return skill.category === state.category;
             });
         }
 
-        function renderDraft() {
-            draft.replaceChildren();
-            var skill = null;
-            catalog.forEach(function (item) {
-                if (item.id === state.draftId) skill = item;
+        function categories() {
+            var seen = {};
+            var names = [];
+            catalog.forEach(function (skill) {
+                if (taken()[skill.id] || !skill.category || seen[skill.category]) return;
+                seen[skill.category] = true;
+                names.push(skill.category);
             });
-            if (!skill || taken()[skill.id]) {
-                state.draftId = null;
-                state.draftLevel = 0;
-                var hint = document.createElement("p");
-                hint.className = "skill-modal__hint";
-                hint.textContent = state.notice || "از فهرست یک مهارت را انتخاب کنید.";
-                draft.append(hint);
-                return;
-            }
-            var box = document.createElement("div");
-            box.className = "skill-modal__pick";
-            var label = document.createElement("p");
-            label.className = "skill-modal__pick-name";
-            label.textContent = skill.title;
-            var caption = document.createElement("p");
-            caption.className = "skill-modal__pick-meta";
-            caption.textContent = skill.category + " · سطح را از ۱ تا ۵ انتخاب کنید";
-            var rate = dots(state.draftLevel, function (level) {
+            return names;
+        }
+
+        function skillRow(skill, label) {
+            var selected = state.draftId === skill.id;
+            var row = document.createElement("div");
+            row.className = "role-pick__row skill-pick__row" + (selected ? " is-on" : "");
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "role-pick__item";
+            button.textContent = label;
+            button.addEventListener("click", function () {
+                if (!mobileQuery.matches) return;
+                if (state.draftId === skill.id) {
+                    state.draftId = null;
+                    if (!state.editId) state.draftLevel = 0;
+                } else {
+                    state.draftId = skill.id;
+                    if (!state.editId) state.draftLevel = 0;
+                }
+                renderResults();
+            });
+            var tools = document.createElement("span");
+            tools.className = "skill-pick__tools";
+            tools.append(dots(selected ? state.draftLevel : 0, function (level) {
+                state.draftId = skill.id;
                 state.draftLevel = level;
-                renderDraft();
-            });
+                renderResults();
+            }));
             var add = document.createElement("button");
             add.type = "button";
-            add.className = "skill-modal__confirm";
-            add.textContent = "افزودن";
-            add.disabled = !state.draftLevel;
-            add.addEventListener("click", addDraft);
-            box.append(label, caption, rate, add);
-            draft.append(box);
+            add.className = "role-pick__add";
+            add.textContent = state.editId ? "ذخیره" : "افزودن";
+            add.disabled = !selected || !state.draftLevel;
+            add.addEventListener("click", function () {
+                state.draftId = skill.id;
+                if (!state.draftLevel) return;
+                if (state.editId) saveEdit();
+                else addDraft();
+            });
+            tools.append(add);
+            row.append(button, tools);
+            return row;
+        }
+
+        function saveEdit() {
+            var skill = skillById(state.draftId);
+            if (!skill || !state.draftLevel || taken()[skill.id]) return;
+            state.chosen = state.chosen.map(function (item) {
+                if (item.id !== state.editId) return item;
+                return { id: skill.id, title: skill.title, category: skill.category, level: state.draftLevel };
+            });
+            close();
+            renderChosen();
+            persist();
         }
 
         function addDraft() {
-            var skill = null;
-            catalog.forEach(function (item) {
-                if (item.id === state.draftId) skill = item;
-            });
+            var skill = skillById(state.draftId);
             if (!skill || !state.draftLevel || taken()[skill.id]) return;
             state.chosen.push({
                 id: skill.id,
@@ -164,55 +265,86 @@
             state.notice = "اضافه شد. مهارت بعدی را انتخاب کنید.";
             renderChosen();
             renderResults();
+            if (persist()) return;
             search.focus();
         }
 
+        function persist() {
+            var form = root.closest("form");
+            if (!form || form.getAttribute("data-autosave") !== "1") return false;
+            window.setTimeout(function () { form.requestSubmit(); }, 0);
+            return true;
+        }
+
+        function emptyNote(text) {
+            var note = document.createElement("p");
+            note.className = "skill-modal__empty";
+            note.textContent = text;
+            results.append(note);
+        }
+
         function renderResults() {
-            var rows = filtered();
+            var query = fold(state.query);
             var scroll = results.scrollTop;
             results.replaceChildren();
-            if (!rows.length) {
-                var note = document.createElement("p");
-                note.className = "skill-modal__empty";
-                note.textContent = state.query.trim() ? "مهارتی پیدا نشد." : "مهارت دیگری برای افزودن نمانده.";
-                results.append(note);
-                renderDraft();
+            if (!query && !state.category) {
+                var names = categories();
+                if (!names.length) emptyNote("مهارت دیگری برای افزودن نمانده.");
+                names.forEach(function (name) {
+                    var button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "role-pick__category";
+                    var text = document.createElement("span");
+                    text.textContent = name;
+                    button.append(text);
+                    var source = root.querySelector("template[data-icon='chevron']");
+                    if (source) button.append(source.content.cloneNode(true));
+                    button.addEventListener("click", function () {
+                        state.category = name;
+                        state.draftId = null;
+                        if (!state.editId) state.draftLevel = 0;
+                        renderResults();
+                    });
+                    results.append(button);
+                });
                 results.scrollTop = scroll;
                 return;
             }
-            var last = "";
-            rows.forEach(function (skill) {
-                if (skill.category !== last) {
-                    last = skill.category;
-                    var heading = document.createElement("p");
-                    heading.className = "skill-modal__group";
-                    heading.textContent = skill.category;
-                    results.append(heading);
-                }
-                var button = document.createElement("button");
-                button.type = "button";
-                button.className = "skill-modal__skill" + (state.draftId === skill.id ? " is-on" : "");
-                var name = document.createElement("span");
-                name.className = "skill-modal__skill-name";
-                name.textContent = skill.title;
-                button.append(name);
-                button.addEventListener("click", function () {
-                    if (state.draftId !== skill.id) {
-                        state.draftId = skill.id;
-                        state.draftLevel = 0;
-                        state.notice = "";
-                    }
+            if (!query && state.category) {
+                var back = document.createElement("button");
+                back.type = "button";
+                back.className = "role-pick__back";
+                back.textContent = state.category;
+                var source = root.querySelector("template[data-icon='chevron']");
+                if (source) back.prepend(source.content.cloneNode(true));
+                back.addEventListener("click", function () {
+                    state.category = "";
+                    state.draftId = null;
+                    if (!state.editId) state.draftLevel = 0;
                     renderResults();
                 });
-                results.append(button);
+                results.append(back);
+            }
+            var rows = filtered();
+            if (!rows.length) emptyNote(query ? "مهارتی پیدا نشد." : "مهارت دیگری در این دسته نمانده.");
+            rows.forEach(function (skill) {
+                var label = query && skill.category ? skill.category + " | " + skill.title : skill.title;
+                results.append(skillRow(skill, label));
             });
-            renderDraft();
             results.scrollTop = scroll;
         }
 
         function open() {
             if (modal.parentElement !== document.body) document.body.append(modal);
             state.open = true;
+            if (!state.editId) {
+                state.category = "";
+                state.draftId = null;
+                state.draftLevel = 0;
+                state.query = "";
+                search.value = "";
+            }
+            if (title) title.textContent = state.editId ? "ویرایش مهارت" : "انتخاب مهارت";
             modal.hidden = false;
             document.body.classList.add("skill-modal-open");
             renderResults();
@@ -221,6 +353,8 @@
 
         function close() {
             state.open = false;
+            state.editId = null;
+            state.category = "";
             state.draftId = null;
             state.draftLevel = 0;
             state.notice = "";
@@ -228,17 +362,30 @@
             document.body.classList.remove("skill-modal-open");
         }
 
-        root.querySelector("[data-skill-open]").addEventListener("click", open);
+        root.querySelector("[data-skill-open]").addEventListener("click", function () {
+            state.editId = null;
+            state.category = "";
+            state.draftId = null;
+            state.draftLevel = 0;
+            state.query = "";
+            state.notice = "";
+            search.value = "";
+            open();
+        });
         root.querySelector("[data-skill-close]").addEventListener("click", close);
         root.querySelector("[data-skill-backdrop]").addEventListener("click", close);
         search.addEventListener("input", function () {
             state.query = search.value;
+            state.draftId = null;
+            if (!state.editId) state.draftLevel = 0;
             renderResults();
         });
         panel.addEventListener("keydown", function (event) {
             if (event.key !== "Enter") return;
             event.preventDefault();
-            if (state.draftLevel) addDraft();
+            if (!state.draftLevel) return;
+            if (state.editId) saveEdit();
+            else addDraft();
         });
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape" && state.open) close();

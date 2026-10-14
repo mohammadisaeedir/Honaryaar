@@ -387,11 +387,13 @@ class TicketForm(forms.Form):
 class DirectUploadWidget(forms.Widget):
     template_name = "widgets/direct_upload.html"
 
-    def __init__(self, purpose, kind="photo", fixed=True, target="", attrs=None):
+    def __init__(self, purpose, kind="photo", fixed=True, target="", initial_url="", remove_name="", attrs=None):
         self.purpose = purpose
         self.kind = kind
         self.fixed = fixed
         self.target = target
+        self.initial_url = initial_url
+        self.remove_name = remove_name
         super().__init__(attrs)
 
     def get_context(self, name, value, attrs):
@@ -399,12 +401,17 @@ class DirectUploadWidget(forms.Widget):
         from django.urls import reverse
 
         context = super().get_context(name, value, attrs)
+        remove_name = self.remove_name
+        if remove_name and "-" in name:
+            remove_name = name.rsplit("-", 1)[0] + "-" + remove_name
         context["widget"].update(
             {
                 "purpose": self.purpose,
                 "kind": self.kind,
                 "fixed": self.fixed,
                 "target": self.target or "",
+                "initial_url": self.initial_url or "",
+                "remove_name": remove_name,
                 "start_url": reverse("media-upload-start"),
                 "max_photo": settings.MEDIA_MAX_IMAGE_BYTES,
                 "max_video": settings.MEDIA_MAX_VIDEO_BYTES,

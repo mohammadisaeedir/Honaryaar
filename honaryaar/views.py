@@ -20,7 +20,7 @@ def _join_cta(user):
         return {"href": reverse("login"), "label": "ورود/ثبت نام"}
     if professional_profile_ready(user):
         return {"href": reverse("opportunities"), "label": "مشاهده فراخوان‌های باز"}
-    return {"href": f"{reverse('me-profile')}?edit=1", "label": "ساخت پروفایل حرفه‌ای"}
+    return {"href": f"{reverse('me-profile')}?edit=hero", "label": "ساخت پروفایل حرفه‌ای"}
 
 
 def home(request):
