@@ -326,6 +326,7 @@ def artist_list(request):
             "invite_board": _invite_board(request.user),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked": _bookmarked_slugs(request.user),
+            "intro_stats": catalog.listing_stats()["artists"],
         },
     )
 
@@ -568,6 +569,7 @@ def opportunity_list(request):
             "quick": catalog.filter_chips(request, catalog.opportunity_quick(facets)),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
+            "intro_stats": catalog.listing_stats()["opportunities"],
         },
     )
 
@@ -641,6 +643,7 @@ def project_list(request):
             "quick": catalog.filter_chips(request, [("تهران", {"city": "تهران"})]),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked_projects": _bookmarked_slugs(request.user, "project"),
+            "intro_stats": catalog.listing_stats()["projects"],
         },
     )
 

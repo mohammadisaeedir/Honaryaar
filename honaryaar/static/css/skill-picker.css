@@ -507,6 +507,105 @@ body.skill-modal-open {
     }
 }
 
+.skill-picker .me-sheet {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 12px;
+}
+
+.skill-picker .me-sheet th,
+.skill-picker .me-sheet td {
+    padding: 8px 0;
+    border-bottom: 1px solid #e7e4e2;
+    color: #17131a;
+    text-align: right;
+    font-size: 13px;
+    line-height: 20px;
+    vertical-align: middle;
+}
+
+.skill-picker .me-sheet th {
+    color: #6f6863;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.skill-picker .me-sheet__actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: left;
+}
+
+.skill-picker .me-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 999px;
+    background: #f6f4ef;
+    color: #485462;
+    cursor: pointer;
+}
+
+.skill-picker .me-icon-btn.is-danger:hover { color: #ef3b2e; }
+
+.contact-editor {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.contact-editor[hidden] { display: none; }
+
+.contact-editor__field { display: block; }
+
+.contact-editor .field,
+.contact-editor .field-select {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border: 1px solid #e7e4e2;
+    border-radius: 12px;
+    background: #fff;
+    color: #17131a;
+}
+
+.contact-editor__public {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #17131a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.skill-picker .me-switch {
+    display: inline-flex;
+    align-items: center;
+    width: 36px;
+    height: 22px;
+    padding: 2px;
+    border: 0;
+    border-radius: 999px;
+    background: #d7d3cf;
+    cursor: pointer;
+}
+
+.skill-picker .me-switch span {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(23, 19, 26, 0.2);
+}
+
+.skill-picker .me-switch.is-on { background: #c13281; }
+
+.skill-picker .me-switch.is-on span { margin-inline-start: 14px; }
+
 @media (max-width: 640px) {
     .skill-picker__row {
         grid-template-columns: minmax(0, 1fr) auto;

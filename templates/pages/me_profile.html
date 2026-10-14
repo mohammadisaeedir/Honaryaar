@@ -255,6 +255,9 @@
                     <section class="me-card" id="contact">
                         <div class="me-card__head">
                             <h2>اطلاعات تماس</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'contacts'" aria-label="ویرایش اطلاعات تماس">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
                         </div>
                         <dl class="me-facts">
                             <div>
@@ -262,7 +265,18 @@
                                 <dd dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</dd>
                             </div>
                         </dl>
-                        <p class="me-note">راه‌های دیگر تماس به‌زودی به این بخش اضافه می‌شود.</p>
+                        {% if contacts %}
+                            <ul class="me-list">
+                                {% for item in contacts %}
+                                    <li>
+                                        <p class="me-role">{{ item.label }}</p>
+                                        <span dir="ltr">{% if item.kind == "phone" or item.kind == "whatsapp" %}{{ item.value|phone_fa }}{% elif item.kind == "telegram" or item.kind == "instagram" %}@{{ item.value }}{% else %}{{ item.value }}{% endif %}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز راه تماسی ثبت نشده.</p>
+                        {% endif %}
                     </section>
                 </div>
             </div>
@@ -509,6 +523,27 @@
                 </div>
             </div>
 
+            <div class="report-modal" x-show="sheet === 'contacts'" x-cloak @keydown.escape.window="sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="contacts-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="contacts-sheet-title">اطلاعات تماس</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    {% if contact_error %}<p class="me-error">{{ contact_error }}</p>{% endif %}
+                    <form method="post" action="{% url 'me-profile' %}" data-autosave="1">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="contacts">
+                        {% include "components/contact_picker.html" with quiet=1 %}
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="contact">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="report-modal" x-show="sheet === 'skills'" x-cloak @keydown.escape.window="if (!$event.target.closest('.skill-modal')) sheet = ''">
                 <div class="report-modal__backdrop" @click="sheet = ''"></div>
                 <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="skills-sheet-title" @click.stop>
@@ -742,7 +777,7 @@
             }, true);
             document.addEventListener("change", function (event) {
                 var form = event.target.closest("form[data-autosave]");
-                if (!form || form.querySelector("[data-skill-picker], [data-role-picker], #credit-rows")) return;
+                if (!form || form.querySelector("[data-skill-picker], [data-role-picker], [data-contact-picker], #credit-rows")) return;
                 window.setTimeout(function () { form.requestSubmit(); }, 0);
             }, true);
         </script>

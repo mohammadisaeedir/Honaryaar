@@ -185,10 +185,10 @@ class AccountIdentityTests(TestCase):
         staff = User.objects.create_superuser("staff4", "staff4@example.com", "secret")
         self.client.force_login(staff)
         admin_page = self.client.get(reverse("admin:honaryaar_profile_change", args=[user.profile.pk]))
-        self.assertContains(admin_page, "data-skill-picker")
-        self.assertContains(admin_page, "js/skill-picker.js")
+        self.assertContains(admin_page, "data-inline-modal")
+        self.assertContains(admin_page, "skill_links-TOTAL_FORMS")
         self.assertContains(admin_page, skill.title)
-        self.assertNotContains(admin_page, "profileskill-TOTAL_FORMS")
+        self.assertNotContains(admin_page, "data-skill-picker")
         admin_data = {
             "user": user.pk,
             "name": "",
@@ -198,13 +198,20 @@ class AccountIdentityTests(TestCase):
             "birth_date": "",
             "gender": "",
             "status": user.profile.status,
-            "skill_picker": "1",
-            f"skill-{skill.pk}": "4",
             "list_upload": "",
             "banner_upload": "",
+            "skill_links-TOTAL_FORMS": "1",
+            "skill_links-INITIAL_FORMS": "1",
+            "skill_links-MIN_NUM_FORMS": "0",
+            "skill_links-MAX_NUM_FORMS": "1000",
+            "skill_links-0-id": str(stored.pk),
+            "skill_links-0-skill": str(skill.pk),
+            "skill_links-0-level": "4",
             "_save": "Save",
         }
         for prefix in re.findall(r'name="([A-Za-z0-9_]+)-TOTAL_FORMS"', admin_page.content.decode()):
+            if prefix == "skill_links":
+                continue
             admin_data[f"{prefix}-TOTAL_FORMS"] = "0"
             admin_data[f"{prefix}-INITIAL_FORMS"] = "0"
             admin_data[f"{prefix}-MIN_NUM_FORMS"] = "0"
@@ -270,10 +277,11 @@ class AccountIdentityTests(TestCase):
         staff = User.objects.create_superuser("staff5", "staff5@example.com", "secret")
         self.client.force_login(staff)
         admin_page = self.client.get(reverse("admin:honaryaar_profile_change", args=[user.profile.pk]))
-        self.assertContains(admin_page, "data-role-picker")
-        self.assertContains(admin_page, "js/role-picker.js")
+        self.assertContains(admin_page, "data-inline-modal")
+        self.assertContains(admin_page, "profile_roles-TOTAL_FORMS")
         self.assertContains(admin_page, second.title)
-        self.assertNotContains(admin_page, "profilerole-TOTAL_FORMS")
+        self.assertNotContains(admin_page, "data-role-picker")
+        links = list(ProfileRole.objects.filter(profile=user.profile).order_by("pk"))
         admin_data = {
             "user": user.pk,
             "name": "",
@@ -283,14 +291,24 @@ class AccountIdentityTests(TestCase):
             "birth_date": "",
             "gender": "",
             "status": user.profile.status,
-            "role_picker": "1",
-            f"role-{first.pk}": "1",
-            "role_primary": str(first.pk),
             "list_upload": "",
             "banner_upload": "",
+            "profile_roles-TOTAL_FORMS": str(len(links)),
+            "profile_roles-INITIAL_FORMS": str(len(links)),
+            "profile_roles-MIN_NUM_FORMS": "0",
+            "profile_roles-MAX_NUM_FORMS": "1000",
             "_save": "Save",
         }
+        for index, link in enumerate(links):
+            admin_data[f"profile_roles-{index}-id"] = str(link.pk)
+            admin_data[f"profile_roles-{index}-role"] = str(link.role_id)
+            if link.role_id == first.pk:
+                admin_data[f"profile_roles-{index}-is_primary"] = "on"
+            else:
+                admin_data[f"profile_roles-{index}-DELETE"] = "on"
         for prefix in re.findall(r'name="([A-Za-z0-9_]+)-TOTAL_FORMS"', admin_page.content.decode()):
+            if prefix == "profile_roles":
+                continue
             admin_data[f"{prefix}-TOTAL_FORMS"] = "0"
             admin_data[f"{prefix}-INITIAL_FORMS"] = "0"
             admin_data[f"{prefix}-MIN_NUM_FORMS"] = "0"
@@ -418,6 +436,61 @@ class AccountIdentityTests(TestCase):
         self.assertContains(response, user.username)
         self.assertContains(response, "09124445566")
         self.assertNotEqual(user.username, "09124445566")
+
+    def test_profile_contacts_save_from_the_table_and_list_as_a_count(self):
+        from honaryaar.models import ProfileContact
+
+        user = user_for_phone("09120001122")
+        self.client.force_login(user)
+        page = self.client.get(reverse("me-profile") + "?edit=contacts")
+        self.assertContains(page, "data-contact-picker")
+        self.assertContains(page, "data-sheet-add=\"contact\"")
+        self.assertContains(page, "هنوز راه تماسی ثبت نشده.")
+        saved = self.client.post(
+            reverse("me-profile"),
+            {
+                "section": "contacts",
+                "contact_picker": "1",
+                "contact-0-kind": "telegram",
+                "contact-0-value": "https://t.me/honar_name",
+                "contact-0-public": "1",
+            },
+        )
+        self.assertRedirects(saved, reverse("me-profile") + "?edit=contacts")
+        stored = ProfileContact.objects.get(profile=user.profile)
+        self.assertEqual(stored.kind, "telegram")
+        self.assertEqual(stored.value, "honar_name")
+        self.assertTrue(stored.is_public)
+        listed = self.client.get(reverse("me-profile"))
+        self.assertContains(listed, "تلگرام")
+        self.assertContains(listed, "@honar_name")
+        self.assertNotContains(listed, "به‌زودی")
+        rejected = self.client.post(
+            reverse("me-profile"),
+            {
+                "section": "contacts",
+                "contact_picker": "1",
+                "contact-0-kind": "email",
+                "contact-0-value": "not-an-email",
+                "contact-0-public": "1",
+            },
+        )
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "مقدار این راه تماس درست نیست.")
+        self.assertTrue(ProfileContact.objects.filter(profile=user.profile, kind="telegram").exists())
+
+        staff = User.objects.create_superuser("staff-contacts", "staff-contacts@example.com", "secret")
+        self.client.force_login(staff)
+        listing = self.client.get(reverse("admin:honaryaar_profile_changelist"))
+        self.assertContains(listing, ">1</a>")
+        self.assertNotContains(listing, "Contacts (")
+        change = self.client.get(reverse("admin:honaryaar_profile_change", args=[user.profile.pk]))
+        self.assertContains(change, "contacts-TOTAL_FORMS")
+        self.assertContains(change, "data-inline-modal")
+        self.assertContains(change, "profile_roles-TOTAL_FORMS")
+        self.assertContains(change, "skill_links-TOTAL_FORMS")
+        self.assertNotContains(change, "data-contact-picker")
+        self.assertContains(change, "honar_name")
 
 
 class AdminCsvExportTests(TestCase):

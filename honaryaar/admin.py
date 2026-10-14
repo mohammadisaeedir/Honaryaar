@@ -21,15 +21,7 @@ from unfold.admin import TabularInline
 from honaryaar.admin_export import csv_response
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
-from honaryaar.auth_views import (
-    _roles_from_picker,
-    _save_roles,
-    _save_skills,
-    _skill_levels_from_post,
-    role_picker_payload,
-    skill_picker_payload,
-)
-from honaryaar.forms import ArtPickerWidget, DirectUploadWidget, GenderPickerWidget, RolePickerWidget, SkillPickerWidget
+from honaryaar.forms import ArtPickerWidget, DirectUploadWidget, GenderPickerWidget
 from honaryaar.labels import status_chip_html
 from honaryaar.media_files import MediaError
 from honaryaar.media_service import (
@@ -211,6 +203,28 @@ class ProfileSkillAdmin(ModelAdmin):
 class CreditInline(TabularInline):
     model = Credit
     extra = 0
+
+
+class ProfileRoleInline(TabularInline):
+    model = ProfileRole
+    extra = 0
+    verbose_name = "Role"
+    verbose_name_plural = "Roles"
+
+
+class ProfileSkillInline(TabularInline):
+    model = ProfileSkill
+    extra = 0
+    verbose_name = "Skill"
+    verbose_name_plural = "Skills"
+
+
+class ProfileContactInline(TabularInline):
+    model = ProfileContact
+    extra = 0
+    fields = ("kind", "value", "is_public")
+    verbose_name = "Contact"
+    verbose_name_plural = "Contacts"
 
 
 class ProfileMediaForm(forms.ModelForm):
@@ -483,8 +497,6 @@ class ProfileAdminForm(forms.ModelForm):
     )
     list_upload = forms.CharField(required=False, label="Main image")
     banner_upload = forms.CharField(required=False, label="Banner")
-    skills = forms.CharField(required=False, label="Skills", widget=SkillPickerWidget())
-    role_picker = forms.CharField(required=False, label="Roles", widget=RolePickerWidget())
 
     class Meta:
         model = Profile
@@ -521,25 +533,6 @@ class ProfileAdminForm(forms.ModelForm):
             ),
             remove_name="banner_remove",
         )
-        if self.is_bound and "skill_picker" in self.data:
-            skill_levels = _skill_levels_from_post(self.data)
-        elif self.instance.pk:
-            skill_levels = {link.skill_id: link.level for link in self.instance.skill_links.all()}
-        else:
-            skill_levels = {}
-        catalog, chosen = skill_picker_payload(skill_levels)
-        self.fields["skills"].widget.catalog = catalog
-        self.fields["skills"].widget.chosen = chosen
-        if self.is_bound and "role_picker" in self.data:
-            picked_roles, primary_role = _roles_from_picker(self.data)
-            role_state = {role.pk: primary_role is not None and role.pk == primary_role.pk for role in picked_roles}
-        elif self.instance.pk:
-            role_state = {link.role_id: link.is_primary for link in self.instance.profile_roles.all()}
-        else:
-            role_state = {}
-        role_catalog, role_chosen = role_picker_payload(role_state)
-        self.fields["role_picker"].widget.catalog = role_catalog
-        self.fields["role_picker"].widget.chosen = role_chosen
 
     def save(self, commit=True):
         obj = super().save(commit=False)
@@ -581,19 +574,14 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
     )
     list_filter = ("status", "gender", "city")
     search_fields = ("name", "user__first_name", "user__last_name", "user__username", "mobile", "city__title", "slug")
-    readonly_fields = ("first_name", "last_name", "slug", "contacts_link")
+    readonly_fields = ("first_name", "last_name", "slug")
     list_select_related = ("user", "city")
     autocomplete_fields = ("user", "city")
-    inlines = (CreditInline, ProfileMediaInline)
+    inlines = (CreditInline, ProfileRoleInline, ProfileSkillInline, ProfileContactInline, ProfileMediaInline)
     Media = AdminMedia
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        if request.POST.get("skill_picker") == "1":
-            _save_skills(obj, _skill_levels_from_post(request.POST))
-        if request.POST.get("role_picker") == "1":
-            picked_roles, primary_role = _roles_from_picker(request.POST)
-            _save_roles(obj, picked_roles, primary_role)
         try:
             finalize_admin_media(request.user, obj)
         except MediaError as exc:
@@ -681,7 +669,7 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
         return _count_link(
             "admin:honaryaar_profilecontact_changelist",
             {"profile__id__exact": profile.pk},
-            f"Contacts ({count})",
+            count,
         )
 
 

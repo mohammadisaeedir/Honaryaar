@@ -1620,6 +1620,14 @@ body.pf-logout-open { overflow: hidden; }
     line-height: 22px;
 }
 
+.me-skills a {
+    color: #6f6863;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+    text-decoration: none;
+}
+
 .me-role {
     margin: 0;
     font-size: 14px;

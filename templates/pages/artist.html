@@ -103,8 +103,6 @@
                         </dl>
                     </section>
 
-                    {% include "components/artist/contact_card.html" %}
-
                     <section class="me-card" id="roles">
                         <div class="me-card__head"><h2>نقش‌ها</h2></div>
                         {% if artist.roles %}
@@ -200,6 +198,7 @@
                             <p class="me-note">هنوز مهارتی ثبت نشده.</p>
                         {% endif %}
                     </section>
+                    {% include "components/artist/contact_card.html" %}
                 </div>
             </div>
         </div>

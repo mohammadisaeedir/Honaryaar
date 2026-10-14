@@ -1,0 +1,44 @@
+<div class="skill-picker" data-contact-picker data-layout="table">
+    {{ contact_kinds|json_script:"contact-kinds" }}
+    {{ contact_chosen|json_script:"contact-chosen" }}
+    <input type="hidden" name="{{ widget_name|default:'contact_picker' }}" value="1">
+    <div data-contact-inputs></div>
+    <template data-icon="pencil">{% include "components/icon.html" with name="pencil" size="16" %}</template>
+    <template data-icon="trash">{% include "components/icon.html" with name="trash" size="16" %}</template>
+    <table class="me-sheet">
+        <thead>
+            <tr>
+                <th>نوع</th>
+                <th>مقدار</th>
+                <th>عمومی</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody data-contact-list></tbody>
+    </table>
+    <p class="skill-picker__empty" data-contact-empty {% if contact_chosen %}hidden{% endif %}>هنوز راه تماسی اضافه نشده.</p>
+    <div class="contact-editor" data-contact-editor hidden>
+        <label class="contact-editor__field">
+            <span class="field-label">نوع</span>
+            <select class="field field-select" data-contact-kind></select>
+        </label>
+        <label class="contact-editor__field">
+            <span class="field-label">مقدار</span>
+            <input class="field" type="text" data-contact-value dir="ltr" maxlength="200" autocomplete="off">
+        </label>
+        <div class="contact-editor__public">
+            <button class="me-switch is-on" type="button" data-contact-public aria-pressed="true" aria-label="عمومی"><span></span></button>
+            <span>عمومی</span>
+        </div>
+        <p class="me-error" data-contact-error hidden></p>
+        <div class="me-form__actions">
+            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-contact-save>ذخیره</button>
+        </div>
+    </div>
+    <button type="button" data-contact-open aria-label="افزودن راه تماس" hidden></button>
+    {% if not quiet %}
+        <div class="me-form__actions">
+            <button class="skill-picker__open" type="button" data-contact-add>افزودن</button>
+        </div>
+    {% endif %}
+</div>

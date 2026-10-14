@@ -1307,6 +1307,56 @@ body.is-search-open .site-header {
     margin-top: 16px;
 }
 
+.catalog-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+}
+
+.catalog-intro__copy {
+    min-width: 0;
+}
+
+.intro-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    flex: 0 1 560px;
+    min-width: 280px;
+    border: 1px solid #ececee;
+    border-radius: 16px;
+    background: #fff;
+    padding: 12px 0;
+}
+
+.intro-stats div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 12px;
+    text-align: center;
+}
+
+.intro-stats div + div {
+    border-inline-start: 1px solid #ececee;
+}
+
+.intro-stats strong {
+    color: #17131a;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 28px;
+}
+
+.intro-stats span {
+    color: #8a847e;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
 .catalog-intro p {
     display: none;
 }
@@ -2186,6 +2236,17 @@ body.is-filter-open {
 }
 
 @media (max-width: 767.98px) {
+    .catalog-intro {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .intro-stats {
+        flex-basis: auto;
+        min-width: 0;
+        width: 100%;
+    }
+
     .list-tools {
         display: block;
         margin-inline: -16px;
@@ -3165,6 +3226,18 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 
 .catalog-more {
     height: 1px;
+    overflow-anchor: none;
+}
+
+.catalog-grid,
+.artist-grid {
+    overflow-anchor: none;
+}
+
+.catalog-skel {
+    overflow: hidden;
+    pointer-events: none;
+    overflow-anchor: none;
 }
 
 .artist-grid {

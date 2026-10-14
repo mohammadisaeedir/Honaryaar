@@ -1,0 +1,8 @@
+<aside class="intro-stats" aria-label="آمار">
+    {% for stat in intro_stats %}
+        <div>
+            <strong dir="ltr">+{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+        </div>
+    {% endfor %}
+</aside>

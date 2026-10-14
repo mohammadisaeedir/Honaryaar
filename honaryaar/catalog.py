@@ -1187,7 +1187,7 @@ def _opportunity_dict(item):
     }
 
 
-@_cached
+@_cached(daily=True)
 def _artists():
     from honaryaar.models import Profile
 
@@ -1223,6 +1223,36 @@ def _opportunities():
 
     items = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related("project", "project__art_category", "role", "city", "art_category")
     return [_opportunity_dict(item) for item in items]
+
+
+def _approx(value):
+    return persian_number(round_up_five(value))
+
+
+@_cached(daily=True)
+def listing_stats():
+    """Rounded counts for the three public lists. Stored in the daily snapshot."""
+    projects = _projects()
+    opportunities = _opportunities()
+    artists = _artists()
+    open_calls = [item for item in opportunities if item["status"] == "open"]
+    return {
+        "projects": [
+            {"value": _approx(sum(item["status_code"] == "casting" for item in projects)), "label": "پروژه‌های در حال جذب"},
+            {"value": _approx(len({item["city"] for item in projects if item["city"]})), "label": "تعداد شهر"},
+            {"value": _approx(len(open_calls)), "label": "تعداد فراخوان همکاری"},
+        ],
+        "artists": [
+            {"value": _approx(len(artists)), "label": "هنرمند فعال"},
+            {"value": _approx(len({slug for item in artists for slug in item["role_slugs"]})), "label": "نقش تخصصی"},
+            {"value": _approx(len({skill["label"] for item in artists for skill in item["skills"]})), "label": "مهارت"},
+        ],
+        "opportunities": [
+            {"value": _approx(len(open_calls)), "label": "فراخوان فعال"},
+            {"value": _approx(len({item["role"] for item in open_calls if item["role"]})), "label": "نقش فعال"},
+            {"value": _approx(len(opportunities)), "label": "کل فراخوان‌ها"},
+        ],
+    }
 
 
 def project_by_slug(slug):

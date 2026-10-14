@@ -9,8 +9,11 @@
 {% block content %}
     <div class="catalog-layout" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
     <div class="catalog-intro">
-    <h1 class="text-[28px] font-semibold leading-9">پروژه‌ها</h1>
-    <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">هر پروژه می‌تواند چند نقش باز داشته باشد.</p>
+        <div class="catalog-intro__copy">
+            <h1 class="text-[28px] font-semibold leading-9">پروژه‌ها</h1>
+            <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">هر پروژه می‌تواند چند نقش باز داشته باشد.</p>
+        </div>
+        {% include "components/catalog/intro_stats.html" %}
     </div>
     <div class="catalog-body">
     {% include "components/filters/drawer.html" with action=request.path %}

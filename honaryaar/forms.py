@@ -96,6 +96,26 @@ class RolePickerWidget(forms.Widget):
         return context
 
 
+class ContactPickerWidget(forms.Widget):
+    template_name = "components/contact_picker.html"
+
+    class Media:
+        css = {"all": ("css/skill-picker.css",)}
+        js = ("js/contact-picker.js",)
+
+    def __init__(self, kinds=None, chosen=None, attrs=None):
+        super().__init__(attrs)
+        self.kinds = kinds or []
+        self.chosen = chosen or []
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["contact_kinds"] = self.kinds
+        context["contact_chosen"] = self.chosen
+        context["widget_name"] = name
+        return context
+
+
 class ReasonPickerWidget(forms.RadioSelect):
     template_name = "widgets/reason_picker.html"
 

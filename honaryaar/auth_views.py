@@ -217,7 +217,114 @@ def _save_roles(profile, roles, primary):
             link.save(update_fields=["is_primary"])
 
 
-PROFILE_SECTIONS = {"hero", "about", "skills", "roles", "credits", "media"}
+CONTACT_KIND_LABELS = {
+    "phone": "تلفن",
+    "whatsapp": "واتساپ",
+    "telegram": "تلگرام",
+    "instagram": "اینستاگرام",
+    "email": "ایمیل",
+    "website": "وب‌سایت",
+    "youtube": "یوتیوب",
+    "aparat": "آپارات",
+    "twitch": "توییچ",
+    "spotify": "اسپاتیفای",
+    "soundcloud": "ساندکلاد",
+    "imdb": "IMDb",
+    "linkedin": "لینکدین",
+    "pinterest": "پینترست",
+}
+
+
+def contact_kind_catalog():
+    return [{"id": key, "title": title} for key, title in CONTACT_KIND_LABELS.items()]
+
+
+def contact_choice(kind, value, is_public):
+    return {
+        "kind": kind,
+        "label": CONTACT_KIND_LABELS.get(kind, kind),
+        "value": value,
+        "public": bool(is_public),
+    }
+
+
+def posted_contacts(post):
+    """Return normalized rows, the rows to show again, and a Persian error."""
+    from django.core.exceptions import ValidationError
+
+    from honaryaar.contacts import normalize_contact
+
+    found = {}
+    for key in post:
+        parts = key.split("-")
+        if len(parts) != 3 or parts[0] != "contact" or not parts[1].isdigit():
+            continue
+        if parts[2] not in {"kind", "value", "public"}:
+            continue
+        found.setdefault(int(parts[1]), {})[parts[2]] = post.get(key) or ""
+    raw = []
+    rows = []
+    seen = set()
+    error = ""
+    for index in sorted(found):
+        item = found[index]
+        kind = (item.get("kind") or "").strip()
+        value = (item.get("value") or "").strip()
+        if not kind and not value:
+            continue
+        if kind not in CONTACT_KIND_LABELS:
+            error = error or "نوع راه تماس شناخته نشد."
+            continue
+        raw.append(contact_choice(kind, value, item.get("public") == "1"))
+        if error:
+            continue
+        try:
+            cleaned = normalize_contact(kind, value)
+        except ValidationError:
+            error = "مقدار این راه تماس درست نیست."
+            continue
+        identity = (kind, cleaned)
+        if identity in seen:
+            error = "این راه تماس تکرار شده است."
+            continue
+        seen.add(identity)
+        rows.append({"kind": kind, "value": cleaned, "is_public": item.get("public") == "1"})
+    return rows, raw, error
+
+
+def _save_contacts(profile, rows):
+    from honaryaar.models import ProfileContact
+
+    current = {(item.kind, item.value): item for item in profile.contacts.all()}
+    keep = set()
+    for position, row in enumerate(rows):
+        identity = (row["kind"], row["value"])
+        keep.add(identity)
+        item = current.get(identity)
+        if item is None:
+            ProfileContact.objects.create(
+                profile=profile,
+                kind=row["kind"],
+                value=row["value"],
+                is_public=row["is_public"],
+                position=position,
+            )
+            continue
+        updates = []
+        if item.is_public != row["is_public"]:
+            item.is_public = row["is_public"]
+            updates.append("is_public")
+        if item.position != position:
+            item.position = position
+            updates.append("position")
+        if updates:
+            item.save(update_fields=updates)
+    for identity, item in current.items():
+        if identity not in keep:
+            item.delete()
+
+
+PROFILE_SECTIONS = {"hero", "about", "skills", "roles", "credits", "media", "contacts"}
 
 
 def _apply_profile_media_action(profile, user, post):
@@ -393,6 +500,12 @@ def me_profile(request):
                 kind=current.kind,
             )
     media_error = ""
+    contact_error = ""
+    saved_contacts = None
+    profile_contacts = [contact_choice(item.kind, item.value, item.is_public) for item in profile.contacts.all()]
+    contact_rows = profile_contacts
+    if posted is not None and (legacy or posted_section == "contacts") and posted.get("contact_picker") == "1":
+        saved_contacts, contact_rows, contact_error = posted_contacts(posted)
     edit_section = _requested_section(request.GET.get("edit", ""))
     use_role_picker = posted is not None and posted.get("role_picker") == "1"
     if posted is not None and not legacy and posted_section not in PROFILE_SECTIONS:
@@ -442,6 +555,8 @@ def me_profile(request):
             valid = use_role_picker or role_formset.is_valid()
         elif section == "credits":
             valid = credit_formset.is_valid()
+        elif section == "contacts":
+            valid = not contact_error
         else:
             valid = media_formset.is_valid()
         if valid:
@@ -493,6 +608,8 @@ def me_profile(request):
                     if section in {"", "media"}:
                         error_section = "media"
                         _save_media(profile, media_formset.cleaned_data, request.user)
+                    if section in {"", "contacts"} and saved_contacts is not None:
+                        _save_contacts(profile, saved_contacts)
             except MediaError as exc:
                 media_error = exc.message
                 messages.error(request, exc.message)
@@ -532,7 +649,7 @@ def me_profile(request):
             "profile": profile,
             "editing": False,
             "open_info": edit_section == "hero",
-            "open_sheet": edit_section if edit_section in {"about", "skills", "roles", "credits", "media"} else "",
+            "open_sheet": edit_section if edit_section in {"about", "skills", "roles", "credits", "media", "contacts"} else "",
             "edit_section": edit_section,
             "role_links": role_links,
             "role_catalog": role_catalog,
@@ -546,6 +663,10 @@ def me_profile(request):
             "credit_formset": credit_formset,
             "media_formset": media_formset,
             "media_error": media_error,
+            "contact_error": contact_error,
+            "contacts": profile_contacts,
+            "contact_kinds": contact_kind_catalog(),
+            "contact_chosen": contact_rows,
             "media_max_items": settings.MEDIA_PROFILE_MAX_ITEMS,
             "media_max_photo": settings.MEDIA_MAX_IMAGE_BYTES,
             "media_max_video": settings.MEDIA_MAX_VIDEO_BYTES,
