@@ -597,7 +597,7 @@ OPPORTUNITIES = [
         "count": 3,
         "paid": False,
         "featured": True,
-        "pay_note": "خوانش بدون دستمزد. اگر به اجرا برسد، شرایط دوباره گفته می‌شود.",
+        "pay_note": "خوانش داوطلبانه. اگر به اجرا برسد، شرایط دوباره گفته می‌شود.",
         "start_date": date(2026, 11, 22),
         "end_date": date(2026, 12, 21),
         "deadline": date(2026, 12, 1),
@@ -742,6 +742,14 @@ def format_jalali_numeric(value):
         return ""
     year, month, day = _to_jalali(value.year, value.month, value.day)
     return f"{year:04d}/{month:02d}/{day:02d}".translate(_PERSIAN_DIGITS)
+
+
+def format_day_month(value):
+    if not value:
+        return ""
+    _year, jalali_month, jalali_day = _to_jalali(value.year, value.month, value.day)
+    text = f"{jalali_day} {_JALALI_MONTHS[jalali_month - 1]}"
+    return text.translate(_PERSIAN_DIGITS)
 
 
 def format_date(value):
@@ -1037,6 +1045,8 @@ def _artist_dict(profile):
         "slug": profile.slug,
         "name": profile.public_name(),
         "legal_name": legal_name or profile.public_name(),
+        "first_name": user.first_name,
+        "last_name": user.last_name,
         "role": primary.slug if primary else "",
         "role_slugs": [link.role.slug for link in ordered],
         "role_titles": [link.role.title for link in ordered],
@@ -1073,12 +1083,13 @@ def _artist_dict(profile):
                 "kind": MEDIA_LABEL.get(item.kind, item.kind),
                 "kind_code": item.kind,
                 "label": item.label,
-                "key": item.file.name if item.is_public and item.file else "",
-                "thumb_key": item.thumbnail.name if item.is_public and item.thumbnail else "",
-                "public": bool(item.is_public),
+                "key": item.file.name,
+                "thumb_key": item.thumbnail.name,
+                "public": True,
                 "public_acl": bool(item.public_acl),
             }
             for item in profile.media_items.all()
+            if item.is_public and item.file
         ],
     }
 
@@ -1241,6 +1252,36 @@ def opportunity_by_slug(slug):
 
 def opportunities_for_project(slug):
     return [item for item in _opportunities() if item["project"] == slug]
+
+
+def related_opportunities(opportunity, limit=5):
+    others = [item for item in _opportunities() if item["slug"] != opportunity["slug"]]
+
+    def score(item):
+        points = 0
+        if item["project"] == opportunity["project"]:
+            points += 4
+        if item["role"] and item["role"] == opportunity["role"]:
+            points += 3
+        if item["art"] and item["art"] == opportunity["art"]:
+            points += 2
+        if item["production"] and item["production"] == opportunity["production"]:
+            points += 2
+        if item["city"] and item["city"] == opportunity["city"]:
+            points += 1
+        return points
+
+    ranked = sorted(others, key=lambda item: (-score(item), -item["pk"]))
+    picked = [item for item in ranked if score(item)][:limit]
+    if len(picked) < limit:
+        chosen = {item["slug"] for item in picked}
+        for item in ranked:
+            if item["slug"] in chosen:
+                continue
+            picked.append(item)
+            if len(picked) == limit:
+                break
+    return picked
 
 
 def _artist_text(artist):
@@ -1487,17 +1528,10 @@ def opportunity_quick(facets):
     genders = {item["value"] for item in facets["genders"]}
     paid = {value for value, _label in facets["paid"]}
     allowed = {"city": cities, "role": roles, "production": productions, "gender": genders, "paid": paid}
-    art_chips = [(item["title"], {"art": item["slug"]}) for item in facets["arts"]]
     chips = []
-    placed_arts = False
     for label, params in OPPORTUNITY_QUICK:
         if all(str(value) in allowed.get(key, ()) for key, value in params.items()):
             chips.append((label, params))
-            if not placed_arts and set(params) == {"city"}:
-                chips.extend(art_chips)
-                placed_arts = True
-    if not placed_arts:
-        chips = art_chips + chips
     return chips
 
 
@@ -1551,16 +1585,13 @@ ARTIST_QUICK = [
 
 
 def artist_quick():
-    art_chips = [(item["title"], {"art": item["slug"]}) for item in artist_arts()]
-    chips = []
-    placed = False
-    for label, params in ARTIST_QUICK:
-        chips.append((label, params))
-        if not placed and set(params) == {"city"}:
-            chips.extend(art_chips)
-            placed = True
-    if not placed:
-        chips = art_chips + chips
+    return list(ARTIST_QUICK)
+
+
+def art_quick(request, items):
+    chips = filter_chips(request, [(item["title"], {"art": item["slug"]}) for item in items])
+    for chip, item in zip(chips, items):
+        chip["slug"] = item["slug"]
     return chips
 
 

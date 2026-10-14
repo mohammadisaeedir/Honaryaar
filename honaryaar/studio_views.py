@@ -16,7 +16,7 @@ from honaryaar.catalog import format_jalali_numeric
 from honaryaar.forms import ApplyForm, InviteForm, OpportunityForm, ProjectCreateForm
 from honaryaar.labels import APPLICATION_LABELS
 from honaryaar.media_files import MediaError
-from honaryaar.media_service import attach_project_image, parse_upload_id
+from honaryaar.media_service import attach_project_image, parse_upload_id, project_image_url
 from honaryaar.models import (
     Application,
     ApplicationStatus,
@@ -128,6 +128,7 @@ def my_projects(request):
                 "title": project.title,
                 "meta": meta,
                 "tone": project.status,
+                "image": project_image_url(project),
             }
         )
     return _list(
@@ -388,6 +389,9 @@ def apply(request, slug):
         messages.success(request, "درخواست شما ثبت شد.")
     else:
         messages.success(request, "این درخواست را قبلاً فرستاده‌اید.")
+    nxt = request.POST.get("next", "")
+    if nxt.startswith("/") and not nxt.startswith("//"):
+        return redirect(nxt)
     return redirect("opportunity", slug=slug)
 
 
@@ -418,6 +422,7 @@ def my_applications(request):
             "title": item.opportunity.title,
             "meta": item.opportunity.project.title,
             "tone": item.status,
+            "image": project_image_url(item.opportunity.project),
         }
         for item in applications
     ]
@@ -469,6 +474,7 @@ def my_invites(request):
             "title": item.opportunity.title,
             "meta": item.opportunity.project.title,
             "tone": item.status,
+            "image": project_image_url(item.opportunity.project),
         }
         for item in invites
     ]
@@ -534,6 +540,7 @@ def my_collaborations(request):
             "title": item.opportunity.title,
             "meta": item.opportunity.project.title,
             "tone": item.status,
+            "image": project_image_url(item.opportunity.project),
         }
         for item in matches
     ]

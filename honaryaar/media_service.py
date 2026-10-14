@@ -72,6 +72,20 @@ def presign_seconds():
     return max(60, min(int(settings.MEDIA_PRESIGN_SECONDS), 3600))
 
 
+def project_image_url(project):
+    from honaryaar.models import PUBLIC_PROJECT_STATUSES
+
+    thumb = getattr(project, "image_thumb", None)
+    image = getattr(project, "image", None)
+    key = thumb.name if thumb else image.name if image else ""
+    return url_for_key(
+        key,
+        public=project.status in PUBLIC_PROJECT_STATUSES,
+        public_acl=bool(getattr(project, "image_public_acl", False)),
+        kind="photo",
+    )
+
+
 def url_for_key(key, *, public=False, public_acl=False, kind="photo"):
     if not key or not key_in_scope(key):
         return ""
@@ -463,21 +477,27 @@ def save_profile_media(profile, rows, user):
         if not label:
             continue
         if upload_id:
+            if "is_public" in row and row.get("is_public") is not None:
+                public = bool(row.get("is_public"))
+            elif current is not None:
+                public = bool(current.is_public)
+            else:
+                public = True
             published = publish_upload(
                 user,
                 upload_id,
                 purpose="profile",
                 target_id=profile.id,
-                public=True,
+                public=public,
             )
             if current is None:
-                current = ProfileMedia(profile=profile, is_public=True)
+                current = ProfileMedia(profile=profile, is_public=public)
             else:
                 enqueue_delete(current.file.name, current.thumbnail.name)
             current.kind = published.kind
             current.label = label
             current.position = position
-            current.is_public = True
+            current.is_public = public
             current.public_acl = published.public_acl
             assign_file(current, "file", published.key)
             assign_file(current, "thumbnail", published.thumb_key)

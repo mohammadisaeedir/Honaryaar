@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Prefetch
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -128,9 +129,12 @@ def bookmark_rows(user):
             meta = " · ".join(link.role.title for link in target.profile_roles.all())
             url = reverse("artist", args=[target.slug])
         elif kind == "project":
+            from honaryaar.media_service import project_image_url
+
             title = target.title
             meta = "پروژه"
             url = reverse("project", args=[target.slug])
+            image = project_image_url(target)
         else:
             title = target.title
             meta = "فراخوان"
@@ -143,6 +147,7 @@ def bookmark_rows(user):
                 "url": url,
                 "slug": target.slug,
                 "kind": kind,
+                "image": image if kind == "project" else "",
                 "remove": reverse("bookmark-remove", args=[bookmark.pk]),
             }
         )
@@ -222,6 +227,39 @@ def _age_filter(request, bounds):
     )
 
 
+def _invite_board(user):
+    from honaryaar.accounts import current_profile
+    from honaryaar.media_service import project_image_url
+    from honaryaar.models import Opportunity, Project
+
+    profile = current_profile(user)
+    if profile is None:
+        return []
+    projects = Project.objects.filter(owner=profile).prefetch_related(
+        Prefetch(
+            "opportunities",
+            queryset=Opportunity.objects.select_related("role").annotate(invite_count=Count("invites")),
+        )
+    )
+    return [
+        {
+            "slug": project.slug,
+            "title": project.title,
+            "image": project_image_url(project),
+            "opportunities": [
+                {
+                    "id": item.pk,
+                    "title": item.title,
+                    "role": item.role.title,
+                    "invites": item.invite_count,
+                }
+                for item in project.opportunities.all()
+            ],
+        }
+        for project in projects
+    ]
+
+
 def artist_list(request):
     age_from, age_to, age = _age_filter(request, catalog.artist_age_bounds())
     saved = [row for row in bookmark_rows(request.user) if row["kind"] == "profile"]
@@ -266,12 +304,6 @@ def artist_list(request):
         [
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
         catalog.choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], filters["gender"]),
-        catalog.choice_group(
-            "art",
-            "هنر",
-            [(item["slug"], item["title"]) for item in catalog.artist_arts()],
-            filters["art"],
-        ),
         catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in catalog.roles()], filters["role"]),
         ]
     )
@@ -289,11 +321,107 @@ def artist_list(request):
             "filters": filters,
             "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
             "filters_on": any(group.get("selected") for group in groups),
+            "art_quick": catalog.art_quick(request, catalog.artist_arts()),
             "quick": catalog.filter_chips(request, catalog.artist_quick()),
+            "invite_board": _invite_board(request.user),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked": _bookmarked_slugs(request.user),
         },
     )
+
+
+@login_required
+@require_POST
+def artist_invite(request):
+    from honaryaar.accounts import current_profile
+    from honaryaar.models import Invite, Opportunity, Profile
+
+    owner = current_profile(request.user)
+    artist = get_object_or_404(Profile, slug=request.POST.get("artist", ""))
+    if owner is None or artist.pk == owner.pk:
+        return JsonResponse({"error": "این دعوت ممکن نیست."}, status=403)
+    opportunity = get_object_or_404(
+        Opportunity.objects.filter(project__owner=owner),
+        pk=request.POST.get("opportunity") or 0,
+    )
+    _invite, created = Invite.objects.get_or_create(profile=artist, opportunity=opportunity)
+    return JsonResponse(
+        {
+            "ok": True,
+            "created": created,
+            "invites": opportunity.invites.count(),
+        }
+    )
+
+
+def _bookmark_many(request, model):
+    from django.contrib.contenttypes.models import ContentType
+
+    from honaryaar.models import Bookmark
+
+    slugs = [slug for slug in request.POST.getlist("slug") if slug][:50]
+    content_type = ContentType.objects.get_for_model(model)
+    saved = []
+    for obj in model.objects.filter(slug__in=slugs):
+        _bookmark, created = Bookmark.objects.get_or_create(
+            user=request.user,
+            content_type=content_type,
+            object_id=obj.pk,
+        )
+        if created:
+            saved.append(obj.slug)
+    count = len(saved)
+    shown = str(count).translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+    if count:
+        message = f"{shown} مورد نشان شد."
+    elif slugs:
+        message = "این موردها قبلاً نشان شده بودند."
+    else:
+        message = "موردی انتخاب نشده."
+    return JsonResponse({"ok": True, "saved": saved, "message": message})
+
+
+@login_required
+@require_POST
+def bookmark_artists(request):
+    from honaryaar.models import Profile
+
+    return _bookmark_many(request, Profile)
+
+
+@login_required
+@require_POST
+def bookmark_opportunities(request):
+    from honaryaar.models import Opportunity
+
+    return _bookmark_many(request, Opportunity)
+
+
+@login_required
+@require_POST
+def apply_many(request):
+    from honaryaar.accounts import ensure_profile
+    from honaryaar.models import Application, Opportunity, OpportunityStatus
+
+    profile = ensure_profile(request.user)
+    if profile is None:
+        return JsonResponse({"error": "برای درخواست، پروفایل لازم است."}, status=403)
+    slugs = [slug for slug in request.POST.getlist("slug") if slug][:50]
+    created = 0
+    for opportunity in Opportunity.objects.filter(slug__in=slugs, status=OpportunityStatus.OPEN).select_related("project"):
+        if opportunity.project.owner_id == profile.pk:
+            continue
+        _row, was_created = Application.objects.get_or_create(profile=profile, opportunity=opportunity)
+        if was_created:
+            created += 1
+    shown = str(created).translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+    if created:
+        message = f"{shown} درخواست ثبت شد."
+    elif slugs:
+        message = "درخواستی برای ثبت نماند."
+    else:
+        message = "موردی انتخاب نشده."
+    return JsonResponse({"ok": True, "created": created, "message": message})
 
 
 @login_required
@@ -332,17 +460,21 @@ def bookmark_remove(request, pk):
 
 
 def artist_detail(request, slug):
+    from honaryaar.accounts import current_profile
     from honaryaar.models import Profile
 
     artist = catalog.artist_by_slug(slug)
     if artist is None:
         raise Http404
+    viewer = current_profile(request.user)
     return render(
         request,
         "pages/artist.html",
         {
             "artist": artist,
             "saved": _is_bookmarked(request.user, Profile, slug),
+            "can_invite": viewer is None or viewer.slug != slug,
+            "invite_board": _invite_board(request.user),
             "report_title": artist["name"],
             "report_action": reverse("report-artist", args=[slug]),
             **report_page_state(request, f"artist:{slug}"),
@@ -413,7 +545,6 @@ def opportunity_list(request):
     groups = [
         catalog.choice_group("status", "وضعیت", [("open", "باز"), ("closed", "بسته")], filters["status"]),
         catalog.choice_group("city", "شهر", [(city, city) for city in facets["cities"]], filters["city"]),
-        catalog.choice_group("art", "هنر", [(item["slug"], item["title"]) for item in facets["arts"]], filters["art"]),
         catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in facets["roles"]], filters["role"]),
         catalog.choice_group("production", "نوع", [(item, item) for item in facets["productions"]], filters["production"]),
         catalog.choice_group("gender", "جنسیت", [(item["value"], item["label"]) for item in facets["genders"]], filters["gender"]),
@@ -433,6 +564,7 @@ def opportunity_list(request):
             "filters": filters,
             "groups": [group for group in groups if group["kind"] in {"text", "age"} or group["options"]],
             "filters_on": any(group.get("selected") for group in groups),
+            "art_quick": catalog.art_quick(request, facets["arts"]),
             "quick": catalog.filter_chips(request, catalog.opportunity_quick(facets)),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
@@ -464,6 +596,8 @@ def opportunity_detail(request, slug):
             "application": application,
             "is_owner": is_owner,
             "saved": _is_bookmarked(request.user, Opportunity, slug),
+            "related": catalog.related_opportunities(opportunity),
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
             "report_title": opportunity["title"],
             "report_action": reverse("report-opportunity", args=[slug]),
             **report_page_state(request, f"opportunity:{slug}"),
@@ -490,12 +624,6 @@ def project_list(request):
     groups = [
         catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
-        catalog.choice_group(
-            "art",
-            "هنر",
-            [(item["slug"], item["title"]) for item in catalog.arts()],
-            filters["art"],
-        ),
     ]
     return render(
         request,
@@ -509,11 +637,8 @@ def project_list(request):
             "filters": filters,
             "groups": groups,
             "filters_on": any(group.get("selected") for group in groups),
-            "quick": catalog.filter_chips(
-                request,
-                [("تهران", {"city": "تهران"})]
-                + [(item["title"], {"art": item["slug"]}) for item in catalog.arts()],
-            ),
+            "art_quick": catalog.art_quick(request, catalog.arts()),
+            "quick": catalog.filter_chips(request, [("تهران", {"city": "تهران"})]),
             "clear_href": catalog.clear_filters_href(request),
             "bookmarked_projects": _bookmarked_slugs(request.user, "project"),
         },

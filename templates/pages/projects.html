@@ -16,6 +16,7 @@
     {% include "components/filters/drawer.html" with action=request.path %}
     <div class="catalog-main">
     <div class="list-tools">
+        {% include "components/filters/art_quick.html" %}
         <form class="page-search" method="get" action="{% url 'projects' %}" role="search" autocomplete="off" data-remember-search data-search-scope="projects" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}

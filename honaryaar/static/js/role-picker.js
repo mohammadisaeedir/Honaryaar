@@ -78,14 +78,25 @@
                     var tr = document.createElement("tr");
                     var nameCell = document.createElement("td");
                     nameCell.textContent = item.title;
-                    if (item.primary) {
-                        var badge = document.createElement("span");
-                        badge.className = "me-badge";
-                        badge.textContent = "اصلی";
-                        nameCell.append(badge);
-                    }
                     var categoryCell = document.createElement("td");
                     categoryCell.textContent = item.category;
+                    var primaryCell = document.createElement("td");
+                    primaryCell.className = "me-sheet__primary";
+                    var radio = document.createElement("input");
+                    radio.type = "radio";
+                    radio.className = "me-radio";
+                    radio.name = "role-main";
+                    radio.checked = !!item.primary;
+                    radio.setAttribute("aria-label", "اصلی");
+                    radio.addEventListener("click", function () {
+                        if (item.primary) return;
+                        state.chosen.forEach(function (rowItem) {
+                            rowItem.primary = rowItem.id === item.id;
+                        });
+                        renderChosen();
+                        persist();
+                    });
+                    primaryCell.append(radio);
                     var actions = document.createElement("td");
                     actions.className = "me-sheet__actions";
                     var edit = iconButton("ویرایش", "pencil");
@@ -113,7 +124,7 @@
                         else drop();
                     });
                     actions.append(edit, remove);
-                    tr.append(nameCell, categoryCell, actions);
+                    tr.append(nameCell, categoryCell, primaryCell, actions);
                     list.append(tr);
                     var input = document.createElement("input");
                     input.type = "hidden";

@@ -1,16 +1,17 @@
 {% load honaryaar_ui %}
 <div class="role-card__top">
-    <span class="role-card__type">{% include "components/icon.html" with name="clapperboard" size="18" %}{{ opportunity.production }}</span>
-    <span class="role-card__marks">
-        {% status_chip opportunity.status %}
-        {% if opportunity.featured %}
-            <span class="role-card__badge">{% include "components/icon.html" with name="star" size="14" %}ویژه</span>
-        {% endif %}
+    <span class="role-card__type">
+        {% include "components/art_icon.html" with slug=opportunity.art size="18" %}
+        {% if opportunity.art %}<span>{{ opportunity.art|art_title }}</span>{% endif %}
+        {% if opportunity.production %}<span class="role-card__sub">{{ opportunity.production }}</span>{% endif %}
     </span>
 </div>
-<h3 class="role-card__project">{{ project.title }}</h3>
-<p class="role-card__part">{{ opportunity.title }}</p>
+<div class="role-card__identity">
+    {% media_src project.image_thumb_key project.image_public project.image_public_acl project.image_key "photo" as project_image %}
+    {% include "components/project/thumb.html" with src=project_image %}
+    <div>
+        <h3 class="role-card__project">{{ opportunity.title }}</h3>
+        <p class="role-card__part">{{ project.title }}</p>
+    </div>
+</div>
 {% include "components/casting/fact_chips.html" with card=1 %}
-{% if opportunity.deadline %}
-    <p class="role-card__deadline">{% include "components/icon.html" with name="clock" size="16" %}مهلت {{ opportunity.deadline }}</p>
-{% endif %}

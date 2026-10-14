@@ -1,19 +1,47 @@
 {% load honaryaar_ui %}
 <article class="artist-tile">
+    <label class="pick-box"><input type="checkbox" data-pick value="{{ artist.slug }}" aria-label="انتخاب"></label>
     <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
         {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
         {% include "components/media/card_photo.html" with src=face %}
     </a>
     <div class="artist-tile__body">
-        <h3 class="artist-tile__name"><a href="{% url 'artist' artist.slug %}">{{ artist.legal_name }}</a></h3>
-        {% status_chip artist.status %}
+        <h3 class="artist-tile__name">
+            <a href="{% url 'artist' artist.slug %}">
+                {% if artist.first_name or artist.last_name %}
+                    {% if artist.first_name %}<span>{{ artist.first_name }}</span>{% endif %}
+                    {% if artist.last_name %}<span class="artist-tile__family">{{ artist.last_name }}</span>{% endif %}
+                {% else %}
+                    {{ artist.legal_name }}
+                {% endif %}
+            </a>
+        </h3>
         {% if artist.role_titles %}
             <ul class="artist-tile__roles">
-                {% for title in artist.role_titles %}
-                    <li>{{ title }}</li>
-                {% endfor %}
+                <li>{{ artist.role_titles.0 }}</li>
+                {% if artist.role_titles|length > 1 %}
+                    <li class="artist-tile__more">+{{ artist.role_titles|length|add:"-1" }}</li>
+                {% endif %}
             </ul>
         {% endif %}
-        {% include "components/card_mark.html" with kind="profile" slug=artist.slug title=artist.legal_name marks=bookmarked %}
+        <div class="artist-tile__foot">
+            {% if artist.city %}
+                <p class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ artist.city }}</span></p>
+            {% else %}
+                <span></span>
+            {% endif %}
+            <div class="artist-tile__marks">
+                {% if request.user.is_authenticated %}
+                    <button class="card-mark__btn" type="button" data-invite-open data-invite-slug="{{ artist.slug }}" data-invite-name="{{ artist.legal_name }}" data-invite-roles="{{ artist.role_titles|join:'||' }}" aria-label="دعوت">
+                        {% include "components/icon.html" with name="mail" size="16" %}
+                    </button>
+                {% else %}
+                    <a class="card-mark__btn" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="دعوت">
+                        {% include "components/icon.html" with name="mail" size="16" %}
+                    </a>
+                {% endif %}
+                {% include "components/card_mark.html" with kind="profile" slug=artist.slug title=artist.legal_name marks=bookmarked %}
+            </div>
+        </div>
     </div>
 </article>

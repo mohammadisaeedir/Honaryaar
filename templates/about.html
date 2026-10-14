@@ -27,6 +27,10 @@
     h1, h2, p { margin: 0; }
     a { color: inherit; }
     .wrap { width: min(980px, calc(100% - 32px)); margin: 32px auto 64px; display: grid; gap: 16px; }
+    .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: #8a847e; font-size: 13px; font-weight: 600; line-height: 20px; }
+    .crumbs a { color: #6f6863; text-decoration: none; }
+    .crumbs [aria-current="page"] { color: var(--ink); }
+    .crumbs__sep { color: #c4beb8; }
     .box {
       background: #fff;
       border: 1px solid var(--line);
@@ -73,6 +77,11 @@
 </head>
 <body>
   <main class="wrap">
+    <nav class="crumbs" aria-label="مسیر">
+      <a href="{% url 'home' %}">خانه</a>
+      <span class="crumbs__sep" aria-hidden="true">/</span>
+      <span aria-current="page">درباره ما</span>
+    </nav>
     <section class="box">
       <img class="logo site-logo-light" src="{% static 'brand/logo-en-tag.svg' %}" alt="هنریار">
       <img class="logo site-logo-dark" src="{% static 'brand/logo-en-tag-dark.svg' %}" alt="" aria-hidden="true">

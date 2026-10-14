@@ -1,4 +1,4 @@
-{% load static %}
+{% load static honaryaar_ui %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -39,6 +39,7 @@
         <script type="application/json" id="server-toasts">[{% for message in messages %}"{{ message|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]</script>
     {% endif %}
     <main class="{% block main_class %}site-main mx-auto w-full min-w-0 px-4 pb-24 pt-8 md:pb-16{% endblock %}">
+        {% breadcrumbs %}
         {% block content %}{% endblock %}
     </main>
     {% block before_footer %}{% endblock %}

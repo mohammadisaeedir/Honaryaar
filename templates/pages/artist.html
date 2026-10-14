@@ -15,8 +15,7 @@
 {% block content %}
     {% include "components/skeleton/artist_page.html" %}
     <div class="live-pane">
-        <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'artists' %}">هنرمندان</a></p>
-        <div class="me-profile mt-4" dir="rtl">
+        <div class="me-profile" dir="rtl">
             <section class="me-hero">
                 {% media_src artist.banner_key 1 artist.banner_public_acl artist.banner_thumb_key "photo" as banner %}
                 {% media_src artist.list_image_key 1 artist.list_public_acl artist.list_thumb_key "photo" as face %}
@@ -175,6 +174,17 @@
                 </div>
 
                 <div class="me-stack">
+                    {% if can_invite %}
+                        <section class="me-card me-invite" id="invite">
+                            <div class="me-card__head"><h2>دعوت به پروژه</h2></div>
+                            <p>این هنرمند را به یکی از فرصت‌های پروژه خود دعوت کنید.</p>
+                            {% if request.user.is_authenticated %}
+                                <button class="me-invite__cta" type="button" data-invite-open data-invite-slug="{{ artist.slug }}" data-invite-name="{{ artist.legal_name }}" data-invite-roles="{{ artist.role_titles|join:'||' }}">دعوت</button>
+                            {% else %}
+                                <a class="me-invite__cta" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">دعوت</a>
+                            {% endif %}
+                        </section>
+                    {% endif %}
                     <section class="me-card" id="skills">
                         <div class="me-card__head"><h2>مهارت‌ها</h2></div>
                         {% if artist.skills %}
@@ -194,5 +204,9 @@
             </div>
         </div>
         {% include "components/report_modal.html" %}
+        {{ invite_board|json_script:"invite-board" }}
+        <div data-invite-root x-data="{ inviteOpen: false, inviteSlug: '', inviteName: '', inviteProject: '', inviteRoles: [], notice: '', board: [] }" x-init="board = JSON.parse(document.getElementById('invite-board').textContent)" x-effect="document.body.classList.toggle('is-invite-open', inviteOpen)" @keydown.escape.window="inviteOpen = false">
+            {% include "components/invite_modal.html" %}
+        </div>
     </div>
 {% endblock %}

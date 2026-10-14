@@ -1,0 +1,151 @@
+{% load static %}
+<div class="report-modal" x-show="inviteOpen" x-cloak @click.self="inviteOpen = false">
+    <div class="report-modal__backdrop" @click="inviteOpen = false"></div>
+    <div class="report-modal__panel report-modal__panel--wide" role="dialog" aria-modal="true" aria-labelledby="invite-title" @click.stop>
+        <div class="report-modal__top">
+            <h2 id="invite-title">دعوت <span x-text="inviteName"></span></h2>
+            <button class="report-modal__close" type="button" @click="inviteOpen = false" aria-label="بستن">
+                {% include "components/icon.html" with name="x" size="20" %}
+            </button>
+        </div>
+        <p class="invite-notice" x-show="notice" x-text="notice" x-cloak></p>
+        <template x-if="!board.length">
+            <div class="mt-4 text-center">
+                <h3 class="text-[18px] font-semibold leading-[26px]">پروژه‌ای ندارید</h3>
+                <p class="mt-2 text-sm leading-[22px] text-muted-foreground">برای دعوت هنرمند، اول یک پروژه بسازید.</p>
+                <a class="invite-add mt-4 inline-flex items-center" href="{% url 'me-project-new' %}">افزودن پروژه</a>
+            </div>
+        </template>
+        <template x-if="board.length && !inviteProject">
+            <div class="invite-projects">
+                <template x-for="project in board" :key="project.slug">
+                    <button type="button" @click="inviteProject = project.slug; notice = ''">
+                        <span class="invite-projects__main">
+                            <span class="project-thumb">
+                                <template x-if="project.image"><img :src="project.image" alt=""></template>
+                                <template x-if="!project.image"><img class="is-mark" src="{% static 'brand/mark-fallback.svg' %}" alt=""></template>
+                            </span>
+                            <span x-text="project.title"></span>
+                        </span>
+                        <span x-text="honarFa(project.opportunities.length)"></span>
+                    </button>
+                </template>
+            </div>
+        </template>
+        <template x-if="inviteProject && honarInviteProject(board, inviteProject)">
+            <div class="mt-4">
+                <div class="invite-roles" x-show="inviteRoles.length" x-cloak>
+                    <span class="invite-roles__main">
+                        {% include "components/icon.html" with name="star" size="14" %}
+                        <span x-text="inviteRoles[0]"></span>
+                    </span>
+                    <template x-for="role in inviteRoles.slice(1)" :key="role">
+                        <span class="invite-roles__chip" x-text="role"></span>
+                    </template>
+                </div>
+                <template x-if="!honarInviteProject(board, inviteProject).opportunities.length">
+                    <div class="mt-4 text-center">
+                        <h3 class="text-[18px] font-semibold leading-[26px]">فرصتی ثبت نشده</h3>
+                        <p class="mt-2 text-sm leading-[22px] text-muted-foreground">برای این پروژه هنوز فرصتی نیست.</p>
+                        <a class="invite-add mt-4 inline-flex items-center" :href="'/me/projects/' + inviteProject + '/'">افزودن فرصت</a>
+                    </div>
+                </template>
+                <template x-if="honarInviteProject(board, inviteProject).opportunities.length">
+                    <table class="invite-table">
+                        <thead>
+                            <tr>
+                                <th>نام فرصت</th>
+                                <th>نقش</th>
+                                <th>دعوت‌ها</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="row in honarInviteProject(board, inviteProject).opportunities" :key="row.id">
+                                <tr>
+                                    <td x-text="row.title"></td>
+                                    <td x-text="row.role"></td>
+                                    <td x-text="honarFa(row.invites)"></td>
+                                    <td>
+                                        <button class="invite-add" type="button" data-invite-send :data-opportunity="row.id" :class="row.added && 'is-done'" x-text="row.added ? 'دعوت شد' : 'افزودن'"></button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>
+{% if request.user.is_authenticated %}<form hidden>{% csrf_token %}</form>{% endif %}
+<script>
+    if (!window.__honarInvite) {
+        window.__honarInvite = true;
+        document.addEventListener("click", function (event) {
+            if (!window.Alpine) return;
+            var root = document.querySelector("[data-invite-root]");
+            if (!root) return;
+            var state = Alpine.$data(root);
+            var open = event.target.closest("[data-invite-open]");
+            if (open) {
+                state.inviteOpen = true;
+                state.inviteSlug = open.getAttribute("data-invite-slug");
+                state.inviteSlugs = [state.inviteSlug];
+                state.inviteName = open.getAttribute("data-invite-name");
+                state.inviteProject = "";
+                state.inviteRoles = (open.getAttribute("data-invite-roles") || "").split("||").filter(Boolean);
+                state.notice = "";
+                return;
+            }
+            var send = event.target.closest("[data-invite-send]");
+            if (!send) return;
+            var project = window.honarInviteProject(state.board, state.inviteProject);
+            if (!project) return;
+            var row = project.opportunities.find(function (item) { return String(item.id) === send.getAttribute("data-opportunity"); });
+            if (row && !row.added) window.honarSendInvite(state, row);
+        }, true);
+        window.honarFa = function (value) {
+            return String(value).replace(/\d/g, function (digit) { return "۰۱۲۳۴۵۶۷۸۹"[digit]; });
+        };
+        window.honarInviteProject = function (board, slug) {
+            return (board || []).find(function (item) { return item.slug === slug; }) || null;
+        };
+        window.honarSendInvite = async function (state, row) {
+            var token = document.querySelector("[name=csrfmiddlewaretoken]");
+            var slugs = state.inviteSlugs && state.inviteSlugs.length ? state.inviteSlugs : [state.inviteSlug];
+            var created = 0;
+            var failed = 0;
+            var invites = row.invites;
+            for (var index = 0; index < slugs.length; index += 1) {
+                var body = new FormData();
+                body.append("artist", slugs[index]);
+                body.append("opportunity", String(row.id));
+                var response = await fetch("{% url 'artist-invite' %}", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "X-CSRFToken": token ? token.value : "" },
+                    body: body
+                });
+                var payload = {};
+                try { payload = await response.json(); } catch (error) { payload = {}; }
+                if (!response.ok) {
+                    failed += 1;
+                    if (slugs.length === 1) state.notice = payload.error || "دعوت انجام نشد.";
+                    continue;
+                }
+                if (payload.created) created += 1;
+                invites = payload.invites;
+            }
+            row.invites = invites;
+            if (!created && failed && slugs.length === 1) return;
+            row.added = true;
+            if (slugs.length === 1) {
+                state.notice = created ? "دعوت فرستاده شد." : "این دعوت قبلاً فرستاده شده.";
+                return;
+            }
+            if (created) state.notice = window.honarFa(created) + " دعوت فرستاده شد.";
+            else state.notice = "دعوت تازه‌ای ثبت نشد.";
+        };
+    }
+</script>

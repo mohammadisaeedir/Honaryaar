@@ -1,0 +1,12 @@
+{% if crumbs %}
+<nav class="crumbs" aria-label="مسیر">
+    {% for item in crumbs %}
+        {% if not forloop.first %}<span class="crumbs__sep" aria-hidden="true">/</span>{% endif %}
+        {% if item.href %}
+            <a href="{{ item.href }}">{{ item.label }}</a>
+        {% else %}
+            <span aria-current="page">{{ item.label }}</span>
+        {% endif %}
+    {% endfor %}
+</nav>
+{% endif %}

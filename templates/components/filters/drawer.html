@@ -13,6 +13,7 @@
         <div class="filter-drawer__body">
             <input type="hidden" name="q" value="{{ filters.q }}">
             {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
+            {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
             {% for group in groups %}
                 <div class="filter-acc{% if group.plain %} is-plain{% endif %}" x-data="{ open: {% if group.plain %}true{% else %}{{ group.open|yesno:'true,false' }}{% endif %}, more: {{ group.more|yesno:'true,false' }}, q: '' }">
                     {% if group.plain %}
@@ -41,7 +42,7 @@
                                         <label>
                                             <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
                                             <span class="saved-list__name">{{ option.label }}</span>
-                                            <span class="saved-list__status">{% status_chip option.status_code %}</span>
+                                            {% if not hide_status %}<span class="saved-list__status">{% status_chip option.status_code %}</span>{% endif %}
                                         </label>
                                     </li>
                                 {% endfor %}
@@ -60,8 +61,7 @@
                             {% if group.find %}
                                 <input class="filter-find" type="search" placeholder="جستجو" x-model="q" @change.stop @keydown.enter.prevent autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                             {% endif %}
-                            <div class="filter-boxes{% if group.find %} is-find{% endif %}" x-data="{ all: {% if group.selected %}false{% else %}true{% endif %} }" @change="all = !$event.target.closest('.filter-boxes').querySelector('input:checked')">
-                                <button class="filter-box{% if not group.selected %} is-on{% endif %}" type="button" :class="{ 'is-on': all }" @click="all = true; var form = $el.closest('form'); $el.parentElement.querySelectorAll('input').forEach(function (input) { input.checked = false }); form.requestSubmit()">همه</button>
+                            <div class="filter-boxes{% if group.find %} is-find{% endif %}">
                                 {% for option in group.options %}
                                     <label class="filter-box{% if not group.find and forloop.counter > 6 %} is-extra{% endif %}" data-option {% if group.find %}x-show="!q || $el.textContent.includes(q)"{% elif forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
                                         <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>

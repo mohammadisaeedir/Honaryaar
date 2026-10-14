@@ -342,18 +342,33 @@ class MediaStorageTests(TestCase):
         item = self.profile.media_items.get()
         item.is_public = False
         item.save(update_fields=["is_public"])
-        listed = _artist_dict(self.profile)["media"][0]
-        self.assertEqual(listed["key"], "")
+        self.assertEqual(_artist_dict(self.profile)["media"], [])
         request = RequestFactory().get("/")
         request.user = AnonymousUser()
         gallery = render_to_string(
             "components/artist/media_gallery.html",
-            {"media": [_artist_dict(self.profile)["media"][0] | {"kind": "ویدیو"}]},
+            {"media": [{
+                "kind": "ویدیو",
+                "kind_code": "video",
+                "label": "پشت صحنه",
+                "key": "",
+                "thumb_key": "",
+                "public": False,
+                "public_acl": False,
+            }]},
             request=request,
         )
         self.assertIn("پشت صحنه", gallery)
         self.assertNotIn("<video", gallery)
-        public = dict(listed, key=item.file.name, public=True, public_acl=False, kind="ویدیو")
+        public = {
+            "kind": "ویدیو",
+            "kind_code": "video",
+            "label": "پشت صحنه",
+            "key": item.file.name,
+            "thumb_key": "",
+            "public": True,
+            "public_acl": False,
+        }
         shown = render_to_string("components/artist/media_gallery.html", {"media": [public]}, request=request)
         self.assertIn("<video", shown)
         self.assertIn("controls", shown)

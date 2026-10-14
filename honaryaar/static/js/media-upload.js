@@ -173,6 +173,13 @@
 
     function applyRemove(box) {
         var form = box.closest("form");
+        if (box.dataset.clearOnly === "1") {
+            clearUpload(box);
+            preview(box, box.dataset.fallbackKind || "photo", box.dataset.fallbackUrl || "");
+            var undo = box.querySelector("[data-remove-file]");
+            if (undo) undo.hidden = true;
+            return;
+        }
         var action = form && form.querySelector("[name='media_action']");
         if (action) {
             action.value = "delete";

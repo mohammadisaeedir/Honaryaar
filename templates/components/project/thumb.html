@@ -1,0 +1,8 @@
+{% load static %}
+<span class="project-thumb">
+    {% if src %}
+        <img src="{{ src }}" alt="">
+    {% else %}
+        <img class="is-mark" src="{% static 'brand/mark-fallback.svg' %}" alt="">
+    {% endif %}
+</span>

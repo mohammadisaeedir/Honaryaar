@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load honaryaar_ui %}
+{% load static honaryaar_ui %}
 
 {% block title %}{{ opportunity.title }} · {{ project.title }} · فراخوان‌ها · هنریار{% endblock %}
 {% block meta_description %}{{ opportunity.title }}، فراخوان {{ project.title }} در هنریار.{% endblock %}
@@ -9,9 +9,8 @@
 {% block content %}
     {% include "components/skeleton/opportunity_page.html" %}
     <div class="live-pane">
-    <p class="text-sm leading-[22px] text-muted-foreground"><a href="{% url 'opportunities' %}">فراخوان‌ها</a> / <a href="{% url 'project' project.slug %}">{{ project.title }}</a></p>
     <div class="opp-layout">
-    <div>
+    <div class="opp-main">
     <div class="pdp-title">
     <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ opportunity.title }}</h1>
         {% include "components/pdp_actions.html" with kind="opportunity" slug=opportunity.slug title=opportunity.title %}
@@ -36,7 +35,8 @@
     </section>
 
     </div>
-    <aside class="opp-apply rounded-box border border-border p-4">
+    <aside class="opp-side">
+    <div class="opp-apply rounded-box border border-border p-4">
         <h2 class="text-[18px] font-semibold leading-[26px]">ارسال درخواست</h2>
         {% if is_owner %}
             <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این پروژه برای شماست. درخواست‌ها را در صفحهٔ پروژه ببینید.</p>
@@ -70,8 +70,48 @@
                 </div>
             </form>
         {% endif %}
+    </div>
+    <section class="opp-project">
+        <div class="opp-project__top">
+            <h2>پروژه</h2>
+            {% status_chip project.status_code %}
+        </div>
+        {% media_src project.image_key project.image_public project.image_public_acl project.image_thumb_key "photo" as project_image %}
+        <div class="opp-project__media">
+            {% if project_image %}
+                <img src="{{ project_image }}" alt="{{ project.title }}">
+            {% else %}
+                <img class="is-mark" src="{% static 'brand/mark-fallback.svg' %}" alt="">
+            {% endif %}
+        </div>
+        <h3>{{ project.title }}</h3>
+        <p class="opp-project__meta">
+            {% if project.art %}<span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span>{% endif %}
+            {% if project.production %}<span>{{ project.production }}</span>{% endif %}
+            {% if project.city %}<span>{% include "components/icon.html" with name="map-pin" size="14" %}{{ project.city }}</span>{% endif %}
+            {% if project.start_date %}<span>شروع {{ project.start_date|jalali }}</span>{% endif %}
+        </p>
+        {% if project.summary %}<p class="opp-project__summary">{{ project.summary }}</p>{% endif %}
+        {% if project.lead or project.lead_role %}
+            <p class="opp-project__lead">{% if project.lead %}{{ project.lead }}{% endif %}{% if project.lead and project.lead_role %} · {% endif %}{% if project.lead_role %}{{ project.lead_role|role_title }}{% endif %}</p>
+        {% endif %}
+        <div class="opp-project__link">
+            {% url 'project' project.slug as project_url %}
+            {% include "components/button.html" with href=project_url label="مشاهده پروژه" variant="secondary" extra="w-full" %}
+        </div>
+    </section>
     </aside>
     </div>
+    {% if related %}
+        <section class="opp-related">
+            <h2>فرصت‌های مرتبط</h2>
+            <div class="opp-related__row">
+                {% for item in related %}
+                    {% include "components/casting/opportunity_card.html" with opportunity=item %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
     {% include "components/report_modal.html" %}
     </div>
 {% endblock %}

@@ -6,8 +6,8 @@ body.account-page {
 }
 
 body.account-page main.account-main {
-    width: 100%;
-    max-width: 1100px;
+    width: min(var(--page), 100%);
+    max-width: var(--page);
     margin: 0 auto;
     padding: 0 0 96px;
     box-sizing: border-box;
@@ -329,15 +329,19 @@ body.account-page main.account-main {
 }
 
 .pf-request {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     border: 1px solid #e7edf3;
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px;
     background: #fff;
     color: inherit;
     text-align: right;
     text-decoration: none;
 }
+
+.pf-request__copy { min-width: 0; flex: 1; }
 
 .pf-request h2,
 .pf-request h3 {
@@ -858,7 +862,7 @@ body.account-page main.account-main {
 }
 
 @media (min-width: 1025px) {
-    body.account-page main.account-main { padding: 24px 24px 48px; }
+    body.account-page main.account-main { padding: 24px var(--page-gutter) 48px; }
     .pf-topbar { display: none; }
     .pf-workspace {
         display: flex;
@@ -1400,6 +1404,51 @@ body.pf-logout-open { overflow: hidden; }
     text-align: left;
 }
 
+.me-sheet__actions form {
+    display: inline-flex;
+}
+
+.me-sheet__primary {
+    width: 1%;
+    text-align: center;
+}
+
+.me-radio {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #c13281;
+    cursor: pointer;
+}
+
+.me-switch {
+    display: inline-flex;
+    align-items: center;
+    width: 36px;
+    height: 22px;
+    padding: 2px;
+    border: 0;
+    border-radius: 999px;
+    background: #d7d3cf;
+    cursor: pointer;
+}
+
+.me-switch span {
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(23, 19, 26, 0.2);
+}
+
+.me-switch.is-on {
+    background: #c13281;
+}
+
+.me-switch.is-on span {
+    margin-inline-start: 14px;
+}
+
 .credit-editor {
     display: grid;
     gap: 12px;
@@ -1475,6 +1524,30 @@ body.pf-logout-open { overflow: hidden; }
 }
 
 .me-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.me-invite p {
+    margin: 0 0 14px;
+    color: #6f6863;
+    font-size: 13px;
+    line-height: 22px;
+}
+
+.me-invite__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    border: 0;
+    border-radius: 999px;
+    background: #c13281;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
 
 .me-about {
     margin: 0;

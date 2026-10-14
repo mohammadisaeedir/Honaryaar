@@ -46,6 +46,21 @@
             font-size: 14px;
             line-height: 24px;
         }
+        .crumbs {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin: 0 0 20px;
+            color: #8a847e;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 20px;
+        }
+        .crumbs a { color: #6f6863; text-decoration: none; }
+        .crumbs [aria-current="page"] { color: #17131a; }
+        .crumbs__sep { color: #c4beb8; }
         a.home {
             display: inline-flex;
             align-items: center;
@@ -64,6 +79,11 @@
 </head>
 <body>
     <main>
+        <nav class="crumbs" aria-label="مسیر">
+            <a href="{% url 'home' %}">خانه</a>
+            <span class="crumbs__sep" aria-hidden="true">/</span>
+            <span aria-current="page">{{ title }}</span>
+        </nav>
         <a href="{% url 'home' %}"><img src="{% static 'brand/logo-fa.svg' %}" alt="هنریار"></a>
         <p class="code">{{ code }}</p>
         <h1>{{ title }}</h1>

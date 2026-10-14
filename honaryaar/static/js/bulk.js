@@ -1,0 +1,153 @@
+(function () {
+    var bar = document.querySelector("[data-bulk-bar]");
+    var toggle = document.querySelector("[data-bulk-toggle]");
+    var layout = bar && bar.closest(".catalog-layout");
+    if (!bar || !toggle || !layout || layout.dataset.bulkReady) return;
+    layout.dataset.bulkReady = "1";
+    var all = bar.querySelector("[data-pick-all]");
+    var count = bar.querySelector("[data-pick-count]");
+
+    function fa(value) {
+        return String(value).replace(/\d/g, function (digit) { return "۰۱۲۳۴۵۶۷۸۹"[digit]; });
+    }
+
+    function boxes() {
+        return layout.querySelectorAll("[data-pick]");
+    }
+
+    function chosen() {
+        return Array.prototype.filter.call(boxes(), function (box) { return box.checked; });
+    }
+
+    var ignore = 0;
+
+    function paint() {
+        ignore += 1;
+        var picked = chosen();
+        var total = boxes().length;
+        var label = fa(picked.length) + " انتخاب";
+        if (count.textContent !== label) count.textContent = label;
+        all.checked = total > 0 && picked.length === total;
+        all.indeterminate = picked.length > 0 && picked.length < total;
+        bar.querySelectorAll("[data-bulk-go]").forEach(function (button) {
+            button.disabled = picked.length === 0;
+        });
+        queueMicrotask(function () { ignore -= 1; });
+    }
+
+    toggle.addEventListener("click", function () {
+        var on = layout.classList.toggle("is-picking");
+        toggle.classList.toggle("is-on", on);
+        toggle.setAttribute("aria-pressed", on ? "true" : "false");
+        bar.hidden = !on;
+        if (!on) {
+            boxes().forEach(function (box) { box.checked = false; });
+            all.checked = false;
+            all.indeterminate = false;
+        }
+        paint();
+    });
+
+    layout.addEventListener("change", function (event) {
+        if (event.target.matches("[data-pick]")) paint();
+    });
+
+    all.addEventListener("change", function () {
+        var on = all.checked;
+        boxes().forEach(function (box) { box.checked = on; });
+        paint();
+    });
+
+    new MutationObserver(function () {
+        if (ignore || bar.hidden) return;
+        paint();
+    }).observe(layout, { childList: true, subtree: true });
+
+    function csrf() {
+        var input = document.querySelector("[name=csrfmiddlewaretoken]");
+        if (input) return input.value;
+        var match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : "";
+    }
+
+    function slugs() {
+        return chosen().map(function (box) { return box.value; });
+    }
+
+    function signedIn() {
+        if (bar.dataset.auth === "1") return true;
+        window.location = bar.dataset.login;
+        return false;
+    }
+
+    function post(url, values) {
+        var body = new FormData();
+        values.forEach(function (slug) { body.append("slug", slug); });
+        return fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "X-CSRFToken": csrf(), "X-Requested-With": "fetch" },
+            body: body
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (payload) {
+                if (!response.ok) throw new Error(payload.error || "انجام نشد.");
+                return payload;
+            });
+        });
+    }
+
+    var bookmark = bar.querySelector("[data-bulk-bookmark]");
+    if (bookmark) {
+        bookmark.addEventListener("click", function () {
+            var values = slugs();
+            if (!values.length || !signedIn()) return;
+            bookmark.disabled = true;
+            post(bar.dataset.bookmark, values).then(function (payload) {
+                values.forEach(function (slug) {
+                    var box = layout.querySelector('[data-pick][value="' + CSS.escape(slug) + '"]');
+                    var mark = box && box.closest("article").querySelector(".card-mark__btn");
+                    if (!mark) return;
+                    mark.classList.add("is-on");
+                    mark.setAttribute("aria-pressed", "true");
+                    mark.setAttribute("aria-label", "حذف از نشان‌شده‌ها");
+                });
+                window.showToast(payload.message);
+            }).catch(function (error) {
+                window.showToast(error.message);
+            }).finally(function () { paint(); });
+        });
+    }
+
+    var apply = bar.querySelector("[data-bulk-apply]");
+    if (apply) {
+        apply.addEventListener("click", function () {
+            var values = slugs();
+            if (!values.length || !signedIn()) return;
+            apply.disabled = true;
+            post(bar.dataset.apply, values).then(function (payload) {
+                window.showToast(payload.message);
+            }).catch(function (error) {
+                window.showToast(error.message);
+            }).finally(function () { paint(); });
+        });
+    }
+
+    var invite = bar.querySelector("[data-bulk-invite]");
+    if (invite) {
+        invite.addEventListener("click", function () {
+            var values = slugs();
+            if (!values.length || !signedIn() || !window.Alpine) return;
+            var state = Alpine.$data(layout);
+            var first = layout.querySelector('[data-pick][value="' + CSS.escape(values[0]) + '"]');
+            var card = first && first.closest("article");
+            var opener = card && card.querySelector("[data-invite-open]");
+            state.inviteSlugs = values;
+            state.inviteSlug = values[0];
+            state.inviteName = values.length > 1 ? fa(values.length) + " هنرمند" : (opener ? opener.getAttribute("data-invite-name") : "");
+            state.inviteRoles = values.length === 1 && opener ? (opener.getAttribute("data-invite-roles") || "").split("||").filter(Boolean) : [];
+            state.inviteProject = "";
+            state.notice = "";
+            state.inviteOpen = true;
+        });
+    }
+})();

@@ -360,7 +360,7 @@
                 root.querySelector("[data-age=from]").textContent = fa(from.value);
                 root.querySelector("[data-age=to]").textContent = fa(to.value);
                 var open = from.value === from.min && to.value === to.max;
-                root.querySelector("[data-age-hint]").textContent = open ? "اگر دو سر را تکان ندهید، محدودیت سنی ندارد." : "";
+                root.querySelector("[data-age-hint]").textContent = open ? "اگر دو سر را تکان ندهید، همه سنین." : "";
             }
             from.addEventListener("input", function () { paint(from); });
             to.addEventListener("input", function () { paint(to); });

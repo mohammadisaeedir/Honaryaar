@@ -344,8 +344,8 @@
                         <table class="me-sheet">
                             <thead>
                                 <tr>
-                                    <th>عنوان</th>
                                     <th>نقش</th>
+                                    <th>نام نقش</th>
                                     <th>سال</th>
                                     <th></th>
                                 </tr>
@@ -354,7 +354,7 @@
                                 {% for row in credit_formset %}
                                     <tr {% if row.delete.value %}hidden{% endif %} {% if row.errors %}data-credit-invalid{% endif %}>
                                         <td>
-                                            <span data-row-summary>{{ row.title.value|default:"بدون عنوان" }}</span>
+                                            <span data-row-summary>{{ row.role_label|default:"—" }}</span>
                                             <input type="hidden" name="{{ row.credit_id.html_name }}" value="{{ row.credit_id.value|default:'' }}">
                                             <input type="hidden" name="{{ row.title.html_name }}" value="{{ row.title.value|default:'' }}">
                                             <input type="hidden" name="{{ row.role.html_name }}" value="{{ row.role.value|default:'' }}">
@@ -428,18 +428,13 @@
                         </button>
                     </div>
                     {% if media_error %}<p class="me-error">{{ media_error }}</p>{% endif %}
-                    <form method="post" action="{% url 'me-profile' %}" hidden>
-                        {% csrf_token %}
-                        <input type="hidden" name="section" value="media">
-                        <input type="hidden" name="media_action" value="add">
-                        <input type="hidden" name="label" value="" data-file-label>
-                        {% include "components/media/upload_control.html" with purpose="profile" kind="photo" target=profile.pk name="upload_id" autosubmit=1 layout="inline" pick_icon="plus" pick_label="افزودن فایل" %}
-                    </form>
                     <table class="me-sheet">
                         <thead>
                             <tr>
                                 <th>تصویر</th>
+                                <th>عنوان</th>
                                 <th>نوع</th>
+                                <th>عمومی</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -457,27 +452,57 @@
                                             <span>{{ item.kind|media_label }}</span>
                                         {% endif %}
                                     </td>
+                                    <td>{{ item.label }}</td>
                                     <td>{{ item.kind|media_label }}</td>
-                                    <td class="me-sheet__actions">
+                                    <td>
                                         <form method="post" action="{% url 'me-profile' %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="section" value="media">
-                                            <input type="hidden" name="media_action" value="replace">
+                                            <input type="hidden" name="media_action" value="visibility">
                                             <input type="hidden" name="media_id" value="{{ item.pk }}">
-                                            <input type="hidden" name="label" value="{{ item.label }}" data-file-label>
-                                            {% with preview=thumb|default:src %}
-                                                {% include "components/media/upload_control.html" with purpose="profile" kind=item.kind target=profile.pk name="upload_id" replacing=item.pk initial_url=preview autosubmit=1 layout="inline" pick_label="ویرایش" remove_label="حذف" %}
-                                            {% endwith %}
+                                            <button class="me-switch{% if item.is_public %} is-on{% endif %}" type="submit" name="is_public" value="{% if item.is_public %}0{% else %}1{% endif %}" aria-pressed="{% if item.is_public %}true{% else %}false{% endif %}" aria-label="عمومی"><span></span></button>
+                                        </form>
+                                    </td>
+                                    <td class="me-sheet__actions">
+                                        <button class="me-icon-btn" type="button" data-media-edit data-id="{{ item.pk }}" data-label="{{ item.label }}" data-kind="{{ item.kind }}" data-preview="{{ thumb|default:src }}" aria-label="ویرایش">
+                                            {% include "components/icon.html" with name="pencil" size="16" %}
+                                        </button>
+                                        <form method="post" action="{% url 'me-profile' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="section" value="media">
+                                            <input type="hidden" name="media_action" value="delete">
+                                            <input type="hidden" name="media_id" value="{{ item.pk }}">
+                                            <button class="me-icon-btn is-danger" type="button" data-media-delete aria-label="حذف">
+                                                {% include "components/icon.html" with name="trash" size="16" %}
+                                            </button>
                                         </form>
                                     </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="3">هنوز مدیایی ثبت نشده.</td>
+                                    <td colspan="5">هنوز مدیایی ثبت نشده.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
+                    <form class="credit-editor" method="post" action="{% url 'me-profile' %}" data-media-editor hidden>
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="media">
+                        <input type="hidden" name="media_action" value="add" data-media-action>
+                        <input type="hidden" name="media_id" value="" data-media-id>
+                        <label class="credit-editor__field">
+                            <span class="field-label">عنوان</span>
+                            <input class="field" type="text" name="label" data-media-label data-file-label maxlength="160" autocomplete="off">
+                        </label>
+                        <div class="credit-editor__field">
+                            <span class="field-label">فایل</span>
+                            {% include "components/media/upload_control.html" with purpose="profile" kind="photo" target=profile.pk name="upload_id" pick_label="افزودن فایل" remove_label="حذف" clear_only=1 %}
+                        </div>
+                        <p class="me-error" data-media-error hidden></p>
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-media-save>ذخیره</button>
+                        </div>
+                    </form>
                     <div class="me-form__actions">
                         <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="media">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
                     </div>
@@ -519,6 +544,74 @@
                 });
                 if (!found) return fallback || "";
                 return found.category ? found.category + " | " + found.title : found.title;
+            }
+            function mediaEditor() {
+                return document.querySelector("[data-media-editor]");
+            }
+            function paintMediaPreview(url, kind) {
+                var editor = mediaEditor();
+                var box = editor && editor.querySelector("[data-media-upload]");
+                if (!box) return;
+                var host = box.querySelector("[data-preview]");
+                var upload = box.querySelector("[data-upload-id]");
+                var remove = box.querySelector("[data-remove-file]");
+                upload.value = "";
+                delete box.dataset.uploadedKind;
+                box.dataset.fallbackUrl = url || "";
+                box.dataset.fallbackKind = kind || "photo";
+                host.replaceChildren();
+                if (url) {
+                    var node;
+                    if (kind === "video") {
+                        node = document.createElement("video");
+                        node.muted = true;
+                        node.playsInline = true;
+                        node.preload = "metadata";
+                        node.src = url;
+                    } else if (kind === "audio") {
+                        node = document.createElement("audio");
+                        node.preload = "metadata";
+                        node.src = url;
+                    } else {
+                        node = document.createElement("img");
+                        node.alt = "";
+                        node.src = url;
+                    }
+                    host.appendChild(node);
+                }
+                if (remove) remove.hidden = true;
+            }
+            function openMediaEditor(button) {
+                var editor = mediaEditor();
+                if (!editor) return;
+                var error = editor.querySelector("[data-media-error]");
+                error.hidden = true;
+                editor.querySelector("[data-media-action]").value = button ? "replace" : "add";
+                editor.querySelector("[data-media-id]").value = button ? button.getAttribute("data-id") : "";
+                editor.querySelector("[data-media-label]").value = button ? (button.getAttribute("data-label") || "") : "";
+                paintMediaPreview(button ? button.getAttribute("data-preview") : "", button ? button.getAttribute("data-kind") : "photo");
+                editor.hidden = false;
+                editor.querySelector("[data-media-label]").focus();
+            }
+            function saveMediaEditor() {
+                var editor = mediaEditor();
+                if (!editor) return;
+                var label = editor.querySelector("[data-media-label]").value.trim();
+                var upload = editor.querySelector("[data-upload-id]").value;
+                var action = editor.querySelector("[data-media-action]").value;
+                var error = editor.querySelector("[data-media-error]");
+                if (!label) {
+                    error.hidden = false;
+                    error.textContent = "عنوان را وارد کنید.";
+                    return;
+                }
+                if (action === "add" && !upload) {
+                    error.hidden = false;
+                    error.textContent = "فایل را بارگذاری کنید.";
+                    return;
+                }
+                error.hidden = true;
+                editor.requestSubmit();
             }
             function openCreditEditor(row) {
                 var editor = creditEditor();
@@ -562,8 +655,11 @@
                 if (opener) {
                     var kind = opener.getAttribute("data-sheet-add");
                     var target = null;
-                    if (kind === "media") target = document.querySelector("[aria-label='افزودن فایل']");
-                    else if (kind === "credit") target = document.querySelector("[data-repeat-add='credit']");
+                    if (kind === "media") {
+                        openMediaEditor(null);
+                        return;
+                    }
+                    if (kind === "credit") target = document.querySelector("[data-repeat-add='credit']");
                     else target = opener.closest("form").querySelector("[data-" + kind + "-open]");
                     if (target) target.click();
                     return;
@@ -584,6 +680,24 @@
                 }
                 if (event.target.closest("[data-credit-save]")) {
                     saveCreditEditor();
+                    return;
+                }
+                if (event.target.closest("[data-media-save]")) {
+                    saveMediaEditor();
+                    return;
+                }
+                var mediaEdit = event.target.closest("[data-media-edit]");
+                if (mediaEdit) {
+                    openMediaEditor(mediaEdit);
+                    return;
+                }
+                var mediaDelete = event.target.closest("[data-media-delete]");
+                if (mediaDelete) {
+                    event.preventDefault();
+                    var mediaForm = mediaDelete.closest("form");
+                    var dropMedia = function () { if (mediaForm) mediaForm.requestSubmit(); };
+                    if (window.honarAskRemove) window.honarAskRemove(dropMedia, "حذف فایل", "این فایل حذف شود؟");
+                    else dropMedia();
                     return;
                 }
                 var edit = event.target.closest("[data-row-edit]");

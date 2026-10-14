@@ -377,6 +377,25 @@ class AccountIdentityTests(TestCase):
         self.assertNotContains(page, "انتخاب فایل")
         self.assertNotContains(page, ">حذف تصویر<")
         self.assertNotContains(page, 'type="checkbox" name="list_remove"')
+        self.assertContains(page, "نمونه")
+        self.assertContains(page, ">عنوان<")
+        self.assertContains(page, ">عمومی<")
+        self.assertContains(page, 'aria-label="عمومی"')
+        self.assertContains(page, "data-media-editor")
+        renamed = self.client.post(
+            reverse("me-profile"),
+            {"section": "media", "media_action": "replace", "media_id": item.pk, "label": "پشت صحنه"},
+        )
+        self.assertEqual(renamed.status_code, 302)
+        item.refresh_from_db()
+        self.assertEqual(item.label, "پشت صحنه")
+        hidden = self.client.post(
+            reverse("me-profile"),
+            {"section": "media", "media_action": "visibility", "media_id": item.pk, "is_public": "0"},
+        )
+        self.assertEqual(hidden.status_code, 302)
+        item.refresh_from_db()
+        self.assertFalse(item.is_public)
         removed = self.client.post(
             reverse("me-profile"),
             {"section": "media", "media_action": "delete", "media_id": item.pk},

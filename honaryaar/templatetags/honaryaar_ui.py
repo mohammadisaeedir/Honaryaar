@@ -158,6 +158,11 @@ def age_label(item):
 
 
 @register.filter
+def day_month(value):
+    return catalog.format_day_month(value)
+
+
+@register.filter
 def project_of(slug):
     return catalog.project_by_slug(slug)
 
@@ -211,6 +216,13 @@ def query_string(request, **kwargs):
             params[key] = value
     encoded = params.urlencode()
     return f"?{encoded}" if encoded else request.path
+
+
+@register.inclusion_tag("components/layout/breadcrumb.html", takes_context=True)
+def breadcrumbs(context):
+    from honaryaar.breadcrumbs import crumbs
+
+    return {"crumbs": crumbs(context)}
 
 
 @register.simple_tag(takes_context=True)

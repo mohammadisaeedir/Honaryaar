@@ -73,7 +73,9 @@
                         <h2 class="site-footer__title">{% include "components/icon.html" with name="clapperboard" size="18" %}پروژه‌های جدید</h2>
                         <ul class="site-footer__list">
                             {% for project in footer_projects %}
-                                <li><a href="{% url 'project' project.slug %}">{{ project.title }}</a></li>
+                                <li>
+                                    <a href="{% url 'project' project.slug %}">{{ project.title }}</a>
+                                </li>
                             {% endfor %}
                         </ul>
                     </section>

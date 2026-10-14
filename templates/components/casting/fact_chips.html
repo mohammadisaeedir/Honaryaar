@@ -2,7 +2,7 @@
 <div class="fact-chips">
     <span class="fact-chip {% if opportunity.paid %}fact-chip--pay{% endif %}">
         {% include "components/icon.html" with name="circle-dollar" size="16" %}
-        {% if opportunity.pay_note %}{{ opportunity.pay_note }}{% endif %}
+        {% if opportunity.pay_note %}{{ opportunity.pay_note }}{% elif opportunity.paid %}با دستمزد{% else %}داوطلبانه{% endif %}
     </span>
     <span class="fact-chip fact-chip--gender">
         {% if opportunity.gender == "female" %}
@@ -15,19 +15,21 @@
         {% endif %}
         {{ opportunity.gender|gender_label }}
     </span>
-    {% if opportunity.collaboration_type %}
-        <span class="fact-chip">{{ opportunity.collaboration_type|collaboration_label }}</span>
+    {% if not card %}
+        {% if opportunity.collaboration_type %}
+            <span class="fact-chip">{{ opportunity.collaboration_type|collaboration_label }}</span>
+        {% endif %}
+        {% if opportunity.experience_level %}
+            <span class="fact-chip">{{ opportunity.experience_level|experience_label }}</span>
+        {% endif %}
+        {% for code in opportunity.special_conditions %}
+            <span class="fact-chip">{{ code|special_label }}</span>
+        {% endfor %}
     {% endif %}
-    {% if opportunity.experience_level %}
-        <span class="fact-chip">{{ opportunity.experience_level|experience_label }}</span>
-    {% endif %}
-    {% for code in opportunity.special_conditions %}
-        <span class="fact-chip">{{ code|special_label }}</span>
-    {% endfor %}
     {% if opportunity.city %}
         <span class="fact-chip">{% include "components/icon.html" with name="map-pin" size="16" %}{{ opportunity.city }}</span>
     {% endif %}
-    <span class="fact-chip">{% include "components/icon.html" with name="cake" size="16" %}{% if opportunity|age_label %}{{ opportunity|age_label }}{% else %}محدودیت سنی ندارد{% endif %}</span>
+    <span class="fact-chip">{% include "components/icon.html" with name="cake" size="16" %}{% if opportunity|age_label %}{{ opportunity|age_label }}{% else %}همه سنین{% endif %}</span>
     {% if not card %}
         <span class="fact-chip">{% include "components/icon.html" with name="clapperboard" size="16" %}{{ opportunity.production }}</span>
         <span class="fact-chip">{% include "components/icon.html" with name="users" size="16" %}{{ opportunity.count }} نفر</span>

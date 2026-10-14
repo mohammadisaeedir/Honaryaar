@@ -7,15 +7,17 @@
 {% block og_description %}هنرمندان تئاتر در هنریار. نقش، شهر و سابقه را ببینید.{% endblock %}
 
 {% block content %}
-    <div class="catalog-layout" x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
+    {{ invite_board|json_script:"invite-board" }}
+    <div class="catalog-layout" data-invite-root x-data="{ open: false, suggest: false, inviteOpen: false, inviteSlug: '', inviteSlugs: [], inviteName: '', inviteProject: '', inviteRoles: [], notice: '', board: [] }" x-init="board = JSON.parse(document.getElementById('invite-board').textContent)" x-effect="document.body.classList.toggle('is-filter-open', open); document.body.classList.toggle('is-invite-open', inviteOpen)" @keydown.escape.window="open = false; inviteOpen = false">
     <div class="catalog-intro">
     <h1 class="text-[28px] font-semibold leading-9">هنرمندان</h1>
     <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">نام، عکس و نقش هر کس. نقش‌ها از داده می‌آیند و فقط به بازیگر محدود نیستند.</p>
     </div>
     <div class="catalog-body">
-    {% include "components/filters/drawer.html" with action=request.path %}
+    {% include "components/filters/drawer.html" with action=request.path hide_status=1 %}
     <div class="catalog-main">
     <div class="list-tools">
+        {% include "components/filters/art_quick.html" %}
         <form class="page-search" method="get" action="{% url 'artists' %}" role="search" autocomplete="off" data-remember-search data-search-scope="artists" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.role %}<input type="hidden" name="role" value="{{ value }}">{% endfor %}
@@ -30,11 +32,13 @@
             {% include "components/filters/suggest.html" with scope="artists" %}
         </form>
         <div class="tool-row">
+            {% include "components/filters/bulk.html" with part="button" %}
             {% include "components/filters/sort.html" %}
             {% include "components/filters/panel.html" with action=request.path %}
             {% include "components/filters/quick.html" %}
         </div>
     </div>
+    {% include "components/filters/bulk.html" with part="bar" kind="artists" %}
     {% include "components/skeleton/list.html" with kind="artists" %}
     <div class="live-pane">
     {% if artists %}
@@ -52,5 +56,6 @@
     </div>
     </div>
     </div>
+    {% include "components/invite_modal.html" %}
     </div>
 {% endblock %}

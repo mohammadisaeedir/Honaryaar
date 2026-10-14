@@ -10,7 +10,7 @@ from django.db import transaction
 
 from honaryaar.accounts import ensure_profile, user_for_phone
 from honaryaar.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
-from honaryaar.media_files import NEED_FILE, MediaError
+from honaryaar.media_files import NEED_FILE, NEED_LABEL, MediaError
 from honaryaar.media_service import attach_profile_picture, parse_upload_id, save_profile_media, url_for_key
 from honaryaar.models import Credit, ProfileMedia, ProfileRole, ProfileSkill, Role, Skill, SkillArea
 
@@ -220,13 +220,6 @@ def _save_roles(profile, roles, primary):
 PROFILE_SECTIONS = {"hero", "about", "skills", "roles", "credits", "media"}
 
 
-def _file_label(value):
-    name = (value or "").strip().replace("\\", "/").split("/")[-1]
-    if "." in name:
-        name = name.rsplit(".", 1)[0]
-    return (name.strip() or "فایل")[:160]
-
-
 def _apply_profile_media_action(profile, user, post):
     action = post.get("media_action")
     if action == "delete":
@@ -234,39 +227,88 @@ def _apply_profile_media_action(profile, user, post):
         if raw.isdigit():
             profile.media_items.filter(pk=int(raw)).delete()
         return
+    if action == "visibility":
+        raw = str(post.get("media_id") or "")
+        if not raw.isdigit():
+            return
+        current = profile.media_items.filter(pk=int(raw)).first()
+        if current is None:
+            return
+        current.is_public = post.get("is_public") == "1"
+        current.save(update_fields=["is_public"])
+        return
     if action not in {"add", "replace"}:
         return
     upload_id = parse_upload_id(post.get("upload_id"))
+    label = (post.get("label") or "").strip()[:160]
+    if action == "replace":
+        raw = str(post.get("media_id") or "")
+        if not raw.isdigit():
+            return
+        current = profile.media_items.filter(pk=int(raw)).first()
+        if current is None:
+            return
+        if not upload_id:
+            if not label:
+                raise MediaError(NEED_LABEL)
+            current.label = label
+            current.save(update_fields=["label"])
+            return
+        if not label:
+            raise MediaError(NEED_LABEL)
+        previous = current.position
+        _save_media(
+            profile,
+            [{
+                "media_id": current.pk,
+                "upload_id": upload_id,
+                "label": label,
+                "kind": current.kind,
+                "is_public": current.is_public,
+            }],
+            user,
+        )
+        current.refresh_from_db()
+        if current.position != previous:
+            current.position = previous
+            current.save(update_fields=["position"])
+        return
     if not upload_id:
         raise MediaError(NEED_FILE)
-    label = _file_label(post.get("label"))
+    if not label:
+        raise MediaError(NEED_LABEL)
     if action == "add":
         if profile.media_items.count() >= settings.MEDIA_PROFILE_MAX_ITEMS:
             raise MediaError(f"حداکثر {settings.MEDIA_PROFILE_MAX_ITEMS} فایل برای پروفایل مجاز است.")
         before = set(profile.media_items.values_list("pk", flat=True))
-        _save_media(profile, [{"upload_id": upload_id, "label": label, "kind": "photo"}], user)
+        _save_media(
+            profile,
+            [{"upload_id": upload_id, "label": label, "kind": "photo", "is_public": True}],
+            user,
+        )
         created = profile.media_items.exclude(pk__in=before).first()
         if created is not None:
             created.position = max(profile.media_items.count() - 1, 0)
             created.save(update_fields=["position"])
         return
-    raw = str(post.get("media_id") or "")
-    if not raw.isdigit():
-        return
-    current = profile.media_items.filter(pk=int(raw)).first()
-    if current is None:
-        return
-    kept = (post.get("label") or "").strip() or current.label or label
-    previous = current.position
-    _save_media(
-        profile,
-        [{"media_id": current.pk, "upload_id": upload_id, "label": kept[:160], "kind": current.kind}],
-        user,
-    )
-    current.refresh_from_db()
-    if current.position != previous:
-        current.position = previous
-        current.save(update_fields=["position"])
+
+
+def _credit_role_labels(formset):
+    raw_ids = []
+    for form in formset:
+        raw = form["role"].value()
+        if raw and str(raw).isdigit():
+            raw_ids.append(int(raw))
+    roles = Role.objects.in_bulk(raw_ids)
+    for form in formset:
+        raw = form["role"].value()
+        role = roles.get(int(raw)) if raw and str(raw).isdigit() else None
+        if role is None:
+            form.role_label = ""
+        elif role.group:
+            form.role_label = f"{role.group} | {role.title}"
+        else:
+            form.role_label = role.title
 
 
 def _requested_section(value):
@@ -328,6 +370,7 @@ def me_profile(request):
         ],
         prefix="credit",
     )
+    _credit_role_labels(credit_formset)
     media_formset = MediaFormSet(
         posted if legacy or posted_section == "media" else None,
         initial=[

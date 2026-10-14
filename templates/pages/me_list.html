@@ -23,8 +23,11 @@
                         <div class="pf-board__list">
                             {% for item in items %}
                                 <a class="pf-request" href="{{ item.url }}">
-                                    <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
-                                    {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                                    {% include "components/project/thumb.html" with src=item.image %}
+                                    <span class="pf-request__copy">
+                                        <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
+                                        {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                                    </span>
                                 </a>
                             {% endfor %}
                         </div>
@@ -37,6 +40,7 @@
                         <ul class="saved-rows">
                             {% for item in bookmarks %}
                                 <li>
+                                    {% if item.image %}{% include "components/project/thumb.html" with src=item.image %}{% endif %}
                                     <a href="{{ item.url }}">{{ item.title }}</a>
                                     {% status_chip item.status_code %}
                                     <form method="post" action="{{ item.remove }}">
@@ -57,8 +61,11 @@
                 <div class="pf-board__list">
                     {% for item in items %}
                         <a class="pf-request" href="{{ item.url }}">
-                            <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
-                            {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                            {% include "components/project/thumb.html" with src=item.image %}
+                            <span class="pf-request__copy">
+                                <h2>{{ item.title }}{% if item.tone %}{% status_chip item.tone %}{% endif %}</h2>
+                                {% if item.meta %}<p>{{ item.meta }}</p>{% endif %}
+                            </span>
                         </a>
                     {% endfor %}
                 </div>

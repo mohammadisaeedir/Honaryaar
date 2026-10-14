@@ -1,0 +1,10 @@
+{% if art_quick %}
+<div class="art-quick" aria-label="هنر">
+    {% for chip in art_quick %}
+        <a class="{% if chip.slug %}art-{{ chip.slug }}{% endif %}{% if chip.active %} is-on{% endif %}" href="{{ chip.href }}">
+            {% if chip.slug %}{% include "components/art_icon.html" with slug=chip.slug size="16" %}{% endif %}
+            <span>{{ chip.label }}</span>
+        </a>
+    {% endfor %}
+</div>
+{% endif %}
