@@ -214,7 +214,7 @@
         if (!panel || panel.hidden) return;
         if (event.target.closest(".jalali-panel")) return;
         if (!event.target.closest("[data-jalali-date]")) close();
-    });
+    }, true);
 
     document.addEventListener("click", function (event) {
         if (!panel || panel.hidden || !event.target.closest(".jalali-panel")) return;

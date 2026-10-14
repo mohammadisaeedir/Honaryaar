@@ -16,18 +16,18 @@
 {% block site_footer %}{% endblock %}
 
 {% block content %}
-<div x-data="{ logoutOpen: false, logoutStep: 1 }" x-effect="document.body.classList.toggle('pf-logout-open', logoutOpen)" @keydown.escape.window="logoutOpen = false">
+<div x-data="{ logoutOpen: false }" x-effect="document.body.classList.toggle('pf-logout-open', logoutOpen)" @keydown.escape.window="logoutOpen = false">
     {% block account_hub %}{% endblock %}
     <div class="pf-workspace">
         <aside class="pf-sidebar" aria-label="منوی حساب">
             <div class="pf-sidebar__panel">
                 <a class="pf-sidebar__userLink {% if request.resolver_match.url_name == 'me-profile' %}pf-sidebar__userLink--active{% endif %}" href="{% url 'me-profile' %}">
+                    {% include "components/account/avatar.html" %}
                     <span class="pf-sidebar__userText">
                         <p class="pf-sidebar__name">{% account_name request.user %}</p>
                         {% account_phone request.user as phone %}
                         {% if phone %}<p class="pf-sidebar__phone" dir="ltr">{{ phone|phone_fa }}</p>{% endif %}
                     </span>
-                    {% include "components/account/avatar.html" %}
                 </a>
                 {% include "components/account/menu.html" %}
             </div>
@@ -51,12 +51,10 @@
             <div class="pf-logoutDialog__handle" aria-hidden="true"></div>
             <div class="pf-logoutDialog__body">
                 <h2 id="pf-logout-title" class="pf-logoutDialog__title">خروج از حساب کاربری</h2>
-                <p class="pf-logoutDialog__text" x-show="logoutStep === 1">آیا می‌خواهید از حساب کاربری‌تان خارج شوید؟</p>
-                <p class="pf-logoutDialog__text" x-show="logoutStep === 2" x-cloak>برای خروج دوباره تأیید کنید. بعد از خروج به صفحهٔ اصلی می‌روید.</p>
+                <p class="pf-logoutDialog__text">آیا می‌خواهید از حساب کاربری‌تان خارج شوید؟</p>
             </div>
             <div class="pf-logoutDialog__actions" dir="ltr">
-                <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" x-show="logoutStep === 1" @click="logoutStep = 2">ادامه</button>
-                <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" x-show="logoutStep === 2" x-cloak @click="$refs.logoutForm.submit()">خروج</button>
+                <button class="pf-logoutDialog__btn pf-logoutDialog__btn--danger" type="button" @click="$refs.logoutForm.submit()">خروج</button>
                 <button class="pf-logoutDialog__btn pf-logoutDialog__btn--ghost" type="button" @click="logoutOpen = false">انصراف</button>
             </div>
         </div>

@@ -4,7 +4,7 @@
 {% media_limit "video" as max_video %}
 {% media_limit "audio" as max_audio %}
 <div
-    class="media-upload"
+    class="media-upload{% if layout %} media-upload--{{ layout }}{% endif %}"
     data-media-upload
     data-purpose="{{ purpose }}"
     data-kind="{{ kind|default:'photo' }}"
@@ -12,13 +12,18 @@
     {% if target %}data-target="{{ target }}"{% endif %}
     {% if require %}data-require="1"{% endif %}
     {% if replacing %}data-replacing="1"{% endif %}
+    {% if autosubmit %}data-autosubmit="1"{% endif %}
     {% if initial_url %}data-initial-url="{{ initial_url }}"{% endif %}
+    {% if remove_name %}data-remove-name="{{ remove_name }}"{% endif %}
     data-start="{{ start_url }}"
     data-max-photo="{{ max_photo }}"
     data-max-video="{{ max_video }}"
     data-max-audio="{{ max_audio }}"
 >
     <input type="hidden" name="{{ name }}" value="{{ value|default:'' }}" data-upload-id>
+    {% if remove_name and not remove_existing %}
+        <input type="hidden" name="{{ remove_name }}" value="" data-file-remove-field>
+    {% endif %}
     <div class="media-upload__preview" data-preview>
         {% if initial_url %}
             {% if kind == "video" %}
@@ -30,10 +35,15 @@
             {% endif %}
         {% endif %}
     </div>
-    <label class="media-upload__pick">
-        <input type="file" data-file {% if fixed and kind == "photo" %}accept="image/jpeg,image/png,image/webp,image/gif"{% endif %}>
-        <span>انتخاب فایل</span>
-    </label>
+    <div class="media-upload__actions">
+        <button class="media-upload__icon" type="button" data-pick aria-label="{% if pick_label %}{{ pick_label }}{% else %}ویرایش فایل{% endif %}">
+            {% include "components/icon.html" with name=pick_icon|default:"pencil" size="16" %}
+        </button>
+        <button class="media-upload__icon media-upload__icon--danger" type="button" data-remove-file aria-label="{% if remove_label %}{{ remove_label }}{% else %}حذف فایل{% endif %}" {% if not initial_url %}hidden{% endif %}>
+            {% include "components/icon.html" with name="trash" size="16" %}
+        </button>
+    </div>
+    <input class="media-upload__file" type="file" data-file {% if fixed and kind == "photo" %}accept="image/jpeg,image/png,image/webp,image/gif"{% endif %}>
     <div class="media-upload__bar" data-bar hidden><span data-progress></span></div>
     <p class="media-upload__error" data-error hidden></p>
 </div>

@@ -14,431 +14,623 @@
     {% if not profile %}
         <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
         <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">این حساب پروفایل هنری ندارد.</p>
-    {% elif editing %}
-        <h1 class="text-[28px] font-semibold leading-9">پروفایل</h1>
-        <p class="mt-2 max-w-lg text-sm leading-[22px] text-muted-foreground">هر بخشی را که خواستید پر کنید. خالی گذاشتن هم ممکن است.</p>
-        <form class="profile-edit mt-6" method="post" action="{% url 'me-profile' %}" x-data="{ tab: '{{ edit_tab }}' }">
-            {% csrf_token %}
-            {{ credit_formset.management_form }}
-            {{ media_formset.management_form }}
-            <div class="profile-tabs" role="tablist" aria-label="بخش‌های پروفایل">
-                <button class="profile-tabs__tab{% if edit_tab == 'identity' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'identity' }" :aria-selected="tab === 'identity'" @click="tab = 'identity'">مشخصات</button>
-                <button class="profile-tabs__tab{% if edit_tab == 'skills' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'skills' }" :aria-selected="tab === 'skills'" @click="tab = 'skills'">مهارت‌ها</button>
-                <button class="profile-tabs__tab{% if edit_tab == 'roles' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'roles' }" :aria-selected="tab === 'roles'" @click="tab = 'roles'">نقش‌ها</button>
-                <button class="profile-tabs__tab{% if edit_tab == 'credits' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'credits' }" :aria-selected="tab === 'credits'" @click="tab = 'credits'">سوابق</button>
-                <button class="profile-tabs__tab{% if edit_tab == 'media' %} is-on{% endif %}" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
-            </div>
-            <div class="profile-pane{% if edit_tab == 'identity' %} is-on{% endif %}" :class="{ 'is-on': tab === 'identity' }">
-            {% media_src profile.list_thumb.name 1 profile.list_public_acl profile.list_image.name "photo" as face %}
-            {% media_src profile.banner_thumb.name 1 profile.banner_public_acl profile.banner.name "photo" as banner %}
-            <div class="mb-4">
-                <span class="field-label">تصویر پروفایل</span>
-                {% include "components/media/upload_control.html" with purpose="profile_list" kind="photo" fixed=1 target=profile.pk name="list_upload" initial_url=face %}
-                {% if face %}
-                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
-                        <input type="checkbox" name="list_remove" value="1">
-                        حذف تصویر
-                    </label>
-                {% endif %}
-            </div>
-            <div class="mb-4">
-                <span class="field-label">تصویر بنر</span>
-                {% include "components/media/upload_control.html" with purpose="profile_banner" kind="photo" fixed=1 target=profile.pk name="banner_upload" initial_url=banner %}
-                {% if banner %}
-                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
-                        <input type="checkbox" name="banner_remove" value="1">
-                        حذف بنر
-                    </label>
-                {% endif %}
-            </div>
-            <label class="mb-4 block">
-                <span class="field-label">نام</span>
-                <input class="field" type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" maxlength="60">
-                {% if form.first_name.errors %}
-                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.first_name.errors.0 }}</p>
-                {% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">نام خانوادگی</span>
-                <input class="field" type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" autocomplete="family-name" maxlength="60">
-                {% if form.last_name.errors %}
-                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.last_name.errors.0 }}</p>
-                {% endif %}
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">نام هنری</span>
-                <input class="field" type="text" name="name" value="{{ form.name.value|default:'' }}" maxlength="120">
-                {% if form.name.errors %}
-                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.name.errors.0 }}</p>
-                {% endif %}
-            </label>
-            <div class="mb-4">
-                <p class="field-label">موبایل</p>
-                <p class="mt-1" dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</p>
-            </div>
-            <label class="mb-4 block">
-                <span class="field-label">شهر</span>
-                <select class="field field-select" name="city">
-                    <option value="">انتخاب شهر</option>
-                    {% for city in form.fields.city.queryset %}
-                        <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <label class="mb-4 block">
-                <span class="field-label">تاریخ تولد</span>
-                {{ form.birth_date }}
-                {% if form.birth_date.errors %}
-                    <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.birth_date.errors.0 }}</p>
-                {% endif %}
-            </label>
-            <fieldset class="mb-4">
-                <legend class="field-label">جنسیت</legend>
-                {{ form.gender }}
-            </fieldset>
-            <label class="mb-4 block">
-                <span class="field-label">درباره</span>
-                <textarea class="field" style="min-height: 7rem" name="about" rows="4">{{ form.about.value|default:'' }}</textarea>
-            </label>
-            <fieldset class="mb-4">
-                <legend class="field-label">هنرها</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هنرهایی که در آن‌ها کار می‌کنید یا به آن‌ها علاقه دارید. چند مورد می‌تواند باشد.</p>
-                <div class="art-picker-wrap">
-                    {{ form.arts }}
-                </div>
-            </fieldset>
-
-            <div class="mb-4 border-y border-border py-3">
-                <p class="text-xs leading-[18px] text-muted-foreground">وضعیت</p>
-                <div class="mt-1">{% status_chip profile.status profile.status|status_label %}</div>
-            </div>
-            </div>
-
-            <div class="profile-pane{% if edit_tab == 'skills' %} is-on{% endif %}" :class="{ 'is-on': tab === 'skills' }">
-            <fieldset class="mb-6">
-                <legend class="field-label">مهارت‌ها</legend>
-                {% include "components/skill_picker.html" %}
-            </fieldset>
-            </div>
-
-            <div class="profile-pane{% if edit_tab == 'roles' %} is-on{% endif %}" :class="{ 'is-on': tab === 'roles' }">
-            <fieldset class="mb-6">
-                <legend class="field-label">نقش‌ها</legend>
-                {% include "components/role_picker.html" %}
-            </fieldset>
-            </div>
-
-            <div class="profile-pane{% if edit_tab == 'credits' %} is-on{% endif %}" :class="{ 'is-on': tab === 'credits' }">
-            <fieldset class="mb-6">
-                <legend class="field-label">سوابق</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">عنوان کار، نقش از فهرست، و نام نقش در همان کار را بنویسید. سال اختیاری است.</p>
-                <div class="repeat-wrap">
-                    <table class="repeat-table">
-                        <thead>
-                            <tr>
-                                <th>عنوان</th>
-                                <th>نقش</th>
-                                <th>نام نقش</th>
-                                <th>سال</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="credit-rows">
-                            {% for row in credit_formset %}
-                                <tr {% if row.delete.value %}hidden{% endif %}>
-                                    <td>
-                                        <input type="hidden" name="{{ row.credit_id.html_name }}" value="{{ row.credit_id.value|default:'' }}">
-                                        <input class="field" type="text" name="{{ row.title.html_name }}" value="{{ row.title.value|default:'' }}" maxlength="160">
-                                        {% for error in row.non_field_errors %}
-                                            <p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ error }}</p>
-                                        {% endfor %}
-                                    </td>
-                                    <td>
-                                        <select class="field field-select" name="{{ row.role.html_name }}">
-                                            <option value="">انتخاب نقش</option>
-                                            {% include "components/account/role_options.html" with selected=row.role.value %}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input class="field" type="text" name="{{ row.role_name.html_name }}" value="{{ row.role_name.value|default:'' }}" maxlength="120">
-                                    </td>
-                                    <td>
-                                        <input class="field" type="text" name="{{ row.year.html_name }}" value="{{ row.year.value|default:'' }}" maxlength="20" inputmode="numeric">
-                                    </td>
-                                    <td>
-                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
-                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <button class="repeat-add" type="button" data-repeat-add="credit">افزودن سابقه</button>
-                <template id="credit-empty">
-                    <tr>
-                        <td>
-                            <input type="hidden" name="{{ credit_formset.empty_form.credit_id.html_name }}" value="">
-                            <input class="field" type="text" name="{{ credit_formset.empty_form.title.html_name }}" maxlength="160">
-                        </td>
-                        <td>
-                            <select class="field field-select" name="{{ credit_formset.empty_form.role.html_name }}">
-                                <option value="">انتخاب نقش</option>
-                                {% include "components/account/role_options.html" with selected="" %}
-                            </select>
-                        </td>
-                        <td>
-                            <input class="field" type="text" name="{{ credit_formset.empty_form.role_name.html_name }}" maxlength="120">
-                        </td>
-                        <td>
-                            <input class="field" type="text" name="{{ credit_formset.empty_form.year.html_name }}" maxlength="20" inputmode="numeric">
-                        </td>
-                        <td>
-                            <input type="checkbox" name="{{ credit_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
-                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                        </td>
-                    </tr>
-                </template>
-            </fieldset>
-            </div>
-
-            <div class="profile-pane{% if edit_tab == 'media' %} is-on{% endif %}" :class="{ 'is-on': tab === 'media' }">
-            <fieldset class="mb-6">
-                <legend class="field-label">مدیای پروفایل</legend>
-                <p class="mb-3 text-xs leading-[18px] text-muted-foreground">حداکثر {{ media_max_items }} فایل. عنوان، ترتیب و نوع حفظ می‌شود.</p>
-                {% if media_error %}<p class="mb-3 text-xs leading-[18px]" style="color:#B42318">{{ media_error }}</p>{% endif %}
-                <div class="repeat-wrap">
-                    <table class="repeat-table">
-                        <thead>
-                            <tr>
-                                <th>نوع</th>
-                                <th>عنوان</th>
-                                <th>فایل</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="media-rows">
-                            {% for row in media_formset %}
-                                <tr {% if row.delete.value %}hidden{% endif %}>
-                                    <td>
-                                        <input type="hidden" name="{{ row.media_id.html_name }}" value="{{ row.media_id.value|default:'' }}">
-                                        <select class="field field-select" name="{{ row.kind.html_name }}">
-                                            {% for value, label in row.fields.kind.choices %}
-                                                <option value="{{ value }}" {% if row.kind.value == value %}selected{% endif %}>{{ label }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <input class="field" type="text" name="{{ row.label.html_name }}" value="{{ row.label.value|default:'' }}" maxlength="160">
-                                    </td>
-                                    <td>
-                                        {% include "components/media/upload_control.html" with purpose="profile" kind=row.preview_kind fixed="" target=profile.pk name=row.upload_id.html_name value=row.upload_id.value replacing=row.media_id.value initial_url=row.preview_url %}
-                                    </td>
-                                    <td>
-                                        <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
-                                        <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <button class="repeat-add" type="button" data-repeat-add="media">افزودن مدیا</button>
-                <template id="media-empty">
-                    <tr>
-                        <td>
-                            <input type="hidden" name="{{ media_formset.empty_form.media_id.html_name }}" value="">
-                            <select class="field field-select" name="{{ media_formset.empty_form.kind.html_name }}">
-                                {% for value, label in media_formset.empty_form.fields.kind.choices %}
-                                    <option value="{{ value }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td>
-                            <input class="field" type="text" name="{{ media_formset.empty_form.label.html_name }}" maxlength="160">
-                        </td>
-                        <td>
-                            {% include "components/media/upload_control.html" with purpose="profile" kind="photo" fixed="" target=profile.pk name=media_formset.empty_form.upload_id.html_name value="" %}
-                        </td>
-                        <td>
-                            <input type="checkbox" name="{{ media_formset.empty_form.delete.html_name }}" data-repeat-delete hidden>
-                            <button class="repeat-remove" type="button" data-repeat-remove>حذف</button>
-                        </td>
-                    </tr>
-                </template>
-            </fieldset>
-            </div>
-            <script>
-                document.addEventListener("click", function (event) {
-                    var remove = event.target.closest("[data-repeat-remove]");
-                    if (remove) {
-                        var row = remove.closest("tr");
-                        var box = row.querySelector("[data-repeat-delete]");
-                        if (box) box.checked = true;
-                        row.hidden = true;
-                        return;
-                    }
-                    var add = event.target.closest("[data-repeat-add]");
-                    if (!add) return;
-                    var prefix = add.getAttribute("data-repeat-add");
-                    var total = document.getElementById("id_" + prefix + "-TOTAL_FORMS");
-                    var template = document.getElementById(prefix + "-empty");
-                    var body = document.getElementById(prefix + "-rows");
-                    if (!total || !template || !body) return;
-                    var index = total.value;
-                    body.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__prefix__", index));
-                    total.value = String(Number(index) + 1);
-                });
-            </script>
-
-            <div class="profile-edit__save">
-                {% include "components/button.html" with label="ذخیره" button_type="submit" extra="w-full" %}
-            </div>
-        </form>
     {% else %}
-        <div class="pf-plp" dir="rtl" x-data="{ tab: 'identity' }">
-            <div class="pf-board__head">
-                <h1>پروفایل</h1>
-                <div class="pf-board__actions">
-                    <a class="pf-board__quiet" href="{% url 'artist' profile.slug %}">پروفایل عمومی</a>
-                    <a class="pf-board__quiet" href="{% url 'me-profile' %}?edit=1">ویرایش</a>
-                </div>
-            </div>
-            <div class="profile-tabs" role="tablist" aria-label="بخش‌های پروفایل">
-                <button class="profile-tabs__tab is-on" type="button" role="tab" :class="{ 'is-on': tab === 'identity' }" :aria-selected="tab === 'identity'" @click="tab = 'identity'">مشخصات</button>
-                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'skills' }" :aria-selected="tab === 'skills'" @click="tab = 'skills'">مهارت‌ها</button>
-                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'roles' }" :aria-selected="tab === 'roles'" @click="tab = 'roles'">نقش‌ها</button>
-                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'credits' }" :aria-selected="tab === 'credits'" @click="tab = 'credits'">سوابق</button>
-                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'media' }" :aria-selected="tab === 'media'" @click="tab = 'media'">مدیا</button>
-            </div>
-            <div class="profile-pane is-on" :class="{ 'is-on': tab === 'identity' }">
+        <div class="me-profile" dir="rtl" x-data="{ info: {% if open_info %}true{% else %}false{% endif %}, sheet: '{{ open_sheet }}' }" x-effect="document.body.classList.toggle('is-report-open', info || sheet != '')">
+            <section class="me-hero" id="hero">
                 {% media_src profile.list_thumb.name 1 profile.list_public_acl profile.list_image.name "photo" as face %}
                 {% media_src profile.banner_thumb.name 1 profile.banner_public_acl profile.banner.name "photo" as banner %}
-                <dl class="pf-record">
-                    <div>
-                        <dt>تصویر پروفایل</dt>
-                        <dd>{% if face %}<img class="pf-record__face" src="{{ face }}" alt="">{% else %}ثبت نشده{% endif %}</dd>
+                <div class="me-hero__cover">
+                    <form method="post" action="{% url 'me-profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="hero">
+                        <input type="hidden" name="hero_action" value="banner">
+                        {% include "components/media/upload_control.html" with purpose="profile_banner" kind="photo" fixed=1 target=profile.pk name="banner_upload" initial_url=banner remove_name="banner_remove" autosubmit=1 layout="cover" pick_label="ویرایش بنر" remove_label="حذف بنر" %}
+                    </form>
+                </div>
+                <div class="me-hero__person">
+                    <div class="me-hero__photo-slot">
+                        {% if not face %}
+                            <span class="me-hero__photo me-hero__photo--empty" aria-hidden="true">{% if profile.user.first_name %}{{ profile.user.first_name|slice:":1" }}{% elif profile.name %}{{ profile.name|slice:":1" }}{% else %}؟{% endif %}</span>
+                        {% endif %}
+                        <form method="post" action="{% url 'me-profile' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="section" value="hero">
+                            <input type="hidden" name="hero_action" value="list">
+                            {% include "components/media/upload_control.html" with purpose="profile_list" kind="photo" fixed=1 target=profile.pk name="list_upload" initial_url=face remove_name="list_remove" autosubmit=1 layout="avatar" pick_label="ویرایش تصویر اصلی" remove_label="حذف تصویر اصلی" %}
+                        </form>
                     </div>
-                    <div>
-                        <dt>تصویر بنر</dt>
-                        <dd>{% if banner %}<img class="pf-record__banner" src="{{ banner }}" alt="">{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>نام</dt>
-                        <dd>{% if profile.user.first_name %}{{ profile.user.first_name }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>نام خانوادگی</dt>
-                        <dd>{% if profile.user.last_name %}{{ profile.user.last_name }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>نام هنری</dt>
-                        <dd>{% if profile.name %}{{ profile.name }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>موبایل</dt>
-                        <dd dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>شهر</dt>
-                        <dd>{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>تاریخ تولد</dt>
-                        <dd>{% if profile.birth_date %}{{ profile.birth_date|jalali }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>جنسیت</dt>
-                        <dd>{% if profile.gender %}{{ profile.gender|gender_label }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>درباره</dt>
-                        <dd>{% if profile.about %}{{ profile.about }}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>هنرها</dt>
-                        <dd>{% if profile.arts %}{% for slug in profile.arts %}{{ slug|art_title }}{% if not forloop.last %}، {% endif %}{% endfor %}{% else %}ثبت نشده{% endif %}</dd>
-                    </div>
-                    <div>
-                        <dt>وضعیت</dt>
-                        <dd>{% status_chip profile.status profile.status|status_label %}</dd>
-                    </div>
-                </dl>
-            </div>
-            <div class="profile-pane" :class="{ 'is-on': tab === 'skills' }">
-                {% if skill_links %}
-                    <ul class="support-list">
-                        {% for link in skill_links %}
-                            <li class="support-item">
-                                <div class="support-item__head">
-                                    <h2>{{ link.skill.title }}</h2>
-                                    <span class="skill-dots" aria-label="سطح {{ link.level }}">{% for n in "12345" %}<i class="{% if link.level|stringformat:"s" >= n %}is-on{% endif %}"></i>{% endfor %}</span>
+                    <div class="me-hero__text">
+                        <div class="me-hero__title-row">
+                            <div class="me-hero__identity">
+                                <div>
+                                    {% if profile.user.first_name or profile.user.last_name %}
+                                        <h1>{{ profile.user.first_name }} {{ profile.user.last_name }}</h1>
+                                        {% if profile.name %}<p class="me-hero__art-name">{{ profile.name }}</p>{% endif %}
+                                    {% elif profile.name %}
+                                        <h1>{{ profile.name }}</h1>
+                                    {% else %}
+                                        <h1 class="is-empty">نام و نام هنری</h1>
+                                    {% endif %}
                                 </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز مهارتی ثبت نشده.</p>
-                {% endif %}
+                                <button class="me-edit" type="button" @click="info = true" aria-label="ویرایش اطلاعات">
+                                    {% include "components/icon.html" with name="pencil" size="16" %}
+                                </button>
+                            </div>
+                            <a class="me-hero__public" href="{% url 'artist' profile.slug %}">پروفایل عمومی</a>
+                        </div>
+                        {% if profile.arts %}
+                            <ul class="me-arts">
+                                {% for slug in profile.arts %}
+                                    <li class="art-{{ slug }}">
+                                        {% include "components/art_icon.html" with slug=slug size="14" %}
+                                        <span>{{ slug|art_title }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنری ثبت نشده.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+            <div class="report-modal" x-show="info" x-cloak x-effect="document.body.classList.toggle('is-report-open', info)" @keydown.escape.window="info = false">
+                <div class="report-modal__backdrop" @click="info = false"></div>
+                <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="hero-info-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="hero-info-title">اطلاعات اصلی</h2>
+                        <button class="report-modal__close" type="button" @click="info = false" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <form class="support-form" method="post" action="{% url 'me-profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="hero">
+                        <label class="mb-4 block">
+                            <span class="field-label">نام</span>
+                            <input class="field" type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" autocomplete="given-name" maxlength="60">
+                            {% if form.first_name.errors %}<p class="me-error">{{ form.first_name.errors.0 }}</p>{% endif %}
+                        </label>
+                        <label class="mb-4 block">
+                            <span class="field-label">نام خانوادگی</span>
+                            <input class="field" type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" autocomplete="family-name" maxlength="60">
+                            {% if form.last_name.errors %}<p class="me-error">{{ form.last_name.errors.0 }}</p>{% endif %}
+                        </label>
+                        <label class="mb-4 block">
+                            <span class="field-label">نام هنری</span>
+                            <input class="field" type="text" name="name" value="{{ form.name.value|default:'' }}" maxlength="120">
+                            {% if form.name.errors %}<p class="me-error">{{ form.name.errors.0 }}</p>{% endif %}
+                        </label>
+                        <fieldset class="mb-4">
+                            <legend class="field-label">هنرها</legend>
+                            <p class="mb-3 text-xs leading-[18px] text-muted-foreground">هنرهایی که در آن‌ها کار می‌کنید یا به آن‌ها علاقه دارید.</p>
+                            <div class="art-picker-wrap">{{ form.arts }}</div>
+                        </fieldset>
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="submit">ذخیره</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="profile-pane" :class="{ 'is-on': tab === 'roles' }">
-                {% if role_links %}
-                    <ul class="support-list">
-                        {% for link in role_links %}
-                            <li class="support-item">
-                                <div class="support-item__head">
-                                    <h2>{{ link.role.title }}</h2>
-                                    {% if link.is_primary %}<span>اصلی</span>{% endif %}
-                                </div>
-                                <p>{{ link.role.group }}</p>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز نقشی ثبت نشده. با افزودن نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
-                {% endif %}
-            </div>
-            <div class="profile-pane" :class="{ 'is-on': tab === 'credits' }">
-                {% if profile.credits.all %}
-                    <ul class="support-list">
-                        {% for credit in profile.credits.all %}
-                            <li class="support-item">
-                                <div class="support-item__head">
-                                    <h2>{{ credit.title }}</h2>
-                                    {% if credit.year %}<span>{{ credit.year }}</span>{% endif %}
-                                </div>
-                                {% if credit.role_name %}<p>{{ credit.role_name }}</p>{% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز سابقه‌ای ثبت نشده.</p>
-                {% endif %}
-            </div>
-            <div class="profile-pane" :class="{ 'is-on': tab === 'media' }">
-                {% if profile.media_items.all %}
-                    <ul class="grid grid-cols-2 gap-3">
-                        {% for item in profile.media_items.all %}
-                            {% media_src item.file.name item.is_public item.public_acl "" item.kind as src %}
-                            {% media_src item.thumbnail.name item.is_public item.public_acl "" "photo" as thumb %}
-                            {% if src %}
-                                <li class="{% if item.kind != 'photo' %}col-span-2{% endif %}">
-                                    {% include "components/media/player.html" with kind=item.kind label=item.label src=src thumb=thumb %}
-                                </li>
+
+            <div class="me-grid">
+                <div class="me-stack">
+                    <section class="me-card" id="about">
+                        <div class="me-card__head">
+                            <h2>اطلاعات</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'about'" aria-label="ویرایش اطلاعات تکمیلی">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
+                        </div>
+                        {% if profile.about %}
+                                <p class="me-about">{{ profile.about }}</p>
                             {% else %}
-                                <li class="support-item">
-                                    <div class="support-item__head">
-                                        <h2>{% if item.label %}{{ item.label }}{% else %}بدون عنوان{% endif %}</h2>
-                                        <span>{{ item.kind|media_label }}</span>
-                                    </div>
-                                </li>
+                                <p class="me-note">هنوز توضیحی نوشته نشده.</p>
                             {% endif %}
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="mt-2 text-sm leading-[22px] text-muted-foreground">هنوز مدیایی ثبت نشده.</p>
-                {% endif %}
+                            <dl class="me-facts">
+                                <div>
+                                    <dt>شهر</dt>
+                                    <dd>{% if profile.city %}{{ profile.city }}{% else %}ثبت نشده{% endif %}</dd>
+                                </div>
+                                <div>
+                                    <dt>تاریخ تولد</dt>
+                                    <dd>{% if profile.birth_date %}{{ profile.birth_date|jalali }}{% else %}ثبت نشده{% endif %}</dd>
+                                </div>
+                                <div>
+                                    <dt>جنسیت</dt>
+                                    <dd>{% if profile.gender %}{{ profile.gender|gender_label }}{% else %}ثبت نشده{% endif %}</dd>
+                                </div>
+                                <div>
+                                    <dt>وضعیت</dt>
+                                    <dd>{% status_chip profile.status profile.status|status_label %}</dd>
+                                </div>
+                            </dl>
+                    </section>
+
+                    <section class="me-card" id="roles">
+                        <div class="me-card__head">
+                            <h2>نقش‌ها</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'roles'" aria-label="ویرایش نقش‌ها">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
+                        </div>
+                        {% if role_links %}
+                            <ul class="me-list">
+                                {% for link in role_links %}
+                                    <li>
+                                        <p class="me-role">{% if link.role.group %}{{ link.role.group }} | {% endif %}{{ link.role.title }}</p>
+                                        {% if link.is_primary %}<span class="me-badge">اصلی</span>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز نقشی ثبت نشده. با افزودن نقش، پروفایل در فهرست هنرمندان دیده می‌شود.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="me-card" id="credits">
+                        <div class="me-card__head">
+                            <h2>سوابق</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'credits'" aria-label="ویرایش سوابق">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
+                        </div>
+                        {% if credits %}
+                            <ul class="me-list">
+                                {% for credit in credits %}
+                                    <li>
+                                        <div>
+                                            <strong>{{ credit.title }}</strong>
+                                            {% if credit.role_name or credit.role %}<span>{% if credit.role %}{{ credit.role.title }}{% endif %}{% if credit.role and credit.role_name %} · {% endif %}{{ credit.role_name }}</span>{% endif %}
+                                        </div>
+                                        {% if credit.year %}<em>{{ credit.year }}</em>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز سابقه‌ای ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="me-card" id="media">
+                        <div class="me-card__head">
+                            <h2>مدیا</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'media'" aria-label="ویرایش مدیا">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
+                        </div>
+                        {% if media_error %}<p class="me-error">{{ media_error }}</p>{% endif %}
+                        {% if media_items %}
+                            <div class="me-slides" {% if media_items|length > 1 %}x-data="{ i: 0, n: {{ media_items|length }}, fa(v) { return String(v).replace(/\d/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'[d]; }); } }"{% endif %}>
+                                {% for item in media_items %}
+                                    {% media_src item.file.name item.is_public item.public_acl "" item.kind as src %}
+                                    {% media_src item.thumbnail.name item.is_public item.public_acl "" "photo" as thumb %}
+                                    <div class="me-slides__item" {% if media_items|length > 1 and not forloop.first %}x-show="i === {{ forloop.counter0 }}" x-cloak{% elif media_items|length > 1 %}x-show="i === 0"{% endif %}>
+                                        {% if src %}
+                                            {% include "components/media/player.html" with kind=item.kind label="" src=src thumb=thumb %}
+                                        {% else %}
+                                            <p class="me-note">{{ item.kind|media_label }}</p>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                {% if media_items|length > 1 %}
+                                    <div class="me-slides__nav">
+                                        <button type="button" @click="i = (i + n - 1) % n" aria-label="قبلی">
+                                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                                        </button>
+                                        <span x-text="fa(i + 1) + ' / ' + fa(n)"></span>
+                                        <button class="is-next" type="button" @click="i = (i + 1) % n" aria-label="بعدی">
+                                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="me-note">هنوز مدیایی ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+                </div>
+
+                <div class="me-stack">
+                    <section class="me-card" id="skills">
+                        <div class="me-card__head">
+                            <h2>مهارت‌ها</h2>
+                            <button class="me-edit" type="button" @click="sheet = 'skills'" aria-label="ویرایش مهارت‌ها">
+                                {% include "components/icon.html" with name="pencil" size="16" %}
+                            </button>
+                        </div>
+                        {% if skill_links %}
+                            <ul class="me-skills">
+                                {% for link in skill_links %}
+                                    <li>
+                                        <span>{{ link.skill.title }}</span>
+                                        <span class="skill-dots" aria-label="سطح {{ link.level }}">{% for n in "12345" %}<i class="{% if link.level|stringformat:"s" >= n %}is-on{% endif %}"></i>{% endfor %}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز مهارتی ثبت نشده.</p>
+                        {% endif %}
+                    </section>
+
+                    <section class="me-card" id="contact">
+                        <div class="me-card__head">
+                            <h2>اطلاعات تماس</h2>
+                        </div>
+                        <dl class="me-facts">
+                            <div>
+                                <dt>موبایل</dt>
+                                <dd dir="ltr">{% if profile.mobile %}{{ profile.mobile|phone_fa }}{% else %}ثبت نشده{% endif %}</dd>
+                            </div>
+                        </dl>
+                        <p class="me-note">راه‌های دیگر تماس به‌زودی به این بخش اضافه می‌شود.</p>
+                    </section>
+                </div>
+            </div>
+
+            <div class="report-modal" x-show="sheet === 'about'" x-cloak @keydown.escape.window="sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel" role="dialog" aria-modal="true" aria-labelledby="about-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="about-sheet-title">اطلاعات</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <form class="support-form" method="post" action="{% url 'me-profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="about">
+                        <label class="mb-4 block">
+                            <span class="field-label">شهر</span>
+                            <select class="field field-select" name="city">
+                                <option value="">انتخاب شهر</option>
+                                {% for city in form.fields.city.queryset %}
+                                    <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="mb-4 block">
+                            <span class="field-label">تاریخ تولد</span>
+                            {{ form.birth_date }}
+                            {% if form.birth_date.errors %}<p class="me-error">{{ form.birth_date.errors.0 }}</p>{% endif %}
+                        </label>
+                        <fieldset class="mb-4">
+                            <legend class="field-label">جنسیت</legend>
+                            {{ form.gender }}
+                        </fieldset>
+                        <label class="mb-4 block">
+                            <span class="field-label">درباره</span>
+                            <textarea class="field" style="min-height: 7rem" name="about" rows="4">{{ form.about.value|default:'' }}</textarea>
+                        </label>
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="submit">ذخیره</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="report-modal" x-show="sheet === 'roles'" x-cloak @keydown.escape.window="if (!$event.target.closest('.skill-modal')) sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="roles-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="roles-sheet-title">نقش‌ها</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <form method="post" action="{% url 'me-profile' %}" data-autosave="1">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="roles">
+                        {% include "components/role_picker.html" with quiet=1 layout="table" %}
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="role">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="report-modal" x-show="sheet === 'credits'" x-cloak @keydown.escape.window="if (!$event.target.closest('.skill-modal')) sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="credits-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="credits-sheet-title">سوابق</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <form method="post" action="{% url 'me-profile' %}" data-autosave="1">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="credits">
+                        {{ credit_formset.management_form }}
+                        <table class="me-sheet">
+                            <thead>
+                                <tr>
+                                    <th>عنوان</th>
+                                    <th>نقش</th>
+                                    <th>سال</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="credit-rows">
+                                {% for row in credit_formset %}
+                                    <tr {% if row.delete.value %}hidden{% endif %} {% if row.errors %}data-credit-invalid{% endif %}>
+                                        <td>
+                                            <span data-row-summary>{{ row.title.value|default:"بدون عنوان" }}</span>
+                                            <input type="hidden" name="{{ row.credit_id.html_name }}" value="{{ row.credit_id.value|default:'' }}">
+                                            <input type="hidden" name="{{ row.title.html_name }}" value="{{ row.title.value|default:'' }}">
+                                            <input type="hidden" name="{{ row.role.html_name }}" value="{{ row.role.value|default:'' }}">
+                                            <input type="hidden" name="{{ row.role_name.html_name }}" value="{{ row.role_name.value|default:'' }}">
+                                            <input type="hidden" name="{{ row.year.html_name }}" value="{{ row.year.value|default:'' }}">
+                                            {% for error in row.non_field_errors %}<p class="me-error" data-row-error hidden>{{ error }}</p>{% endfor %}
+                                        </td>
+                                        <td><span data-row-summary>{{ row.role_name.value|default:"—" }}</span></td>
+                                        <td><span data-row-summary>{{ row.year.value|default:"—" }}</span></td>
+                                        <td class="me-sheet__actions">
+                                            <button class="me-icon-btn" type="button" data-row-edit aria-label="ویرایش">
+                                                {% include "components/icon.html" with name="pencil" size="16" %}
+                                            </button>
+                                            <button class="me-icon-btn is-danger" type="button" data-repeat-remove aria-label="حذف">
+                                                {% include "components/icon.html" with name="trash" size="16" %}
+                                            </button>
+                                            <input type="checkbox" name="{{ row.delete.html_name }}" data-repeat-delete {% if row.delete.value %}checked{% endif %} hidden>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <template id="credit-empty">
+                            <tr class="is-new" hidden>
+                                <td>
+                                    <span data-row-summary></span>
+                                    <input type="hidden" name="{{ credit_formset.empty_form.credit_id.html_name }}" value="">
+                                    <input type="hidden" name="{{ credit_formset.empty_form.title.html_name }}" value="">
+                                    <input type="hidden" name="{{ credit_formset.empty_form.role.html_name }}" value="">
+                                    <input type="hidden" name="{{ credit_formset.empty_form.role_name.html_name }}" value="">
+                                    <input type="hidden" name="{{ credit_formset.empty_form.year.html_name }}" value="">
+                                </td>
+                                <td><span data-row-summary></span></td>
+                                <td><span data-row-summary></span></td>
+                                <td></td>
+                            </tr>
+                        </template>
+                        <div class="credit-editor" data-credit-editor hidden>
+                            <label class="credit-editor__field">
+                                <span class="field-label">عنوان</span>
+                                <input class="field" type="text" data-credit-title maxlength="160" autocomplete="off">
+                            </label>
+                            <label class="credit-editor__field">
+                                <span class="field-label">نقش</span>
+                                <input class="field credit-editor__role" type="text" data-credit-role readonly placeholder="انتخاب نقش" autocomplete="off">
+                            </label>
+                            <label class="credit-editor__field credit-editor__year">
+                                <span class="field-label">سال</span>
+                                <input class="field" type="text" data-credit-year maxlength="20" inputmode="numeric" autocomplete="off">
+                            </label>
+                            <p class="me-error" data-credit-error hidden></p>
+                            <div class="me-form__actions">
+                                <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-credit-save>ذخیره</button>
+                            </div>
+                        </div>
+                        <button type="button" data-repeat-add="credit" aria-label="افزودن سابقه" hidden></button>
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="credit">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="report-modal" x-show="sheet === 'media'" x-cloak @keydown.escape.window="if (!$event.target.closest('.file-modal')) sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="media-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="media-sheet-title">مدیا</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    {% if media_error %}<p class="me-error">{{ media_error }}</p>{% endif %}
+                    <form method="post" action="{% url 'me-profile' %}" hidden>
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="media">
+                        <input type="hidden" name="media_action" value="add">
+                        <input type="hidden" name="label" value="" data-file-label>
+                        {% include "components/media/upload_control.html" with purpose="profile" kind="photo" target=profile.pk name="upload_id" autosubmit=1 layout="inline" pick_icon="plus" pick_label="افزودن فایل" %}
+                    </form>
+                    <table class="me-sheet">
+                        <thead>
+                            <tr>
+                                <th>تصویر</th>
+                                <th>نوع</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in media_items %}
+                                {% media_src item.file.name item.is_public item.public_acl "" item.kind as src %}
+                                {% media_src item.thumbnail.name item.is_public item.public_acl "" "photo" as thumb %}
+                                <tr>
+                                    <td class="me-sheet__thumb">
+                                        {% if thumb or item.kind == "photo" %}
+                                            <img src="{{ thumb|default:src }}" alt="">
+                                        {% elif item.kind == "video" and src %}
+                                            <video src="{{ src }}" muted playsinline preload="metadata"></video>
+                                        {% else %}
+                                            <span>{{ item.kind|media_label }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.kind|media_label }}</td>
+                                    <td class="me-sheet__actions">
+                                        <form method="post" action="{% url 'me-profile' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="section" value="media">
+                                            <input type="hidden" name="media_action" value="replace">
+                                            <input type="hidden" name="media_id" value="{{ item.pk }}">
+                                            <input type="hidden" name="label" value="{{ item.label }}" data-file-label>
+                                            {% with preview=thumb|default:src %}
+                                                {% include "components/media/upload_control.html" with purpose="profile" kind=item.kind target=profile.pk name="upload_id" replacing=item.pk initial_url=preview autosubmit=1 layout="inline" pick_label="ویرایش" remove_label="حذف" %}
+                                            {% endwith %}
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3">هنوز مدیایی ثبت نشده.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="me-form__actions">
+                        <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="media">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-modal" x-show="sheet === 'skills'" x-cloak @keydown.escape.window="if (!$event.target.closest('.skill-modal')) sheet = ''">
+                <div class="report-modal__backdrop" @click="sheet = ''"></div>
+                <div class="report-modal__panel report-modal__panel--sheet" role="dialog" aria-modal="true" aria-labelledby="skills-sheet-title" @click.stop>
+                    <div class="report-modal__top">
+                        <h2 id="skills-sheet-title">مهارت‌ها</h2>
+                        <button class="report-modal__close" type="button" @click="sheet = ''" aria-label="بستن">
+                            {% include "components/icon.html" with name="x" size="20" %}
+                        </button>
+                    </div>
+                    <form method="post" action="{% url 'me-profile' %}" data-autosave="1">
+                        {% csrf_token %}
+                        <input type="hidden" name="section" value="skills">
+                        {% include "components/skill_picker.html" with quiet=1 layout="table" %}
+                        <div class="me-form__actions">
+                            <button class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" type="button" data-sheet-add="skill">{% include "components/icon.html" with name="plus" size="16" %}افزودن</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+        <script>
+            function creditEditor() {
+                return document.querySelector("[data-credit-editor]");
+            }
+            function roleLabel(id, fallback) {
+                var node = document.getElementById("role-catalog");
+                if (!node || !id) return fallback || "";
+                var catalog = [];
+                try { catalog = JSON.parse(node.textContent); } catch (error) { return fallback || ""; }
+                var found = null;
+                catalog.forEach(function (role) {
+                    if (String(role.id) === String(id)) found = role;
+                });
+                if (!found) return fallback || "";
+                return found.category ? found.category + " | " + found.title : found.title;
+            }
+            function openCreditEditor(row) {
+                var editor = creditEditor();
+                if (!editor || !row) return;
+                editor._row = row;
+                editor.hidden = false;
+                editor.querySelector("[data-credit-title]").value = row.querySelector("input[name$='-title']").value;
+                editor.querySelector("[data-credit-year]").value = row.querySelector("input[name$='-year']").value;
+                var roleId = row.querySelector("input[name$='-role']").value;
+                var roleName = row.querySelector("input[name$='-role_name']").value;
+                editor.querySelector("[data-credit-role]").value = roleLabel(roleId, roleName);
+                var error = editor.querySelector("[data-credit-error]");
+                var rowError = row.querySelector("[data-row-error]");
+                error.hidden = !rowError;
+                error.textContent = rowError ? rowError.textContent : "";
+                editor.querySelector("[data-credit-title]").focus();
+            }
+            function saveCreditEditor() {
+                var editor = creditEditor();
+                var row = editor && editor._row;
+                if (!row) return;
+                var title = editor.querySelector("[data-credit-title]").value.trim();
+                var year = editor.querySelector("[data-credit-year]").value.trim();
+                var roleName = row.querySelector("input[name$='-role_name']").value.trim();
+                var error = editor.querySelector("[data-credit-error]");
+                if (!title || !roleName) {
+                    error.hidden = false;
+                    error.textContent = "عنوان و نقش را وارد کنید.";
+                    return;
+                }
+                row.querySelector("input[name$='-title']").value = title;
+                row.querySelector("input[name$='-year']").value = year;
+                error.hidden = true;
+                var form = row.closest("form");
+                if (form) form.requestSubmit();
+            }
+            var invalidCredit = document.querySelector("#credit-rows tr[data-credit-invalid]");
+            if (invalidCredit) openCreditEditor(invalidCredit);
+            document.addEventListener("click", function (event) {
+                var opener = event.target.closest("[data-sheet-add]");
+                if (opener) {
+                    var kind = opener.getAttribute("data-sheet-add");
+                    var target = null;
+                    if (kind === "media") target = document.querySelector("[aria-label='افزودن فایل']");
+                    else if (kind === "credit") target = document.querySelector("[data-repeat-add='credit']");
+                    else target = opener.closest("form").querySelector("[data-" + kind + "-open]");
+                    if (target) target.click();
+                    return;
+                }
+                var rolePick = event.target.closest(".credit-editor__field");
+                if (rolePick && rolePick.querySelector("[data-credit-role]")) {
+                    event.preventDefault();
+                    var editor = creditEditor();
+                    var row = editor && editor._row;
+                    if (!row || !window.honarPickRole) return;
+                    window.honarPickRole(function (role) {
+                        var label = role.category ? role.category + " | " + role.title : role.title;
+                        editor.querySelector("[data-credit-role]").value = label;
+                        row.querySelector("input[name$='-role']").value = String(role.id);
+                        row.querySelector("input[name$='-role_name']").value = role.title;
+                    });
+                    return;
+                }
+                if (event.target.closest("[data-credit-save]")) {
+                    saveCreditEditor();
+                    return;
+                }
+                var edit = event.target.closest("[data-row-edit]");
+                if (edit) {
+                    var creditRow = edit.closest("#credit-rows tr");
+                    if (creditRow) openCreditEditor(creditRow);
+                    else edit.closest("tr").classList.toggle("is-editing");
+                    return;
+                }
+                var remove = event.target.closest("[data-repeat-remove]");
+                if (remove) {
+                    var row = remove.closest("tr");
+                    var apply = function () {
+                        var box = row.querySelector("[data-repeat-delete]");
+                        if (box) box.checked = true;
+                        var form = row.closest("form");
+                        if (form && form.getAttribute("data-autosave") === "1") form.requestSubmit();
+                        else row.hidden = true;
+                    };
+                    if (window.honarAskRemove) window.honarAskRemove(apply, "حذف سابقه", "این سابقه حذف شود؟");
+                    else apply();
+                    return;
+                }
+                var add = event.target.closest("[data-repeat-add]");
+                if (!add) return;
+                var prefix = add.getAttribute("data-repeat-add");
+                var total = document.getElementById("id_" + prefix + "-TOTAL_FORMS");
+                var template = document.getElementById(prefix + "-empty");
+                var body = document.getElementById(prefix + "-rows");
+                if (!total || !template || !body) return;
+                if (prefix === "credit") {
+                    var editor = creditEditor();
+                    if (editor && !editor.hidden && editor._row && editor._row.classList.contains("is-new")) {
+                        editor.querySelector("[data-credit-title]").focus();
+                        return;
+                    }
+                }
+                var index = total.value;
+                body.insertAdjacentHTML("beforeend", template.innerHTML.replaceAll("__prefix__", index));
+                total.value = String(Number(index) + 1);
+                if (prefix === "credit") openCreditEditor(body.lastElementChild);
+            }, true);
+            document.addEventListener("change", function (event) {
+                var form = event.target.closest("form[data-autosave]");
+                if (!form || form.querySelector("[data-skill-picker], [data-role-picker], #credit-rows")) return;
+                window.setTimeout(function () { form.requestSubmit(); }, 0);
+            }, true);
+        </script>
     {% endif %}
 {% endblock %}

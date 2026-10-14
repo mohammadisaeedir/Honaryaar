@@ -27,7 +27,7 @@
 
 .jalali-panel {
     position: fixed;
-    z-index: 200;
+    z-index: 4200;
     width: 280px;
     padding: 12px;
     border: 1px solid #e7e4e2;

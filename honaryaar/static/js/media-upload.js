@@ -17,8 +17,15 @@
     function kindOf(box) {
         if (box.dataset.fixedKind) return box.dataset.kind || "photo";
         var row = box.closest("tr");
-        var select = row && row.querySelector("select");
+        var select = row && row.querySelector("select[name$='-kind'], select[name='kind']");
         return (select && select.value) || box.dataset.kind || "photo";
+    }
+
+    function kindFromFile(file) {
+        var type = (file && file.type) || "";
+        if (type.indexOf("video/") === 0) return "video";
+        if (type.indexOf("audio/") === 0) return "audio";
+        return "photo";
     }
 
     function limitOf(box, kind) {
@@ -108,7 +115,95 @@
         });
     }
 
+    function removeField(box) {
+        var name = box.dataset.removeName;
+        if (!name) return null;
+        var form = box.closest("form");
+        if (!form || !window.CSS || !CSS.escape) return form && form.querySelector("[name='" + name + "']");
+        return form.querySelector("[data-file-remove-field][name='" + CSS.escape(name) + "']");
+    }
+
+    function syncRemove(box) {
+        var button = box.querySelector("[data-remove-file]");
+        if (!button) return;
+        var preview = box.querySelector("[data-preview]");
+        var flag = removeField(box);
+        var gone = flag && flag.value === "1";
+        button.hidden = gone || !preview || !preview.children.length;
+    }
+
+    function fileModal(title, text) {
+        var node = document.querySelector("[data-file-modal]");
+        if (!node) {
+            node = document.createElement("div");
+            node.className = "file-modal";
+            node.hidden = true;
+            node.setAttribute("data-file-modal", "");
+            node.innerHTML = '<div class="file-modal__backdrop" data-file-cancel></div><div class="file-modal__sheet" role="dialog" aria-modal="true" aria-labelledby="file-modal-title"><h2 id="file-modal-title"></h2><p></p><div class="file-modal__actions"><button type="button" data-file-confirm>حذف</button><button type="button" data-file-cancel>انصراف</button></div></div>';
+            document.body.appendChild(node);
+        }
+        node.querySelector("h2").textContent = title || "حذف فایل";
+        node.querySelector("p").textContent = text || "این فایل حذف شود؟";
+        return node;
+    }
+
+    function askRemove(done, title, text) {
+        var node = fileModal(title, text);
+        node.hidden = false;
+        function finish(confirm) {
+            node.hidden = true;
+            node.removeEventListener("click", onClick);
+            document.removeEventListener("keydown", onKey);
+            if (confirm) done();
+        }
+        function onClick(event) {
+            if (event.target.closest("[data-file-confirm]")) finish(true);
+            else if (event.target.closest("[data-file-cancel]")) finish(false);
+        }
+        function onKey(event) {
+            if (event.key !== "Escape") return;
+            event.stopPropagation();
+            finish(false);
+        }
+        node.addEventListener("click", onClick);
+        document.addEventListener("keydown", onKey);
+    }
+
+    window.honarAskRemove = askRemove;
+
+    function applyRemove(box) {
+        var form = box.closest("form");
+        var action = form && form.querySelector("[name='media_action']");
+        if (action) {
+            action.value = "delete";
+            clearUpload(box);
+            preview(box, "", "");
+            syncRemove(box);
+            if (box.dataset.autosubmit && form) form.requestSubmit();
+            return;
+        }
+        var flag = removeField(box);
+        if (flag) {
+            flag.value = "1";
+            clearUpload(box);
+            preview(box, "", "");
+            syncRemove(box);
+            if (box.dataset.autosubmit && form) form.requestSubmit();
+            return;
+        }
+        var row = box.closest("tr");
+        var checkbox = row && row.querySelector("input.delete, input[name$='-DELETE']");
+        if (checkbox) {
+            checkbox.checked = true;
+            checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            return;
+        }
+        var fresh = row && row.querySelector(".delete-template");
+        if (fresh) fresh.click();
+    }
+
     async function upload(box, file) {
+        if (!box.dataset.fixedKind) box.dataset.kind = kindFromFile(file);
         var kind = kindOf(box);
         var limit = limitOf(box, kind);
         if (!file || !file.size) throw new Error("فایل خالی است.");
@@ -136,7 +231,7 @@
         var input = box.querySelector("[data-file]");
         var select = box.closest("tr") && box.closest("tr").querySelector("select");
         function accept() {
-            if (!box.dataset.fixedKind) input.accept = kinds[kindOf(box)] || "";
+            if (!box.dataset.fixedKind) input.accept = Object.keys(kinds).map(function (key) { return kinds[key]; }).join(",");
         }
         accept();
         if (select) {
@@ -149,11 +244,25 @@
                 }
             });
         }
+        var pick = box.querySelector("[data-pick]");
+        if (pick) {
+            pick.addEventListener("click", function () {
+                input.click();
+            });
+        }
+        var removeBtn = box.querySelector("[data-remove-file]");
+        if (removeBtn) {
+            removeBtn.addEventListener("click", function () {
+                askRemove(function () { applyRemove(box); });
+            });
+        }
         input.addEventListener("change", async function () {
             var file = input.files && input.files[0];
             input.value = "";
             if (!file) return;
             showError(box, "");
+            var flag = removeField(box);
+            if (flag) flag.value = "";
             setBusy(box, true);
             var last = "بارگذاری انجام نشد. دوباره تلاش کنید.";
             for (var attempt = 0; attempt < 2; attempt += 1) {
@@ -169,6 +278,14 @@
             setBusy(box, false);
             box.querySelector("[data-bar]").hidden = true;
             showError(box, last);
+            syncRemove(box);
+            if (last || !box.dataset.autosubmit) return;
+            var form = box.closest("form");
+            var label = form && form.querySelector("[data-file-label]");
+            if (label && !label.value && file.name) {
+                label.value = file.name.replace(/\.[^.]+$/, "").slice(0, 160);
+            }
+            if (form) form.requestSubmit();
         });
     }
 

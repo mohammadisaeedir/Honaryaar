@@ -58,11 +58,7 @@
                 <div class="mb-4">
                     <span class="field-label">تصویر</span>
                     {% media_src project.image_thumb.name 0 0 project.image.name "photo" as current_image %}
-                    {% include "components/media/upload_control.html" with purpose="project" kind="photo" fixed=1 target=project.pk name="image_upload" initial_url=current_image %}
-                    <label class="mt-3 flex items-center gap-2 text-xs leading-[18px]">
-                        <input type="checkbox" name="image_remove" value="1">
-                        حذف تصویر
-                    </label>
+                    {% include "components/media/upload_control.html" with purpose="project" kind="photo" fixed=1 target=project.pk name="image_upload" initial_url=current_image remove_name="image_remove" %}
                 </div>
                 <label class="mb-4 block">
                     <span class="field-label">وضعیت</span>

@@ -3,7 +3,7 @@
     gap: 8px;
 }
 
-.media-upload__preview:empty {
+.media-upload__preview:not(:has(img, video, audio)) {
     display: none;
 }
 
@@ -17,7 +17,11 @@
     background: #f6f4ef;
 }
 
-.media-upload__pick input {
+.media-upload {
+    position: relative;
+}
+
+.media-upload__file {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -25,18 +29,183 @@
     clip: rect(0 0 0 0);
 }
 
-.media-upload__pick span {
+.media-upload__actions {
+    display: flex;
+    gap: 6px;
+}
+
+.media-upload:not(.media-upload--cover):not(.media-upload--avatar) .media-upload__preview:has(img, video, audio) + .media-upload__actions {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 8px;
+    z-index: 2;
+}
+
+.media-upload__icon {
     display: inline-flex;
     align-items: center;
-    min-height: 36px;
-    padding: 0 12px;
-    border: 1px solid #d9dfe7;
-    border-radius: 8px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
     background: #fff;
-    color: #252b32;
-    font-size: 12px;
+    color: #485462;
+    box-shadow: 0 1px 4px rgba(23, 19, 26, 0.16);
+    cursor: pointer;
+}
+
+.media-upload__icon:hover { color: #c13281; }
+
+.media-upload__icon--danger:hover { color: #ef3b2e; }
+
+.media-upload--inline {
+    display: inline-flex;
+}
+
+.media-upload--inline .media-upload__actions {
+    position: static;
+}
+
+.media-upload--slide .media-upload__preview img,
+.media-upload--slide .media-upload__preview video {
+    max-height: 280px;
+}
+
+.media-upload--cover {
+    z-index: 0;
+}
+
+.media-upload--cover .media-upload__preview {
+    display: block;
+    height: 168px;
+    overflow: hidden;
+    background: linear-gradient(120deg, #ead7e4 0%, #d9e2ec 55%, #f6f4ef 100%);
+}
+
+.media-upload--cover .media-upload__preview img {
+    height: 168px;
+    max-height: none;
+    border-radius: 0;
+}
+
+.media-upload--cover .media-upload__actions {
+    position: absolute;
+    top: 12px;
+    inset-inline-end: 12px;
+    z-index: 2;
+}
+
+.media-upload--avatar {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+}
+
+.media-upload--avatar .media-upload__preview,
+.media-upload--avatar .media-upload__preview img {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.media-upload--avatar .media-upload__preview img {
+    box-sizing: border-box;
+    border: 4px solid #fff;
+    box-shadow: 0 0 0 1px rgba(23, 19, 26, 0.08);
+}
+
+.media-upload--avatar .media-upload__actions {
+    position: absolute;
+    top: auto;
+    right: 0;
+    bottom: 4px;
+    left: 0;
+    z-index: 2;
+    justify-content: center;
+}
+
+.media-upload--avatar .media-upload__icon {
+    width: 28px;
+    height: 28px;
+}
+
+#media_items-group td.delete,
+#media_items-group thead th:last-child {
+    display: none;
+}
+
+#media_items-group tr.form-row:has(input.delete:checked) {
+    display: none;
+}
+
+.file-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 4100;
+    display: grid;
+    place-items: end center;
+}
+
+.file-modal[hidden] { display: none; }
+
+.file-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(23, 19, 26, 0.45);
+}
+
+.file-modal__sheet {
+    position: relative;
+    width: min(100%, 420px);
+    margin: 0 16px 24px;
+    padding: 20px 16px 16px;
+    border-radius: 16px;
+    background: #fff;
+    text-align: right;
+}
+
+.file-modal__sheet h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.file-modal__sheet p {
+    margin: 8px 0 0;
+    color: #5c6570;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.file-modal__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.file-modal__actions button {
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.file-modal__actions [data-file-confirm] {
+    background: #ef3b2e;
+    color: #fff;
+}
+
+.file-modal__actions [data-file-cancel] {
+    background: #f3f5f7;
+    color: #252b32;
 }
 
 .media-upload__bar {

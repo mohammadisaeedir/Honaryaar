@@ -2864,6 +2864,7 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 
 .profile-cover {
     position: relative;
+    z-index: 1;
     margin-bottom: 72px;
 }
 
@@ -2882,6 +2883,7 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 
 .profile-photo {
     position: absolute;
+    z-index: 2;
     inset-inline-start: 24px;
     bottom: -52px;
     width: 128px;
