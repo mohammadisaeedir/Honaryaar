@@ -422,6 +422,11 @@ class Project(models.Model):
         related_name="led_projects",
     )
     summary = models.TextField(blank=True)
+    lead_name = models.CharField(max_length=120, blank=True)
+    source_channel = models.CharField(max_length=60, blank=True)
+    source_post_id = models.PositiveIntegerField(null=True, blank=True)
+    source_url = models.URLField(max_length=300, blank=True)
+    source_posted_at = models.DateTimeField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True, verbose_name="Start date")
     featured = models.BooleanField(default=False, verbose_name="Featured")
     status = models.CharField(
@@ -435,9 +440,65 @@ class Project(models.Model):
 
     class Meta:
         ordering = ["title"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source_channel", "source_post_id"],
+                condition=models.Q(source_post_id__isnull=False),
+                name="unique_project_source_post",
+            ),
+        ]
 
     def __str__(self):
         return self.title
+
+
+_PROJECT_CONTACT_KINDS = {
+    ContactKind.PHONE,
+    ContactKind.WHATSAPP,
+    ContactKind.TELEGRAM,
+    ContactKind.INSTAGRAM,
+    ContactKind.EMAIL,
+    ContactKind.WEBSITE,
+}
+
+
+class ProjectContact(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="contacts")
+    kind = models.CharField(max_length=20, choices=ContactKind.choices)
+    value = models.CharField(max_length=200)
+    is_public = models.BooleanField(default=True)
+    position = models.PositiveSmallIntegerField(default=0)
+    source = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["project_id", "position", "id"]
+        verbose_name = "Project contact"
+        verbose_name_plural = "Project contacts"
+        constraints = [
+            models.UniqueConstraint(fields=["project", "kind", "value"], name="unique_project_contact"),
+        ]
+        indexes = [
+            models.Index(fields=["kind"]),
+        ]
+
+    def clean(self):
+        super().clean()
+        self._normalize()
+
+    def save(self, *args, **kwargs):
+        self._normalize()
+        super().save(*args, **kwargs)
+
+    def _normalize(self):
+        from honaryaar.contacts import normalize_contact
+
+        if self.kind not in _PROJECT_CONTACT_KINDS:
+            raise ValidationError({"kind": "This contact kind is not allowed on a project."})
+        self.value = normalize_contact(self.kind, self.value)
+
+    def __str__(self):
+        return f"{self.project} · {self.kind}"
 
 
 class Testimonial(models.Model):
