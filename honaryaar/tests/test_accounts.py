@@ -20,6 +20,113 @@ def catalog_json(page, element_id):
     return json.loads(html[start:html.index("</script>", start)])
 
 
+class ProductionDataSwitchTests(TestCase):
+    def test_production_database_is_read_only(self):
+        from django.core.exceptions import ImproperlyConfigured
+
+        from honaryaar.settings import production_database
+
+        params = production_database("postgresql://user:secret@ep-example.neon.tech/honaryaar?sslmode=require")
+        self.assertEqual(params["HOST"], "ep-example.neon.tech")
+        self.assertEqual(params["NAME"], "honaryaar")
+        self.assertIn("default_transaction_read_only=on", params["OPTIONS"]["options"])
+        with self.assertRaises(ImproperlyConfigured):
+            production_database("localhost")
+
+    def test_account_menu_switches_live_data_for_superuser(self):
+        from unittest.mock import patch
+
+        from django.contrib.sessions.models import Session
+
+        from honaryaar.data_source import ProductionPreviewRouter, _preview
+        from honaryaar.models import Profile
+
+        router = ProductionPreviewRouter()
+        self.assertIsNone(router.db_for_read(Profile))
+        superuser = User.objects.create_superuser("data-switch", "switch@example.com", "secret-pass")
+        self.client.force_login(superuser)
+        menu = self.client.get(reverse("admin:index"))
+        self.assertContains(menu, reverse("admin-data-source"))
+        blocked = self.client.post(reverse("admin-data-source"), {"source": "production", "next": "/admin/"})
+        self.assertEqual(blocked.status_code, 302)
+        self.assertNotIn("data_source", self.client.session)
+
+        with patch("honaryaar.data_source.production_configured", return_value=True):
+            switched = self.client.post(
+                reverse("admin-data-source"),
+                {"source": "production", "next": "/admin/honaryaar/profile/"},
+            )
+            marker = _preview.set(True)
+            try:
+                self.assertEqual(router.db_for_read(Profile), "production")
+                self.assertEqual(router.db_for_write(Profile), "production")
+                self.assertEqual(router.db_for_read(Session), "default")
+                self.assertEqual(router.db_for_write(Session), "default")
+            finally:
+                _preview.reset(marker)
+        self.assertRedirects(switched, "/admin/honaryaar/profile/", fetch_redirect_response=False)
+        self.assertEqual(self.client.session["data_source"], "production")
+
+        staff = User.objects.create_user("data-staff", "data-staff@example.com", "secret-pass", is_staff=True)
+        self.client.force_login(staff)
+        hidden = self.client.get(reverse("admin:index"))
+        self.assertNotContains(hidden, reverse("admin-data-source"))
+        denied = self.client.post(reverse("admin-data-source"), {"source": "production"})
+        self.assertEqual(denied.status_code, 403)
+
+
+class AdminTableOrderTests(TestCase):
+    def test_changelists_show_id_and_newest_first(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+
+        from honaryaar.admin import CreditInline
+        from honaryaar.models import City, Profile
+
+        user = User.objects.create_superuser("table-order", "table@example.com", "secret-pass")
+        request = RequestFactory().get("/admin/")
+        request.user = user
+        for model, model_admin in admin.site._registry.items():
+            self.assertEqual(model_admin.get_list_display(request)[0], "row_id", model._meta.label)
+            self.assertEqual(model_admin.get_ordering(request), ("-pk",), model._meta.label)
+
+        inline = CreditInline(Profile, admin.site)
+        self.assertEqual(inline.get_fields(request)[0], "row_id")
+        self.assertEqual(inline.get_ordering(request), ("-pk",))
+
+        self.client.force_login(user)
+        older = City.objects.create(title="Older city", slug="older-city", priority=1)
+        newer = City.objects.create(title="Newer city", slug="newer-city", priority=100)
+        page = self.client.get(reverse("admin:honaryaar_city_changelist"))
+        html = page.content.decode()
+        self.assertContains(page, "column-row_id")
+        self.assertLess(html.index(f'value="{newer.pk}"'), html.index(f'value="{older.pk}"'))
+
+
+class DocumentErdTests(TestCase):
+    def test_erd_is_listed_and_built_from_current_models(self):
+        from honaryaar.erd import render_erd
+
+        page = render_erd()
+        self.assertIn("ProfileContact", page)
+        self.assertIn('Profile ||--o{ ProfileContact : "profile"', page)
+        self.assertIn("PendingUpload", page)
+        self.assertIn("کلید عمومی", page)
+
+        user = User.objects.create_superuser("erd-reader", "erd@example.com", "secret-pass")
+        self.client.force_login(user)
+        listing = self.client.get(reverse("admin-documents"))
+        self.assertContains(listing, "Entity relationship")
+        self.assertContains(listing, reverse("admin-document", args=["erd"]))
+        document = self.client.get(reverse("admin-document", args=["erd"]))
+        self.assertContains(document, "ProfileContact")
+
+        other = User.objects.create_user("erd-staff", "staff-erd@example.com", "secret-pass", is_staff=True)
+        self.client.force_login(other)
+        denied = self.client.get(reverse("admin-documents"))
+        self.assertEqual(denied.status_code, 403)
+
+
 class AccountIdentityTests(TestCase):
     def test_registration_stores_phone_apart_from_username(self):
         response = self.client.post(reverse("login"), {"phone": "۰۹۱۲۳۴۵۶۷۸۹"})

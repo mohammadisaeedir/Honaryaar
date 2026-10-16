@@ -12,8 +12,11 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import mimetypes
 import os
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 
 mimetypes.add_type("application/wasm", ".wasm", strict=True)
 mimetypes.add_type("font/woff2", ".woff2", strict=True)
@@ -270,6 +273,7 @@ MIDDLEWARE = [
     'honaryaar.digits.PersianDigitsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'honaryaar.data_source.ProductionPreviewMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -346,6 +350,30 @@ def _neon_database():
     }
 
 
+def production_database(raw):
+    """Connection for the live database. The session cannot write."""
+    parsed = urlparse((raw or "").strip())
+    database = unquote((parsed.path or "").lstrip("/"))
+    if parsed.scheme not in {"postgres", "postgresql"} or not parsed.hostname or not database:
+        raise ImproperlyConfigured("PROD_DATABASE_URL could not be parsed")
+    sslmode = (parse_qs(parsed.query).get("sslmode") or ["require"])[0]
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": database,
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname,
+        "PORT": str(parsed.port or 5432),
+        "OPTIONS": {
+            "sslmode": sslmode,
+            "options": "-c default_transaction_read_only=on",
+        },
+        "CONN_HEALTH_CHECKS": True,
+        "CONN_MAX_AGE": 60,
+        "DISABLE_SERVER_SIDE_CURSORS": True,
+    }
+
+
 def _database_from_env():
     # Vercel sets VERCEL=1 and injects the Neon connection. Local ignores that.
     if os.environ.get("VERCEL") == "1":
@@ -353,7 +381,15 @@ def _database_from_env():
     return _local_database()
 
 
+# The local process always opens the database on this machine. A superuser can
+# point reads at the live database from the admin account menu. That alias is
+# read-only and is absent during tests.
 DATABASES = {"default": _database_from_env()}
+_production_url = os.environ.get("PROD_DATABASE_URL", "").strip()
+if _production_url and os.environ.get("VERCEL") != "1" and "test" not in sys.argv:
+    DATABASES["production"] = production_database(_production_url)
+
+DATABASE_ROUTERS = ["honaryaar.data_source.ProductionPreviewRouter"]
 
 
 # Password validation

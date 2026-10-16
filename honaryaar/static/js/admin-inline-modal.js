@@ -71,8 +71,12 @@
                 return names.join(", ");
             }
             var input = cell.querySelector("textarea, input:not([type=hidden])");
-            if (!input) return "";
-            return input.value.replace(/\s+/g, " ").trim();
+            if (input) return input.value.replace(/\s+/g, " ").trim();
+            var clone = cell.cloneNode(true);
+            clone.querySelectorAll(".inline-add__label, .help, .errorlist").forEach(function (node) {
+                node.remove();
+            });
+            return clone.textContent.replace(/\s+/g, " ").trim();
         }
 
         function paint(group) {

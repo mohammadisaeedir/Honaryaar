@@ -99,7 +99,28 @@ class HonaryaarUserChangeForm(UserChangeForm):
 admin.site.index_title = "Honaryaar"
 
 
-class ModelAdmin(UnfoldModelAdmin):
+def _id_first(display):
+    display = list(display)
+    if "pk" in display:
+        display.remove("pk")
+    if "row_id" not in display:
+        display.insert(0, "row_id")
+    return display
+
+
+class AdminTableMixin:
+    @admin.display(description="ID", ordering="pk")
+    def row_id(self, obj):
+        return obj.pk if getattr(obj, "pk", None) else "—"
+
+    def get_list_display(self, request):
+        return _id_first(super().get_list_display(request))
+
+    def get_ordering(self, request):
+        return ("-pk",)
+
+
+class ModelAdmin(AdminTableMixin, UnfoldModelAdmin):
     def get_actions(self, request, action_location=ActionLocation.CHANGE_LIST):
         actions = super().get_actions(request, action_location=action_location)
         if not request.user.is_superuser:
@@ -150,6 +171,12 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     list_select_related = ("profile",)
     search_fields = ("username", "first_name", "last_name", "email", "profile__mobile")
 
+    def get_list_display(self, request):
+        return _id_first(super().get_list_display(request))
+
+    def get_ordering(self, request):
+        return ("-pk",)
+
     def get_readonly_fields(self, request, obj=None):
         fields = list(super().get_readonly_fields(request, obj))
         if obj is not None and "profile_mobile" not in fields:
@@ -188,7 +215,11 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(BaseGroupAdmin, ModelAdmin):
-    pass
+    def get_list_display(self, request):
+        return _id_first(super().get_list_display(request))
+
+    def get_ordering(self, request):
+        return ("-pk",)
 
 
 @admin.register(ProfileSkill)
@@ -200,26 +231,40 @@ class ProfileSkillAdmin(ModelAdmin):
     autocomplete_fields = ("profile", "skill")
 
 
-class CreditInline(TabularInline):
+class HonarInline(AdminTableMixin, TabularInline):
+    ordering = ("-pk",)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if "row_id" not in fields:
+            fields.append("row_id")
+        return fields
+
+    def get_fields(self, request, obj=None):
+        fields = [name for name in super().get_fields(request, obj) if name != "row_id"]
+        return ["row_id", *fields]
+
+
+class CreditInline(HonarInline):
     model = Credit
     extra = 0
 
 
-class ProfileRoleInline(TabularInline):
+class ProfileRoleInline(HonarInline):
     model = ProfileRole
     extra = 0
     verbose_name = "Role"
     verbose_name_plural = "Roles"
 
 
-class ProfileSkillInline(TabularInline):
+class ProfileSkillInline(HonarInline):
     model = ProfileSkill
     extra = 0
     verbose_name = "Skill"
     verbose_name_plural = "Skills"
 
 
-class ProfileContactInline(TabularInline):
+class ProfileContactInline(HonarInline):
     model = ProfileContact
     extra = 0
     fields = ("kind", "value", "is_public")
@@ -423,7 +468,7 @@ def _save_formset_media(request, formset):
     formset.save_m2m()
 
 
-class ProfileMediaInline(TabularInline):
+class ProfileMediaInline(HonarInline):
     model = ProfileMedia
     form = ProfileMediaForm
     extra = 0
@@ -757,7 +802,7 @@ class OpportunityAdminForm(forms.ModelForm):
             self.initial.setdefault("special_conditions", current)
 
 
-class OpportunityInline(TabularInline):
+class OpportunityInline(HonarInline):
     model = Opportunity
     form = OpportunityAdminForm
     extra = 0
@@ -768,7 +813,7 @@ class OpportunityInline(TabularInline):
     verbose_name_plural = "Opportunities"
 
 
-class TestimonialInline(TabularInline):
+class TestimonialInline(HonarInline):
     model = Testimonial
     form = TestimonialAdminForm
     extra = 0

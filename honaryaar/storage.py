@@ -32,6 +32,10 @@ def parspack_configured():
 
 
 def storage_prefix():
+    from honaryaar.data_source import preview_active
+
+    if preview_active():
+        return "production"
     raw = (settings.MEDIA_STORAGE_PREFIX or "").strip().strip("/")
     if not raw:
         vercel = os.environ.get("VERCEL_ENV", "")
