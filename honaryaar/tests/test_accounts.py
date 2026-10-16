@@ -124,6 +124,56 @@ class ProductionDataSwitchTests(TestCase):
         self.assertEqual(denied.status_code, 403)
 
 
+class AdminLanguageTests(TestCase):
+    def test_persian_turns_the_admin_rtl(self):
+        user = User.objects.create_superuser("lang-switch", "lang@example.com", "secret-pass")
+        self.client.force_login(user)
+        menu = self.client.get(reverse("admin:index"))
+        self.assertContains(menu, reverse("admin-language"))
+        self.assertContains(menu, "فارسی")
+        self.assertContains(menu, 'dir="ltr"')
+
+        switched = self.client.post(reverse("admin-language"), {"language": "fa", "next": "/admin/"})
+        self.assertRedirects(switched, "/admin/", fetch_redirect_response=False)
+        self.assertEqual(self.client.session["admin_lang"], "fa")
+        page = self.client.get(reverse("admin:index"))
+        self.assertContains(page, 'dir="rtl"')
+        self.assertContains(page, "پیشخوان")
+        self.assertContains(page, "شهرها")
+        self.assertContains(page, "دسته‌های هنری")
+        self.assertContains(page, "روشن")
+        self.assertNotContains(page, "Basic data")
+        cities = self.client.get(reverse("admin:honaryaar_city_changelist"))
+        self.assertContains(cities, "انتخاب شهر برای ویرایش")
+        self.assertContains(cities, "حذف شهر انتخاب‌شده")
+        self.assertNotContains(cities, "های انتخاب شده")
+
+        back = self.client.post(reverse("admin-language"), {"language": "en", "next": "/admin/"})
+        self.assertRedirects(back, "/admin/", fetch_redirect_response=False)
+        self.assertNotIn("admin_lang", self.client.session)
+        restored = self.client.get(reverse("admin:index"))
+        self.assertContains(restored, 'dir="ltr"')
+
+
+class PageViewTests(TestCase):
+    def test_opening_a_profile_counts_once_per_session(self):
+        from honaryaar.accounts import ensure_profile
+
+        from honaryaar.models import Profile
+
+        user = User.objects.create_user("page-view", "page-view@example.com", "secret-pass")
+        profile = ensure_profile(user)
+        page = self.client.get(reverse("artist", args=[profile.slug]))
+        self.assertContains(page, "بار مشاهده شده است")
+        self.assertContains(page, 'dir="ltr"')
+        profile.refresh_from_db()
+        self.assertEqual(profile.views, 1)
+        self.client.get(reverse("artist", args=[profile.slug]))
+        profile.refresh_from_db()
+        self.assertEqual(profile.views, 1)
+        self.assertEqual(Profile.objects.get(pk=profile.pk).views, 1)
+
+
 class AdminTableOrderTests(TestCase):
     def test_changelists_show_id_and_newest_first(self):
         from django.contrib import admin

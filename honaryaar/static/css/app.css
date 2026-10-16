@@ -2187,6 +2187,14 @@ body.is-filter-picker {
     margin-bottom: 16px;
 }
 
+.filter-drawer__body .jalali-date .field {
+    margin-bottom: 0;
+}
+
+.filter-drawer__body .jalali-date {
+    margin-bottom: 16px;
+}
+
 .age-slider {
     padding-bottom: 16px;
 }
@@ -2973,14 +2981,32 @@ article .fact-chips {
     flex-shrink: 0;
 }
 
+.project-card__calls {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--color-foreground);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 20px;
+}
+
 .project-card__foot {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     margin-top: auto;
     padding-top: 16px;
 }
 
+.project-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.project-card__actions > a,
 .project-card__foot > a {
     flex: 1 1 auto;
     min-width: 0;
@@ -3503,6 +3529,11 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     .catalog-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+
+    .skel-grid--3.skel-grid--stay3,
+    .catalog-grid.catalog-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 .catalog-grid {
@@ -3752,6 +3783,98 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     justify-content: space-between;
     gap: 8px;
     margin-top: auto;
+}
+
+.artist-tile__meta,
+.project-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    min-width: 0;
+}
+
+.project-card__art {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--art, currentColor);
+}
+
+.project-card__art .icon {
+    color: var(--art, currentColor);
+}
+
+.project-card__kind {
+    color: var(--color-foreground);
+    font-weight: 700;
+}
+
+.project-card__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.project-card__title h3 {
+    min-width: 0;
+    margin: 0;
+}
+
+.project-card__title .status-chip {
+    flex-shrink: 0;
+}
+
+.project-card__start {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.project-card__start .icon {
+    flex-shrink: 0;
+    color: #c13281;
+}
+
+.filter-date__hint {
+    margin: 8px 0 0;
+    color: var(--color-muted-foreground);
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.card-views {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+    color: var(--color-muted-foreground);
+    font-size: 12px;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.card-views .icon {
+    flex-shrink: 0;
+    color: #c13281;
+}
+
+.page-views {
+    margin: 16px 0 0;
+    color: var(--color-muted-foreground);
+    font-size: 13px;
+    line-height: 22px;
+}
+
+.me-stack > .page-views {
+    margin: 0 0 16px;
 }
 
 .artist-tile__city {
@@ -4542,7 +4665,29 @@ body.pf-logout-open { overflow: hidden; }
 }
 
 .project-card {
+    position: relative;
     overflow: hidden;
+}
+
+.project-card__hit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.project-card__hit:focus-visible {
+    outline: 2px solid #c13281;
+    outline-offset: 2px;
+}
+
+.project-card:has(.project-card__hit:hover) {
+    border-color: #c13281;
+}
+
+.project-card .card-mark,
+.project-card .card-mark__btn {
+    position: relative;
+    z-index: 2;
 }
 
 .project-card__media {

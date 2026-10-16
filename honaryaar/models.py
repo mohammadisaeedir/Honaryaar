@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from honaryaar.storage import MediaStorage
 
@@ -197,6 +198,7 @@ class Profile(models.Model):
         choices=ProfileStatus.choices,
         default=ProfileStatus.INDEXED,
     )
+    views = models.PositiveIntegerField(default=0)
     roles = models.ManyToManyField("Role", through="ProfileRole", related_name="profiles")
     list_image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     list_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
@@ -215,7 +217,7 @@ class Profile(models.Model):
         if raw:
             phone = normalize_phone(raw)
             if not phone:
-                raise ValidationError({"mobile": "Enter a mobile number like 09123456789."})
+                raise ValidationError({"mobile": _("Enter a mobile number like 09123456789.")})
             self.mobile = phone
         else:
             self.mobile = None
@@ -285,8 +287,8 @@ class ProfileContact(models.Model):
 
     class Meta:
         ordering = ["profile_id", "position", "id"]
-        verbose_name = "Contact"
-        verbose_name_plural = "Contacts"
+        verbose_name = "contact"
+        verbose_name_plural = "contacts"
         constraints = [
             models.UniqueConstraint(fields=["profile", "kind", "value"], name="unique_profile_contact"),
         ]
@@ -429,6 +431,7 @@ class Project(models.Model):
         choices=ProjectStatus.choices,
         default=ProjectStatus.DRAFT,
     )
+    views = models.PositiveIntegerField(default=0)
     image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_public_acl = models.BooleanField(default=False)
@@ -653,6 +656,7 @@ class Opportunity(models.Model):
         choices=OpportunityStatus.choices,
         default=OpportunityStatus.OPEN,
     )
+    views = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["title"]
@@ -922,15 +926,15 @@ class SupportTicket(models.Model):
         super().clean()
         allowed = KIND_REASON_VALUES.get(self.kind, set())
         if self.kind_reason not in allowed:
-            raise ValidationError({"kind_reason": "This reason does not belong to the selected kind."})
+            raise ValidationError({"kind_reason": _("This reason does not belong to the selected kind.")})
         has_target = bool(self.content_type_id and self.object_id)
         if self.kind == TicketKind.REPORT:
             if not has_target or self.content_type.model not in REPORT_TARGET_MODELS:
-                raise ValidationError({"content_type": "A report points at a profile, project, or opportunity."})
+                raise ValidationError({"content_type": _("A report points at a profile, project, or opportunity.")})
         elif self.content_type_id or self.object_id:
-            raise ValidationError({"content_type": "Only a report has a target."})
+            raise ValidationError({"content_type": _("Only a report has a target.")})
         if self.kind == TicketKind.TICKET and not self.user_id:
-            raise ValidationError({"user": "A ticket requires a user."})
+            raise ValidationError({"user": _("A ticket requires a user.")})
 
     def __str__(self):
         return f"{self.get_kind_display()} #{self.pk}"

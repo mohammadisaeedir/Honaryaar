@@ -1,0 +1,926 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: honaryaar\n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "role"
+msgstr "نقش"
+
+msgid "roles"
+msgstr "نقش"
+
+msgid "ID"
+msgstr "شناسه"
+
+msgid "slug"
+msgstr "نامک"
+
+msgid "title"
+msgstr "عنوان"
+
+msgid "group"
+msgstr "گروه"
+
+msgid "art category"
+msgstr "دسته هنری"
+
+msgid "city"
+msgstr "شهر"
+
+msgid "cities"
+msgstr "شهر"
+
+msgid "province"
+msgstr "استان"
+
+msgid "priority"
+msgstr "اولویت"
+
+msgid "featured"
+msgstr "ویژه"
+
+msgid "art categories"
+msgstr "دسته هنری"
+
+msgid "art"
+msgstr "هنر"
+
+msgid "skill"
+msgstr "مهارت"
+
+msgid "skills"
+msgstr "مهارت"
+
+msgid "profile"
+msgstr "پروفایل"
+
+msgid "profiles"
+msgstr "پروفایل"
+
+msgid "user"
+msgstr "کاربر"
+
+msgid "Public address. Always the same as the user's username."
+msgstr "نشانی عمومی. همیشه همان نام کاربری است."
+
+msgid "Mobile"
+msgstr "موبایل"
+
+msgid "Phone number from registration. Separate from the username."
+msgstr "شماره ثبت‌نام. جدا از نام کاربری است."
+
+msgid "Art name"
+msgstr "نام هنری"
+
+msgid "about"
+msgstr "درباره"
+
+msgid "Birth date"
+msgstr "تاریخ تولد"
+
+msgid "Gender"
+msgstr "جنسیت"
+
+msgid "Male"
+msgstr "مرد"
+
+msgid "Female"
+msgstr "زن"
+
+msgid "arts"
+msgstr "هنرها"
+
+msgid "Arts"
+msgstr "هنرها"
+
+msgid "Arts this person works in or is interested in."
+msgstr "هنرهایی که این شخص در آن‌ها کار می‌کند یا به آن‌ها علاقه دارد."
+
+msgid "status"
+msgstr "وضعیت"
+
+msgid "Indexed"
+msgstr "نمایه‌شده"
+
+msgid "Claimed"
+msgstr "در اختیار هنرمند"
+
+msgid "views"
+msgstr "بازدید"
+
+msgid "list image"
+msgstr "تصویر فهرست"
+
+msgid "list thumb"
+msgstr "بندانگشتی فهرست"
+
+msgid "list public acl"
+msgstr "دسترسی عمومی تصویر فهرست"
+
+msgid "banner"
+msgstr "سربرگ"
+
+msgid "banner thumb"
+msgstr "بندانگشتی سربرگ"
+
+msgid "banner public acl"
+msgstr "دسترسی عمومی سربرگ"
+
+msgid "contact"
+msgstr "تماس"
+
+msgid "contacts"
+msgstr "تماس"
+
+msgid "Contact"
+msgstr "تماس"
+
+msgid "Contacts"
+msgstr "تماس‌ها"
+
+msgid "kind"
+msgstr "نوع"
+
+msgid "Phone"
+msgstr "تلفن"
+
+msgid "Email"
+msgstr "ایمیل"
+
+msgid "Website"
+msgstr "وب‌سایت"
+
+msgid "value"
+msgstr "مقدار"
+
+msgid "is public"
+msgstr "عمومی"
+
+msgid "position"
+msgstr "ترتیب"
+
+msgid "source"
+msgstr "منبع"
+
+msgid "created at"
+msgstr "زمان ایجاد"
+
+msgid "profile skill"
+msgstr "مهارت پروفایل"
+
+msgid "profile skills"
+msgstr "مهارت پروفایل"
+
+msgid "level"
+msgstr "سطح"
+
+msgid "profile role"
+msgstr "نقش پروفایل"
+
+msgid "profile roles"
+msgstr "نقش پروفایل"
+
+msgid "is primary"
+msgstr "اصلی"
+
+msgid "profile media"
+msgstr "رسانه"
+
+msgid "Photo"
+msgstr "عکس"
+
+msgid "Video"
+msgstr "ویدیو"
+
+msgid "Audio"
+msgstr "صوت"
+
+msgid "label"
+msgstr "عنوان"
+
+msgid "file"
+msgstr "فایل"
+
+msgid "File"
+msgstr "فایل"
+
+msgid "thumbnail"
+msgstr "بندانگشتی"
+
+msgid "public acl"
+msgstr "دسترسی عمومی"
+
+msgid "credit"
+msgstr "سابقه"
+
+msgid "credits"
+msgstr "سابقه"
+
+msgid "role name"
+msgstr "نام نقش"
+
+msgid "year"
+msgstr "سال"
+
+msgid "project"
+msgstr "پروژه"
+
+msgid "projects"
+msgstr "پروژه"
+
+msgid "owner"
+msgstr "مسئول"
+
+msgid "lead role"
+msgstr "نقش اصلی"
+
+msgid "summary"
+msgstr "خلاصه"
+
+msgid "Start date"
+msgstr "تاریخ شروع"
+
+msgid "Featured"
+msgstr "ویژه"
+
+msgid "image"
+msgstr "تصویر"
+
+msgid "Image"
+msgstr "تصویر"
+
+msgid "image thumb"
+msgstr "بندانگشتی تصویر"
+
+msgid "image public acl"
+msgstr "دسترسی عمومی تصویر"
+
+msgid "testimonial"
+msgstr "نظر"
+
+msgid "testimonials"
+msgstr "نظر"
+
+msgid "quote"
+msgstr "نقل‌قول"
+
+msgid "name"
+msgstr "نام"
+
+msgid "role label"
+msgstr "عنوان نقش"
+
+msgid "pending upload"
+msgstr "بارگذاری در انتظار"
+
+msgid "pending uploads"
+msgstr "بارگذاری در انتظار"
+
+msgid "id"
+msgstr "شناسه"
+
+msgid "purpose"
+msgstr "کاربرد"
+
+msgid "target id"
+msgstr "شناسه مقصد"
+
+msgid "key"
+msgstr "کلید"
+
+msgid "thumb key"
+msgstr "کلید بندانگشتی"
+
+msgid "requested kind"
+msgstr "نوع درخواستی"
+
+msgid "content type"
+msgstr "نوع محتوا"
+
+msgid "declared size"
+msgstr "حجم اعلام‌شده"
+
+msgid "actual size"
+msgstr "حجم واقعی"
+
+msgid "checksum"
+msgstr "چک‌سام"
+
+msgid "Pending"
+msgstr "در انتظار"
+
+msgid "Validated"
+msgstr "تأییدشده"
+
+msgid "Published"
+msgstr "منتشرشده"
+
+msgid "Failed"
+msgstr "ناموفق"
+
+msgid "Expired"
+msgstr "منقضی"
+
+msgid "Abandoned"
+msgstr "رهاشده"
+
+msgid "error"
+msgstr "خطا"
+
+msgid "expires at"
+msgstr "زمان انقضا"
+
+msgid "validated at"
+msgstr "زمان تأیید"
+
+msgid "storage cleanup"
+msgstr "پاکسازی فایل"
+
+msgid "storage cleanups"
+msgstr "پاکسازی فایل"
+
+msgid "attempts"
+msgstr "تلاش‌ها"
+
+msgid "last error"
+msgstr "آخرین خطا"
+
+msgid "media migration record"
+msgstr "سابقه انتقال رسانه"
+
+msgid "media migration records"
+msgstr "سابقه انتقال رسانه"
+
+msgid "model label"
+msgstr "نام مدل"
+
+msgid "object id"
+msgstr "شناسه شیء"
+
+msgid "field name"
+msgstr "نام فیلد"
+
+msgid "source hash"
+msgstr "هش مبدأ"
+
+msgid "previous value"
+msgstr "مقدار قبلی"
+
+msgid "destination key"
+msgstr "کلید مقصد"
+
+msgid "byte size"
+msgstr "حجم"
+
+msgid "updated at"
+msgstr "زمان به‌روزرسانی"
+
+msgid "opportunity"
+msgstr "فراخوان"
+
+msgid "opportunities"
+msgstr "فراخوان"
+
+msgid "age min"
+msgstr "حداقل سن"
+
+msgid "age max"
+msgstr "حداکثر سن"
+
+msgid "gender"
+msgstr "جنسیت"
+
+msgid "No difference"
+msgstr "فرقی ندارد"
+
+msgid "Collaboration type"
+msgstr "نوع همکاری"
+
+msgid "Project hire"
+msgstr "استخدام پروژه‌ای"
+
+msgid "Contractor"
+msgstr "پیمانکاری"
+
+msgid "Wage"
+msgstr "دستمزدی"
+
+msgid "Daily rate"
+msgstr "روزمزد"
+
+msgid "Hourly"
+msgstr "ساعتی"
+
+msgid "Per session"
+msgstr "جلسه‌ای"
+
+msgid "Percentage"
+msgstr "درصدی"
+
+msgid "Partnership"
+msgstr "مشارکت"
+
+msgid "Equity share"
+msgstr "سهم"
+
+msgid "Honorary"
+msgstr "افتخاری"
+
+msgid "Internship"
+msgstr "کارآموزی"
+
+msgid "Volunteer"
+msgstr "داوطلبانه"
+
+msgid "Long-term"
+msgstr "بلندمدت"
+
+msgid "Temporary"
+msgstr "موقت"
+
+msgid "Experience"
+msgstr "تجربه"
+
+msgid "Beginner"
+msgstr "مبتدی"
+
+msgid "Intermediate"
+msgstr "متوسط"
+
+msgid "Professional"
+msgstr "حرفه‌ای"
+
+msgid "Special conditions"
+msgstr "شرایط خاص"
+
+msgid "count"
+msgstr "تعداد"
+
+msgid "paid"
+msgstr "پرداختی"
+
+msgid "pay note"
+msgstr "توضیح دستمزد"
+
+msgid "start date"
+msgstr "تاریخ شروع"
+
+msgid "end date"
+msgstr "تاریخ پایان"
+
+msgid "deadline"
+msgstr "مهلت"
+
+msgid "description"
+msgstr "توضیحات"
+
+msgid "requirements"
+msgstr "شرایط"
+
+msgid "Open"
+msgstr "باز"
+
+msgid "Closed"
+msgstr "بسته"
+
+msgid "application"
+msgstr "درخواست"
+
+msgid "applications"
+msgstr "درخواست"
+
+msgid "message"
+msgstr "پیام"
+
+msgid "Submitted"
+msgstr "ارسال‌شده"
+
+msgid "Rejected"
+msgstr "رد شده"
+
+msgid "Shortlisted"
+msgstr "فهرست کوتاه"
+
+msgid "Conversation"
+msgstr "گفتگو"
+
+msgid "Matched"
+msgstr "هم‌خوان"
+
+msgid "invite"
+msgstr "دعوت"
+
+msgid "invites"
+msgstr "دعوت"
+
+msgid "Sent"
+msgstr "ارسال‌شده"
+
+msgid "Declined"
+msgstr "رد شده"
+
+msgid "Accepted"
+msgstr "پذیرفته"
+
+msgid "match"
+msgstr "همکاری"
+
+msgid "matchs"
+msgstr "همکاری"
+
+msgid "Active"
+msgstr "فعال"
+
+msgid "bookmark"
+msgstr "نشان"
+
+msgid "bookmarks"
+msgstr "نشان"
+
+msgid "support ticket"
+msgstr "تیکت پشتیبانی"
+
+msgid "support tickets"
+msgstr "تیکت پشتیبانی"
+
+msgid "Report"
+msgstr "گزارش"
+
+msgid "Ticket"
+msgstr "تیکت"
+
+msgid "kind reason"
+msgstr "دلیل"
+
+msgid "Public"
+msgstr "عمومی"
+
+msgid "Collaboration"
+msgstr "همکاری"
+
+msgid "Criticism and complaint"
+msgstr "انتقاد و شکایت"
+
+msgid "Account"
+msgstr "حساب کاربری"
+
+msgid "Profile"
+msgstr "پروفایل"
+
+msgid "Project"
+msgstr "پروژه"
+
+msgid "Opportunity"
+msgstr "فراخوان"
+
+msgid "Technical"
+msgstr "مشکل فنی"
+
+msgid "Wrong information"
+msgstr "اطلاعات نادرست"
+
+msgid "Ownership mismatch"
+msgstr "مغایرت مالکیت"
+
+msgid "Spam"
+msgstr "اسپم"
+
+msgid "Other"
+msgstr "سایر"
+
+msgid "Answered"
+msgstr "پاسخ‌داده‌شده"
+
+msgid "body"
+msgstr "متن"
+
+msgid "ticket message"
+msgstr "پیام تیکت"
+
+msgid "ticket messages"
+msgstr "پیام تیکت"
+
+msgid "ticket"
+msgstr "تیکت"
+
+msgid "author"
+msgstr "نویسنده"
+
+msgid "from staff"
+msgstr "از طرف پشتیبانی"
+
+msgid "Enter a mobile number like 09123456789."
+msgstr "شماره موبایل را مانند ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید."
+
+msgid "This reason does not belong to the selected kind."
+msgstr "این دلیل به نوع انتخاب‌شده مربوط نیست."
+
+msgid "A report points at a profile, project, or opportunity."
+msgstr "گزارش باید به یک پروفایل، پروژه یا فراخوان اشاره کند."
+
+msgid "Only a report has a target."
+msgstr "فقط گزارش مقصد دارد."
+
+msgid "A ticket requires a user."
+msgstr "تیکت باید کاربر داشته باشد."
+
+msgid "Basic data"
+msgstr "داده‌های پایه"
+
+msgid "Cities"
+msgstr "شهرها"
+
+msgid "Art categories"
+msgstr "دسته‌های هنری"
+
+msgid "Roles"
+msgstr "نقش‌ها"
+
+msgid "Role"
+msgstr "نقش"
+
+msgid "Skills"
+msgstr "مهارت‌ها"
+
+msgid "Skill"
+msgstr "مهارت"
+
+msgid "Documents"
+msgstr "مدارک"
+
+msgid "People"
+msgstr "افراد"
+
+msgid "Profiles"
+msgstr "پروفایل‌ها"
+
+msgid "Profile roles"
+msgstr "نقش‌های پروفایل"
+
+msgid "Profile skills"
+msgstr "مهارت‌های پروفایل"
+
+msgid "Credits"
+msgstr "سوابق"
+
+msgid "Media"
+msgstr "رسانه"
+
+msgid "Projects"
+msgstr "پروژه‌ها"
+
+msgid "Opportunities"
+msgstr "فراخوان‌ها"
+
+msgid "Testimonials"
+msgstr "نظرها"
+
+msgid "Casting"
+msgstr "انتخاب بازیگر"
+
+msgid "Applications"
+msgstr "درخواست‌ها"
+
+msgid "Invites"
+msgstr "دعوت‌ها"
+
+msgid "Matches"
+msgstr "همکاری‌ها"
+
+msgid "Support"
+msgstr "پشتیبانی"
+
+msgid "Support tickets"
+msgstr "تیکت‌های پشتیبانی"
+
+msgid "Bookmarks"
+msgstr "نشان‌شده‌ها"
+
+msgid "Authentication"
+msgstr "احراز هویت"
+
+msgid "Users"
+msgstr "کاربران"
+
+msgid "Groups"
+msgstr "گروه‌ها"
+
+msgid "Dashboard"
+msgstr "پیشخوان"
+
+msgid "Open opportunities"
+msgstr "فراخوان‌های باز"
+
+msgid "Applications to review"
+msgstr "درخواست‌های در انتظار بررسی"
+
+msgid "Invites waiting"
+msgstr "دعوت‌های در انتظار"
+
+msgid "Active matches"
+msgstr "همکاری‌های فعال"
+
+msgid "Claimed profiles"
+msgstr "پروفایل‌های در اختیار هنرمند"
+
+msgid "Projects without an owner"
+msgstr "پروژه‌های بدون مسئول"
+
+msgid "Nearest open deadlines"
+msgstr "نزدیک‌ترین مهلت‌های باز"
+
+msgid "Latest applications"
+msgstr "تازه‌ترین درخواست‌ها"
+
+msgid "Invites waiting for a reply"
+msgstr "دعوت‌های در انتظار پاسخ"
+
+msgid "Profiles with no role"
+msgstr "پروفایل‌های بدون نقش"
+
+msgid "Deadline"
+msgstr "مهلت"
+
+msgid "Status"
+msgstr "وضعیت"
+
+msgid "Created"
+msgstr "ایجاد"
+
+msgid "City"
+msgstr "شهر"
+
+msgid "%(date)s · Overdue"
+msgstr "%(date)s · گذشته"
+
+msgid "%(date)s · Today"
+msgstr "%(date)s · امروز"
+
+msgid "%(date)s · Tomorrow"
+msgstr "%(date)s · فردا"
+
+msgid "%(date)s · %(count)s days"
+msgstr "%(date)s · %(count)s روز"
+
+msgid "Export to CSV"
+msgstr "خروجی CSV"
+
+msgid "Main image"
+msgstr "تصویر اصلی"
+
+msgid "Banner"
+msgstr "سربرگ"
+
+msgid "Light"
+msgstr "روشن"
+
+msgid "Dark"
+msgstr "تیره"
+
+msgid "System"
+msgstr "سیستم"
+
+msgid "Search apps and models..."
+msgstr "جستجوی بخش‌ها و مدل‌ها..."
+
+msgid "Filters"
+msgstr "فیلترها"
+
+msgid "Apply Filters"
+msgstr "اعمال فیلترها"
+
+msgid "No results found"
+msgstr "نتیجه‌ای پیدا نشد"
+
+msgid "Welcome"
+msgstr "خوش آمدید"
+
+msgid "Go back"
+msgstr "بازگشت"
+
+msgid "Type to search"
+msgstr "برای جستجو بنویسید"
+
+msgid "Nothing matched your search"
+msgstr "چیزی با این جستجو پیدا نشد"
+
+msgid "Available shortcuts"
+msgstr "میانبرهای موجود"
+
+msgid "Global shortcuts"
+msgstr "میانبرهای عمومی"
+
+msgid "Open command tool"
+msgstr "باز کردن جستجوی فرمان"
+
+msgid "Open shortcuts list"
+msgstr "نمایش میانبرها"
+
+msgid "Toggle sidebar"
+msgstr "نمایش یا پنهان کردن منو"
+
+msgid "Toggle dark/light mode"
+msgstr "تغییر حالت روشن و تیره"
+
+msgid "Changelist shortcuts"
+msgstr "میانبرهای فهرست"
+
+msgid "Toggle filter"
+msgstr "نمایش یا پنهان کردن فیلتر"
+
+msgid "Create new record"
+msgstr "ایجاد مورد جدید"
+
+msgid "Command tool shortcuts"
+msgstr "میانبرهای فرمان"
+
+msgid "Open selection"
+msgstr "باز کردن مورد"
+
+msgid "Open selection in new tab"
+msgstr "باز کردن در زبانه جدید"
+
+msgid "Tomorrow"
+msgstr "فردا"
+
+msgid "This page yielded into no results. Create a new item or reset your filters."
+msgstr "نتیجه‌ای پیدا نشد. مورد تازه‌ای بسازید یا فیلترها را پاک کنید."
+
+msgid "Reset filters"
+msgstr "پاک کردن فیلترها"
+
+msgid "Select action"
+msgstr "انتخاب عمل"
+
+msgid "Run"
+msgstr "اجرا"
+
+msgid "General"
+msgstr "عمومی"
+
+msgid "False"
+msgstr "خیر"
+
+msgid "True"
+msgstr "بله"
+
+msgid "Date"
+msgstr "تاریخ"
+
+msgid "Select value"
+msgstr "انتخاب کنید"
+
+msgid "Home"
+msgstr "خانه"
+
+msgid "Add"
+msgstr "افزودن"
+
+msgid "Add %(name)s"
+msgstr "افزودن %(name)s"
+
+msgid "Add another %(model)s"
+msgstr "افزودن %(model)s دیگر"
+
+msgid "Delete selected %(verbose_name_plural)s"
+msgstr "حذف %(verbose_name_plural)s انتخاب‌شده"
+
+msgid "View selected %(model)s"
+msgstr "مشاهده %(model)s انتخاب‌شده"
+
+msgid " By %(filter_title)s "
+msgstr " بر اساس %(filter_title)s "
+
+msgid "Select %s to change"
+msgstr "انتخاب %s برای ویرایش"
+
+msgid "Recent actions"
+msgstr "فعالیت‌های اخیر"
+
+msgid "View site"
+msgstr "مشاهده سایت"
+
+msgid "Change password"
+msgstr "تغییر رمز عبور"
+msgid "Art"
+msgstr "هنر"
+
+msgid "First name"
+msgstr "نام"
+
+msgid "Last name"
+msgstr "نام خانوادگی"
+
+msgid "Target"
+msgstr "مقصد"
+
+msgid "Name"
+msgstr "نام"
+
+msgid "Messages"
+msgstr "پیام‌ها"
+

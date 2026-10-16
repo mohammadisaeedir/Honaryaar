@@ -474,6 +474,7 @@ def artist_detail(request, slug):
     artist = catalog.artist_by_slug(slug)
     if artist is None:
         raise Http404
+    artist["views"] = catalog.note_view(request, Profile, artist["pk"])
     viewer = current_profile(request.user)
     return render(
         request,
@@ -582,12 +583,14 @@ def opportunity_list(request):
 
 
 def opportunity_detail(request, slug):
+    from honaryaar.accounts import current_profile
+    from honaryaar.models import Application, Opportunity
+
     opportunity = catalog.opportunity_by_slug(slug)
     if opportunity is None:
         raise Http404
+    opportunity["views"] = catalog.note_view(request, Opportunity, opportunity["pk"])
     project = catalog.project_by_slug(opportunity["project"])
-    from honaryaar.accounts import current_profile
-    from honaryaar.models import Application, Opportunity
 
     row = Opportunity.objects.select_related("project").filter(slug=slug).first()
     profile = current_profile(request.user)
@@ -619,8 +622,11 @@ def project_list(request):
         "q": request.GET.get("q", "").strip(),
         "city": _picked(request, "city"),
         "art": _picked(request, "art"),
+        "production": _picked(request, "production"),
         "status": _picked(request, "status"),
+        "start": catalog.parse_user_date(request.GET.get("start", "")),
     }
+    filters["start"] = filters["start"].isoformat() if filters["start"] else ""
     sort, sort_label, sort_options = catalog.sort_state(request, "projects")
     filters["sort"] = sort
     projects, total, shown, partial = _catalog_window(request, catalog.list_projects(**filters))
@@ -632,7 +638,9 @@ def project_list(request):
         )
     groups = [
         catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
+        {**catalog.choice_group("production", "نوع", [(title, title) for title in catalog.project_categories()], filters["production"]), "plain": True, "open": True},
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
+        catalog.date_group("start", "تاریخ شروع از", filters["start"]),
     ]
     return render(
         request,
@@ -661,6 +669,7 @@ def project_detail(request, slug):
     project = catalog.project_by_slug(slug)
     if project is None:
         raise Http404
+    project["views"] = catalog.note_view(request, Project, project["pk"])
     return render(
         request,
         "pages/project.html",
