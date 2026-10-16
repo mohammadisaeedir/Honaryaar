@@ -311,7 +311,7 @@ def artist_list(request):
         [
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
         catalog.choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], filters["gender"]),
-        catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role["group"]) for role in catalog.roles()], filters["role"]),
+        catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role.get("group", "")) for role in catalog.roles()], filters["role"]),
         ]
     )
     if age:

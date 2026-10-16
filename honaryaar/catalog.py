@@ -10,7 +10,7 @@ import time
 from datetime import date
 
 _CACHE_SECONDS = 20
-_SNAPSHOT_KEY = "honaryaar:home:v3"
+_SNAPSHOT_KEY = "honaryaar:home:v4"
 _SNAPSHOT_TTL = 60 * 60 * 24
 _DAILY_LOADERS = {}
 _building = False
