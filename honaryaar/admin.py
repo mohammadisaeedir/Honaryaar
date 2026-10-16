@@ -49,6 +49,7 @@ from honaryaar.models import (
     SpecialCondition,
     Profile,
     ProfileContact,
+    ProjectContact,
     ProfileMedia,
     ProfileRole,
     ProfileSkill,
@@ -858,13 +859,13 @@ class TestimonialAdmin(ModelAdmin):
 @admin.register(Project)
 class ProjectAdmin(StatusChipMixin, ModelAdmin):
     form = ProjectAdminForm
-    list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link")
+    list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link", "contacts_link")
     list_filter = ("status", "featured", "art_category__art", "art_category", "city")
     list_editable = ("featured",)
     search_fields = ("title", "owner__user__first_name", "owner__user__last_name", "owner__name", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("owner", "art_category", "lead_role", "city")
     list_select_related = ("owner", "city", "art_category")
-    readonly_fields = ("image_preview",)
+    readonly_fields = ("image_preview", "source_channel", "source_post_id", "source_url", "source_posted_at")
     Media = AdminMedia
 
     @admin.display(description="Art", ordering="art_category__art")
@@ -905,7 +906,10 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
         formset.save_m2m()
 
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(opportunity_count=Count("opportunities", distinct=True))
+        return super().get_queryset(request).annotate(
+            opportunity_count=Count("opportunities", distinct=True),
+            contact_count=Count("contacts", distinct=True),
+        )
 
     @admin.display(description="Opportunities")
     def opportunity_link(self, project):
@@ -914,6 +918,24 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
             {"project__id__exact": project.pk},
             project.opportunity_count,
         )
+
+    @admin.display(description="Contacts")
+    def contacts_link(self, project):
+        count = project.contact_count if hasattr(project, "contact_count") else project.contacts.count()
+        return _count_link(
+            "admin:honaryaar_projectcontact_changelist",
+            {"project__id__exact": project.pk},
+            f"Contacts ({count})",
+        )
+
+
+@admin.register(ProjectContact)
+class ProjectContactAdmin(ModelAdmin):
+    list_display = ("project", "kind", "value", "is_public", "source", "position")
+    list_filter = ("kind", "is_public", "source")
+    search_fields = ("value", "kind", "project__title", "project__slug")
+    autocomplete_fields = ("project",)
+    list_select_related = ("project",)
 
 
 @admin.register(Opportunity)

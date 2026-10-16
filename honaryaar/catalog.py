@@ -1132,12 +1132,13 @@ def _project_dict(project):
     from honaryaar.models import PUBLIC_PROJECT_STATUSES
 
     art = project.art_category.art if project.art_category_id else ""
+    contact_channels, contact_links = _contact_groups(project)
     return {
         "pk": project.pk,
         "slug": project.slug,
         "title": project.title,
         "city": project.city.title if project.city_id else "",
-        "lead": _profile_name(project.owner),
+        "lead": _profile_name(project.owner) or (project.lead_name or ""),
         "lead_role": project.lead_role.slug if project.lead_role_id else "",
         "art": art,
         "art_title": project.art_category.get_art_display() if project.art_category_id else "",
@@ -1152,6 +1153,8 @@ def _project_dict(project):
         "image_thumb_key": project.image_thumb.name if project.image_thumb else "",
         "image_public": project.status in PUBLIC_PROJECT_STATUSES,
         "image_public_acl": bool(project.image_public_acl),
+        "contact_channels": contact_channels,
+        "contact_links": contact_links,
         "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
     }
 
@@ -1208,7 +1211,8 @@ def _projects():
 
     quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
     projects = Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).select_related("owner", "owner__user", "art_category", "lead_role", "city").prefetch_related(
-        Prefetch("testimonials", queryset=quotes)
+        Prefetch("testimonials", queryset=quotes),
+        "contacts",
     )
     return [_project_dict(item) for item in projects]
 

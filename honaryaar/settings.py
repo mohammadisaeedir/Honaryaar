@@ -173,6 +173,7 @@ def _sidebar(request):
                         _nav("Projects", "theater_comedy", "admin:honaryaar_project_changelist"),
                         _nav("Opportunities", "campaign", "admin:honaryaar_opportunity_changelist"),
                         _nav("Testimonials", "format_quote", "admin:honaryaar_testimonial_changelist"),
+                        _nav("Project contacts", "contacts", "admin:honaryaar_projectcontact_changelist"),
                     ],
                 },
                 {
