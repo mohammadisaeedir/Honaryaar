@@ -1,12 +1,12 @@
-.art-theatre { --art: #c13281; --art-bg: #f8e6f0; }
-.art-music { --art: #1f7a4d; --art-bg: #e5f3ec; }
-.art-film { --art: #3a5278; --art-bg: #e7eef6; }
-.art-painting { --art: #8a5a00; --art-bg: #f8f1e3; }
-.art-architecture { --art: #3d4a5c; --art-bg: #e8eef3; }
-.art-sculpture { --art: #8a4030; --art-bg: #f8ebe6; }
-.art-literature { --art: #4a3d78; --art-bg: #eeeaf6; }
-.gender-male { --art: #3a5278; --art-bg: #e7eef6; }
-.gender-female { --art: #c13281; --art-bg: #f8e6f0; }
+.art-theatre { --art: var(--color-art-theatre); --art-bg: var(--color-art-theatre-bg); }
+.art-music { --art: var(--color-art-music); --art-bg: var(--color-art-music-bg); }
+.art-film { --art: var(--color-art-film); --art-bg: var(--color-art-film-bg); }
+.art-painting { --art: var(--color-art-painting); --art-bg: var(--color-art-painting-bg); }
+.art-architecture { --art: var(--color-art-architecture); --art-bg: var(--color-art-architecture-bg); }
+.art-sculpture { --art: var(--color-art-sculpture); --art-bg: var(--color-art-sculpture-bg); }
+.art-literature { --art: var(--color-art-literature); --art-bg: var(--color-art-literature-bg); }
+.gender-male { --art: var(--color-art-film); --art-bg: var(--color-art-film-bg); }
+.gender-female { --art: var(--color-art-theatre); --art-bg: var(--color-art-theatre-bg); }
 
 .art-picker {
     display: flex;
@@ -65,19 +65,19 @@
     width: auto;
     min-height: 32px;
     padding: 0 12px;
-    border-color: #e7e4e2;
+    border-color: var(--color-border);
     border-radius: 12px;
-    background: #fff;
-    color: #6f6863;
+    background: var(--color-card);
+    color: var(--color-muted-foreground);
     box-shadow: none;
 }
 
-.art-picker--pair .art-picker__btn .icon { color: #8a847e; }
+.art-picker--pair .art-picker__btn .icon { color: var(--color-muted-foreground); }
 
 .art-picker--pair .art-picker__btn:has(input:checked) {
     border-color: var(--art, #c13281);
     background: var(--art-bg, #f8e6f0);
-    color: #17131a;
+    color: var(--art, var(--color-foreground));
     box-shadow: none;
 }
 

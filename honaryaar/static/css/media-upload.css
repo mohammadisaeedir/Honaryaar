@@ -14,7 +14,7 @@
     max-height: 160px;
     border-radius: 8px;
     object-fit: cover;
-    background: #f6f4ef;
+    background: var(--color-surface);
 }
 
 .media-upload {
@@ -49,8 +49,8 @@
     height: 36px;
     border: 0;
     border-radius: 999px;
-    background: #fff;
-    color: #485462;
+    background: var(--color-card);
+    color: var(--color-foreground);
     box-shadow: 0 1px 4px rgba(23, 19, 26, 0.16);
     cursor: pointer;
 }
@@ -164,7 +164,8 @@
     margin: 0 16px 24px;
     padding: 20px 16px 16px;
     border-radius: 16px;
-    background: #fff;
+    background: var(--color-card);
+    color: var(--color-foreground);
     text-align: right;
 }
 
@@ -204,8 +205,8 @@
 }
 
 .file-modal__actions [data-file-cancel] {
-    background: #f3f5f7;
-    color: #252b32;
+    background: var(--color-surface);
+    color: var(--color-foreground);
 }
 
 .media-upload__bar {

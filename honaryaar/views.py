@@ -126,7 +126,12 @@ def bookmark_rows(user):
         if kind == "profile":
             full = f"{target.user.first_name} {target.user.last_name}".strip()
             title = full or target.public_name()
-            meta = " · ".join(link.role.title for link in target.profile_roles.all())
+            links = list(target.profile_roles.all())
+            primary = next((link for link in links if link.is_primary), None)
+            if primary is None and links:
+                primary = links[0]
+            role = primary.role.title if primary else ""
+            meta = " · ".join(link.role.title for link in links)
             url = reverse("artist", args=[target.slug])
         elif kind == "project":
             from honaryaar.media_service import project_image_url
@@ -143,6 +148,7 @@ def bookmark_rows(user):
             {
                 "title": title,
                 "meta": meta,
+                "role": role if kind == "profile" else "",
                 "status_code": target.status,
                 "url": url,
                 "slug": target.slug,
@@ -293,6 +299,7 @@ def artist_list(request):
                     {
                         "value": row["slug"],
                         "label": row["title"],
+                        "role": row["role"],
                         "status_code": row["status_code"],
                         "selected": row["slug"] in picked,
                     }
@@ -304,7 +311,7 @@ def artist_list(request):
         [
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
         catalog.choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], filters["gender"]),
-        catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in catalog.roles()], filters["role"]),
+        catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role["group"]) for role in catalog.roles()], filters["role"]),
         ]
     )
     if age:
@@ -546,7 +553,7 @@ def opportunity_list(request):
     groups = [
         catalog.choice_group("status", "وضعیت", [("open", "باز"), ("closed", "بسته")], filters["status"]),
         catalog.choice_group("city", "شهر", [(city, city) for city in facets["cities"]], filters["city"]),
-        catalog.choice_group("role", "نقش", [(role["slug"], role["title"]) for role in facets["roles"]], filters["role"]),
+        catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role.get("group", "")) for role in facets["roles"]], filters["role"]),
         catalog.choice_group("production", "نوع", [(item, item) for item in facets["productions"]], filters["production"]),
         catalog.choice_group("gender", "جنسیت", [(item["value"], item["label"]) for item in facets["genders"]], filters["gender"]),
         catalog.choice_group("paid", "پرداخت", facets["paid"], filters["paid"]),

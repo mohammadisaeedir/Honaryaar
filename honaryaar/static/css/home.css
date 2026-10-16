@@ -1,5 +1,5 @@
 .home-page {
-    background: #f6f4ef;
+    background: var(--color-background);
 }
 
 .home-page main {
@@ -23,9 +23,9 @@
     display: inline-flex;
     gap: 2px;
     padding: 4px;
-    border: 1px solid #ece8e3;
+    border: 1px solid var(--color-line);
     border-radius: 999px;
-    background: #fff;
+    background: var(--color-card);
     box-shadow: 0 1px 2px rgb(23 19 26 / 6%);
 }
 
@@ -38,7 +38,7 @@
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: #17131a;
+    color: var(--color-foreground);
     font: inherit;
     font-size: 12px;
     font-weight: 600;
@@ -85,7 +85,7 @@
 .hero-title,
 .hero-rotate {
     margin: 0;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 22px;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -127,7 +127,7 @@
 
 .hero-stats strong {
     display: block;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -138,7 +138,7 @@
 .hero-stats span {
     display: block;
     margin-top: 6px;
-    color: #8a847e;
+    color: var(--color-muted-foreground);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -225,7 +225,7 @@
 .home-head h2,
 .home-block > h2 {
     margin: 0 0 18px;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -289,7 +289,7 @@
 
 .home-faq h2 {
     margin: 0 0 18px;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 16px;
     font-weight: 800;
     letter-spacing: -0.02em;
@@ -303,9 +303,9 @@
 }
 
 .faq-item {
-    border: 1px solid #ece7e3;
+    border: 1px solid var(--color-border);
     border-radius: 16px;
-    background: #fff;
+    background: var(--color-card);
     padding: 0 16px;
 }
 
@@ -315,7 +315,7 @@
     justify-content: space-between;
     gap: 12px;
     min-height: 52px;
-    color: #17131a;
+    color: var(--color-foreground);
     font-weight: 700;
     line-height: 24px;
     cursor: pointer;
@@ -326,7 +326,7 @@
 
 .faq-item summary .icon {
     flex: 0 0 auto;
-    color: #6f6863;
+    color: var(--color-muted-foreground);
     transition: transform 160ms ease;
 }
 
@@ -342,7 +342,7 @@
 .join-band {
     width: 100%;
     margin-top: 72px;
-    background: #fff;
+    background: var(--color-card);
     border-top: 1px solid color-mix(in srgb, #17131a 12%, #fff);
 }
 
@@ -391,7 +391,7 @@
     align-items: flex-start;
     gap: 10px;
     margin-top: 12px;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 12px;
     line-height: 24px;
 }
@@ -458,8 +458,8 @@
     height: 40px;
     border: 0;
     border-radius: 999px;
-    background: #fff;
-    color: #17131a;
+    background: var(--color-card);
+    color: var(--color-foreground);
     cursor: pointer;
     box-shadow: 0 8px 20px rgb(23 19 26 / 8%);
 }
@@ -499,7 +499,7 @@
 .t-card__mark {
     flex-shrink: 0;
     margin-top: 8px;
-    color: #17131a;
+    color: var(--color-foreground);
     font-family: Georgia, "Times New Roman", serif;
     font-size: 20px;
     font-weight: 700;
@@ -508,7 +508,7 @@
 
 .t-card blockquote {
     margin: 0;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.6;
@@ -529,7 +529,7 @@
     width: 48px;
     height: 48px;
     border-radius: 999px;
-    background: #f6f4ef;
+    background: var(--color-surface);
     color: #c13281;
     font-size: 16px;
     font-weight: 800;
@@ -538,7 +538,7 @@
 
 .t-card figcaption strong {
     display: block;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 12px;
     font-weight: 700;
     line-height: 22px;
@@ -552,7 +552,7 @@
 }
 
 .t-card__meta b {
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 11px;
     font-weight: 700;
     line-height: 20px;
@@ -580,7 +580,7 @@
 
 .quote-card p {
     margin: 0;
-    color: #17131a;
+    color: var(--color-foreground);
     font-size: 12px;
     font-weight: 700;
     line-height: 1.45;
@@ -641,4 +641,16 @@
     .quote-grid {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+html[data-theme="dark"] .t-card {
+    background: #1a2e24;
+}
+
+html[data-theme="dark"] .t-card__meta a {
+    color: #8dccb0;
+}
+
+html[data-theme="dark"] .faq-item p {
+    color: var(--color-muted-foreground);
 }

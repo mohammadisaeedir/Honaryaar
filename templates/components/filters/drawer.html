@@ -15,23 +15,32 @@
             {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
             {% for group in groups %}
-                <div class="filter-acc{% if group.plain %} is-plain{% endif %}" x-data="{ open: {% if group.plain %}true{% else %}{{ group.open|yesno:'true,false' }}{% endif %}, more: {{ group.more|yesno:'true,false' }}, q: '' }">
-                    {% if group.plain %}
-                        <div class="filter-acc__head">
+                <div class="filter-acc{% if group.plain %} is-plain{% endif %}" x-data="{ open: {% if group.plain %}true{% else %}{{ group.open|yesno:'true,false' }}{% endif %}, picker: false, q: '', cat: '' }" x-effect="document.body.classList.toggle('is-filter-picker', picker)" @keydown.escape.window.capture="if (!picker) return; picker = false; q = ''; cat = ''; $event.stopPropagation()">
+                    <div class="filter-acc__head">
+                        {% if group.plain %}
                             <span class="filter-acc__label">
                                 {{ group.label }}
                                 {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
                             </span>
-                        </div>
-                    {% else %}
-                        <button class="filter-acc__head" type="button" @click="open = !open">
-                            <span class="filter-acc__label">
-                                {{ group.label }}
-                                {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
+                        {% else %}
+                            <button class="filter-acc__toggle" type="button" @click="open = !open">
+                                <span class="filter-acc__label">
+                                    {{ group.label }}
+                                    {% if group.selected %}<span class="filter-acc__count">{{ group.selected }}</span>{% endif %}
+                                </span>
+                            </button>
+                        {% endif %}
+                        {% if not group.plain %}
+                            <span class="filter-acc__tools">
+                                {% if group.find %}
+                                    <button class="filter-acc__find" type="button" @click.stop="picker = true; q = ''; cat = ''" aria-label="جستجو">{% include "components/icon.html" with name="search" size="18" %}</button>
+                                {% endif %}
+                                <button class="filter-acc__chevron" type="button" @click="open = !open" aria-label="{{ group.label }}">
+                                    <span class="filter-acc__chev" :class="open && 'is-open'"></span>
+                                </button>
                             </span>
-                            <span class="filter-acc__chev" :class="open && 'is-open'"></span>
-                        </button>
-                    {% endif %}
+                        {% endif %}
+                    </div>
                     <div class="filter-acc__body" {% if not group.plain %}x-cloak x-show="open"{% endif %}>
                         {% if group.kind == "text" %}
                             <input class="field" type="text" inputmode="numeric" name="{{ group.name }}" value="{{ group.value }}" placeholder="{{ group.placeholder }}">
@@ -42,6 +51,7 @@
                                         <label>
                                             <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
                                             <span class="saved-list__name">{{ option.label }}</span>
+                                            {% if option.role %}<span class="saved-list__role">{{ option.role }}</span>{% endif %}
                                             {% if not hide_status %}<span class="saved-list__status">{% status_chip option.status_code %}</span>{% endif %}
                                         </label>
                                     </li>
@@ -58,22 +68,59 @@
                                 </div>
                             </div>
                         {% else %}
-                            {% if group.find %}
-                                <input class="filter-find" type="search" placeholder="جستجو" x-model="q" @change.stop @keydown.enter.prevent autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                            {% endif %}
-                            <div class="filter-boxes{% if group.find %} is-find{% endif %}">
+                            <div class="filter-boxes">
                                 {% for option in group.options %}
-                                    <label class="filter-box{% if not group.find and forloop.counter > 6 %} is-extra{% endif %}" data-option {% if group.find %}x-show="!q || $el.textContent.includes(q)"{% elif forloop.counter > 6 %}x-cloak x-show="more"{% endif %}>
-                                        <input type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
+                                    <label class="filter-box" {% if group.find and not option.shown %}hidden{% endif %}>
+                                        <input id="filter-{{ group.name }}-{{ forloop.counter }}" type="checkbox" name="{{ group.name }}" value="{{ option.value }}" {% if option.selected %}checked{% endif %}>
                                         {{ option.label }}
                                     </label>
                                 {% endfor %}
-                                {% if group.find %}
-                                    <p class="filter-find__empty" x-cloak x-show="q && Array.from($el.parentElement.querySelectorAll('[data-option]')).every(function (el) { return !el.textContent.includes(q); })">موردی پیدا نشد</p>
-                                {% elif group.options|length > 6 %}
-                                    <button class="filter-box" type="button" x-cloak x-show="!more" @click="more = true">موارد بیشتر</button>
+                                {% if group.rest %}
+                                    <button class="filter-box filter-box--more" type="button" @click="picker = true; q = ''; cat = ''">سایر&nbsp;<span dir="ltr">(+{{ group.rest }})</span></button>
                                 {% endif %}
                             </div>
+                            {% if group.find %}
+                                <template x-teleport="body">
+                                    <div class="filter-picker" x-cloak x-show="picker" x-effect="if (picker) $nextTick(function () { if ($refs.find) $refs.find.focus(); })">
+                                        <div class="filter-picker__backdrop" @click="picker = false; q = ''"></div>
+                                        <div class="filter-picker__panel" role="dialog" aria-modal="true" aria-label="{{ group.label }}">
+                                            <div class="filter-picker__head">
+                                                <h3>{{ group.label }}</h3>
+                                                <button class="filter-picker__close" type="button" @click="picker = false; q = ''" aria-label="بستن">{% include "components/icon.html" with name="x" size="20" %}</button>
+                                            </div>
+                                            <input class="filter-find" type="search" data-search-typewriter placeholder="مثلاً: بازیگر" x-ref="find" x-model="q" @input="cat = ''" @keydown.enter.prevent autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
+                                            {% if group.name == "role" and group.categories %}
+                                                <div class="filter-picker__list filter-picker__list--roles" x-ref="choices">
+                                                    <button class="role-pick__back" type="button" x-show="cat && !q" @click="cat = ''">
+                                                        {% include "components/icon.html" with name="chevron-right" size="16" %}
+                                                        <span x-text="cat"></span>
+                                                    </button>
+                                                    {% for category in group.categories %}
+                                                        <button class="role-pick__category" type="button" data-cat="{{ category.name }}" x-show="!q && !cat" @click="cat = $el.dataset.cat">
+                                                            <span>{{ category.name }}</span>
+                                                            {% include "components/icon.html" with name="chevron-right" size="16" %}
+                                                        </button>
+                                                    {% endfor %}
+                                                    {% for option in group.options %}
+                                                        <button class="role-pick__item{% if option.selected %} is-on{% endif %}" type="button" data-option data-label="{{ option.label }}" data-cat="{{ option.group }}" data-hay="{{ option.group }} {{ option.label }}" x-show="q ? $el.dataset.hay.includes(q) : (cat && cat === $el.dataset.cat)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">
+                                                            <span x-show="!q">{{ option.label }}</span>
+                                                            <span x-show="q">{% if option.group %}{{ option.group }} | {% endif %}{{ option.label }}</span>
+                                                        </button>
+                                                    {% endfor %}
+                                                    <p class="filter-find__empty" x-cloak x-show="q && $refs.choices && Array.from($refs.choices.querySelectorAll('[data-option]')).every(function (el) { return !el.dataset.hay.includes(q); })">موردی پیدا نشد</p>
+                                                </div>
+                                            {% else %}
+                                                <div class="filter-picker__list" x-ref="choices">
+                                                    {% for option in group.options %}
+                                                        <button class="filter-box{% if option.selected %} is-on{% endif %}" type="button" data-option data-label="{{ option.label }}" data-hay="{{ option.label }}" x-show="!q || $el.dataset.label.includes(q)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">{{ option.label }}</button>
+                                                    {% endfor %}
+                                                    <p class="filter-find__empty" x-cloak x-show="q && $refs.choices && Array.from($refs.choices.querySelectorAll('[data-option]')).every(function (el) { return !el.dataset.hay.includes(q); })">موردی پیدا نشد</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </template>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>

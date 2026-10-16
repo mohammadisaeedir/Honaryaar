@@ -20,6 +20,55 @@ def catalog_json(page, element_id):
     return json.loads(html[start:html.index("</script>", start)])
 
 
+class FilterPreviewTests(TestCase):
+    def test_long_choice_lists_keep_five_and_count_the_rest(self):
+        from honaryaar.catalog import choice_group
+
+        group = choice_group("city", "شهر", [(str(i), f"شهر {i}") for i in range(12)], ["9"])
+        self.assertTrue(group["find"])
+        self.assertEqual(group["rest"], 7)
+        self.assertEqual(sum(option["shown"] for option in group["options"]), 5)
+        short = choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], "")
+        self.assertFalse(short["find"])
+        self.assertEqual(short["rest"], 0)
+        roles = choice_group(
+            "role",
+            "نقش",
+            [("actor", "بازیگر", "اجرا"), ("writer", "نویسنده", "متن")],
+            [],
+        )
+        self.assertEqual([item["name"] for item in roles["categories"]], ["اجرا", "متن"])
+        self.assertEqual(roles["categories"][0]["options"][0]["label"], "بازیگر")
+
+
+class BookmarkFilterRoleTests(TestCase):
+    def test_saved_filter_shows_the_primary_role(self):
+        from django.contrib.contenttypes.models import ContentType
+
+        from honaryaar.models import ArtCategory, Bookmark, ProfileRole, Role
+
+        viewer = user_for_phone("09120000111")
+        artist = user_for_phone("09120000112")
+        artist.first_name = "سارا"
+        artist.last_name = "محمدی"
+        artist.save()
+        category = ArtCategory.objects.create(art="theatre", slug="filter-role-art", title="تئاتر")
+        main = Role.objects.create(slug="filter-lead", title="نقش اصلی فیلتر", group="فیلتر", art_category=category)
+        other = Role.objects.create(slug="filter-extra", title="نقش فرعی فیلتر", group="فیلتر دیگر", art_category=category)
+        ProfileRole.objects.create(profile=artist.profile, role=other, is_primary=False)
+        ProfileRole.objects.create(profile=artist.profile, role=main, is_primary=True)
+        Bookmark.objects.create(
+            user=viewer,
+            content_type=ContentType.objects.get_for_model(artist.profile),
+            object_id=artist.profile.pk,
+        )
+        self.client.force_login(viewer)
+        page = self.client.get(reverse("artists"))
+        self.assertContains(page, "سارا محمدی")
+        self.assertContains(page, 'class="saved-list__role">نقش اصلی فیلتر')
+        self.assertNotContains(page, 'class="saved-list__role">نقش فرعی فیلتر')
+
+
 class ProductionDataSwitchTests(TestCase):
     def test_production_database_is_read_only(self):
         from django.core.exceptions import ImproperlyConfigured

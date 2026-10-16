@@ -905,7 +905,7 @@ def arts_in_use():
 def roles():
     from honaryaar.models import Role
 
-    return [{"slug": item.slug, "title": item.title} for item in Role.objects.all()]
+    return [{"slug": item.slug, "title": item.title, "group": item.group} for item in Role.objects.all()]
 
 
 def years_old(birth, today=None):
@@ -1521,8 +1521,12 @@ def opportunity_facets():
     city_names.sort(key=lambda title: (order.get(title, 10_000), title))
 
     role_slugs = list(dict.fromkeys(item["role"] for item in items if item["role"]))
-    roles = sorted(
-        ({"slug": slug, "title": role_title(slug)} for slug in role_slugs),
+    grouped = {item["slug"]: item.get("group", "") for item in roles()}
+    role_rows = sorted(
+        (
+            {"slug": slug, "title": role_title(slug), "group": grouped.get(slug, "")}
+            for slug in role_slugs
+        ),
         key=lambda item: item["title"],
     )
     from honaryaar.models import Art
@@ -1543,7 +1547,7 @@ def opportunity_facets():
         paid.append(("unpaid", "غیرپرداختی"))
     return {
         "cities": city_names,
-        "roles": roles,
+        "roles": role_rows,
         "arts": arts,
         "productions": productions,
         "genders": genders,
@@ -1630,21 +1634,34 @@ def arts():
 
 
 _PLAIN_FILTERS = {"status", "art", "gender", "paid"}
-_FIND_FILTERS = {"city", "role"}
+_FILTER_PREVIEW = 5
 
 
 def choice_group(name, label, pairs, selected):
     picked = _picked(selected)
     options = []
     first = None
-    for value, text in pairs:
-        value = str(value)
+    buckets = {}
+    categories = []
+    for item in pairs:
+        value, text = str(item[0]), item[1]
+        category = item[2] if len(item) > 2 else ""
         is_selected = value in picked
-        options.append({"value": value, "label": text, "selected": is_selected})
+        option = {"value": value, "label": text, "group": category, "selected": is_selected}
+        options.append(option)
+        if category:
+            bucket = buckets.get(category)
+            if bucket is None:
+                bucket = {"name": category, "options": []}
+                buckets[category] = bucket
+                categories.append(bucket)
+            bucket["options"].append(option)
         if is_selected and first is None:
             first = len(options) - 1
     plain = name in _PLAIN_FILTERS
-    find = name in _FIND_FILTERS and len(options) > 5
+    find = len(options) > _FILTER_PREVIEW
+    for index, option in enumerate(options):
+        option["shown"] = index < _FILTER_PREVIEW
     return {
         "name": name,
         "label": label,
@@ -1653,8 +1670,10 @@ def choice_group(name, label, pairs, selected):
         "open": True if plain else first is not None,
         "plain": plain,
         "find": find,
-        "more": first is not None and first >= 6 and not find,
+        "more": False,
+        "rest": len(options) - _FILTER_PREVIEW if find else 0,
         "selected": sum(1 for option in options if option["selected"]),
+        "categories": categories,
     }
 
 

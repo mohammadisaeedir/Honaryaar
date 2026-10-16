@@ -31,6 +31,14 @@
             {% include "components/layout/search_modal.html" %}
         </div>
         <div class="site-header__end">
+            <div class="theme-switch" role="group" aria-label="حالت نمایش">
+                <button type="button" data-theme-value="light" aria-label="روز" aria-pressed="true">
+                    {% include "components/icon.html" with name="sun" size="18" %}
+                </button>
+                <button type="button" data-theme-value="dark" aria-label="شب" aria-pressed="false">
+                    {% include "components/icon.html" with name="moon" size="18" %}
+                </button>
+            </div>
             {% if user.is_authenticated %}
                 <div class="site-account-wrap" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
                     <a class="site-account site-account--mobile" href="{% url 'me-profile' %}">
@@ -63,3 +71,25 @@
         </div>
     </div>
 </header>
+<script>
+    (function () {
+        function applyTheme(theme) {
+            var dark = theme === "dark";
+            document.documentElement.dataset.theme = dark ? "dark" : "light";
+            try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch (e) {}
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute("content", dark ? "#17131A" : "#C13281");
+            document.querySelectorAll("[data-theme-value]").forEach(function (button) {
+                var on = button.getAttribute("data-theme-value") === (dark ? "dark" : "light");
+                button.classList.toggle("is-on", on);
+                button.setAttribute("aria-pressed", on ? "true" : "false");
+            });
+        }
+        document.querySelectorAll("[data-theme-value]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                applyTheme(button.getAttribute("data-theme-value"));
+            });
+        });
+        applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+    })();
+</script>

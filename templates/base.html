@@ -26,7 +26,7 @@
     <link rel="icon" href="{% static 'brand/favicon.svg' %}" type="image/svg+xml">
     <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}">
     <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}">
-    <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";document.documentElement.classList.add("is-booting");</script>
+    <script>document.documentElement.dataset.os=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||/Mac/.test(navigator.userAgent)?"mac":"win";document.documentElement.classList.add("is-booting");try{if(localStorage.getItem("theme")==="dark")document.documentElement.dataset.theme="dark"}catch(e){}</script>
     <link rel="preload" href="{% static 'fonts/PeydaWeb-Regular.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v={{ asset_v }}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ asset_v }}">

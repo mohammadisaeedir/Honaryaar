@@ -62,16 +62,6 @@
 
             <div class="me-grid">
                 <div class="me-stack">
-                    {% if artist.status == "indexed" %}
-                        <section class="me-card" id="claim">
-                            <p class="me-about">این صفحه از اطلاعات عمومی ساخته شده و به معنی عضویت در هنریار نیست.</p>
-                            <div class="mt-4">
-                                {% include "components/button.html" with href="#claim" label="این پروفایل متعلق به من است" variant="secondary" %}
-                            </div>
-                            <p class="me-note mt-3">ثبت مالکیت پروفایل در گام بعدی، همراه با ورود، فعال می‌شود.</p>
-                        </section>
-                    {% endif %}
-
                     <section class="me-card" id="about">
                         <div class="me-card__head"><h2>اطلاعات</h2></div>
                         {% if artist.about %}
