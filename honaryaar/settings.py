@@ -271,6 +271,7 @@ UNFOLD = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'honaryaar.catalog.RequestLists',
     'honaryaar.admin_language.AdminLanguageMiddleware',
     'django.middleware.common.CommonMiddleware',
     'honaryaar.digits.PersianDigitsMiddleware',

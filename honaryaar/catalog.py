@@ -5,18 +5,13 @@ Pages read Profile, Project, and Opportunity from there.
 """
 
 import os
-import pickle
 import time
+from contextvars import ContextVar
 from datetime import date
 
-_CACHE_SECONDS = 20
-_SNAPSHOT_KEY = "honaryaar:home:v4"
-_SNAPSHOT_TTL = 60 * 60 * 24
-_DAILY_LOADERS = {}
-_building = False
-_daily_mem = {"at": 0.0, "value": None}
 _redis_client = None
 _redis_down_until = 0.0
+_request_lists = ContextVar("honaryaar_request_lists", default=None)
 
 
 def _upstash():
@@ -61,70 +56,31 @@ def _redis_pause():
     _redis_down_until = time.monotonic() + 60
 
 
-def _daily_snapshot():
-    """One Redis value for the public home page, kept for 24 hours.
+def _once(key, build):
+    """Reuse one list for the rest of this request. No process-wide cache."""
+    box = _request_lists.get()
+    if box is None:
+        return build()
+    if key not in box:
+        box[key] = build()
+    return box[key]
 
-    Returns None when Redis is not configured, so local requests keep
-    reading the database through the short in-process cache.
-    """
-    global _building
 
-    client = _upstash()
-    if client is None:
-        return None
-    now = time.monotonic()
-    if _daily_mem["value"] is not None and now - _daily_mem["at"] < 60:
-        return _daily_mem["value"]
-    data = None
-    try:
-        raw = client.get(_SNAPSHOT_KEY)
-    except Exception:
-        _redis_pause()
-        return None
-    if raw:
+class RequestLists:
+    """Hold catalogue lists on the request so one page does not read them twice."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        box = {}
+        request.catalog_lists = box
+        token = _request_lists.set(box)
         try:
-            data = pickle.loads(raw)
-        except (pickle.UnpicklingError, TypeError, ValueError):
-            data = None
-    if not isinstance(data, dict) or any(name not in data for name in _DAILY_LOADERS):
-        _building = True
-        try:
-            data = {name: loader() for name, loader in _DAILY_LOADERS.items()}
+            return self.get_response(request)
         finally:
-            _building = False
-        try:
-            client.setex(_SNAPSHOT_KEY, _SNAPSHOT_TTL, pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL))
-        except Exception:
-            _redis_pause()
-    _daily_mem["at"] = now
-    _daily_mem["value"] = data
-    return data
+            _request_lists.reset(token)
 
-
-def _cached(fn=None, *, daily=False):
-    def decorate(func):
-        if daily:
-            _DAILY_LOADERS[func.__name__] = func
-        box = {"at": 0.0, "value": None}
-
-        def wrapper():
-            if daily and not _building:
-                snap = _daily_snapshot()
-                if snap is not None and func.__name__ in snap:
-                    return snap[func.__name__]
-            now = time.monotonic()
-            if box["value"] is not None and now - box["at"] < _CACHE_SECONDS:
-                return box["value"]
-            value = func()
-            box["at"] = now
-            box["value"] = value
-            return value
-
-        return wrapper
-
-    if fn is None:
-        return decorate
-    return decorate(fn)
 
 ROLES = [
     {"slug": "actor", "title": "بازیگر"},
@@ -905,19 +861,23 @@ def _art_order():
     return [value for value, _label in Art.choices]
 
 
-@_cached(daily=True)
 def arts_in_use():
-    from honaryaar.models import Art, ArtCategory
+    def load():
+        from honaryaar.models import Art, ArtCategory
 
-    present = set(ArtCategory.objects.values_list("art", flat=True).distinct())
-    return [{"slug": value, "title": label} for value, label in Art.choices if value in present]
+        present = set(ArtCategory.objects.values_list("art", flat=True).distinct())
+        return [{"slug": value, "title": label} for value, label in Art.choices if value in present]
+
+    return _once("arts", load)
 
 
-@_cached(daily=True)
 def roles():
-    from honaryaar.models import Role
+    def load():
+        from honaryaar.models import Role
 
-    return [{"slug": item.slug, "title": item.title, "group": item.group} for item in Role.objects.all()]
+        return [{"slug": item.slug, "title": item.title, "group": item.group} for item in Role.objects.all()]
+
+    return _once("roles", load)
 
 
 def years_old(birth, today=None):
@@ -1216,33 +1176,35 @@ def _opportunity_dict(item):
     }
 
 
-@_cached(daily=True)
-def _artists():
+def _artist_queryset():
     from honaryaar.models import Profile
 
-    profiles = (
-        Profile.objects.filter(profile_roles__isnull=False)
-        .select_related("city", "user")
-        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill", "contacts")
-        .distinct()
+    return Profile.objects.select_related("city", "user").prefetch_related(
+        "profile_roles__role", "credits", "media_items", "skill_links__skill", "contacts"
     )
-    return [_artist_dict(item) for item in profiles]
 
 
-@_cached(daily=True)
-def _projects():
+def _artists():
+    rows = _artist_queryset().filter(profile_roles__isnull=False).distinct()
+    return _once("artists", lambda: [_artist_dict(item) for item in rows])
+
+
+def _project_queryset():
     from django.db.models import Count, Prefetch, Q
 
     from honaryaar.models import PUBLIC_PROJECT_STATUSES, Project, Testimonial
 
     quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
-    projects = (
+    return (
         Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
         .select_related("owner", "owner__user", "art_category", "lead_role", "city")
         .annotate(open_calls=Count("opportunities", filter=Q(opportunities__status="open"), distinct=True))
         .prefetch_related(Prefetch("testimonials", queryset=quotes), "contacts")
     )
-    return [_project_dict(item) for item in projects]
+
+
+def _projects():
+    return _once("projects", lambda: [_project_dict(item) for item in _project_queryset()])
 
 
 def latest_projects(limit=5):
@@ -1252,21 +1214,24 @@ def latest_projects(limit=5):
     return _with_views(items, Project)
 
 
-@_cached(daily=True)
-def _opportunities():
+def _opportunity_queryset():
     from honaryaar.models import PUBLIC_PROJECT_STATUSES, Opportunity
 
-    items = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related("project", "project__art_category", "role", "city", "art_category").prefetch_related("project__contacts")
-    return [_opportunity_dict(item) for item in items]
+    return Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related(
+        "project", "project__art_category", "role", "city", "art_category"
+    ).prefetch_related("project__contacts")
+
+
+def _opportunities():
+    return _once("opportunities", lambda: [_opportunity_dict(item) for item in _opportunity_queryset()])
 
 
 def _approx(value):
     return persian_number(round_up_five(value))
 
 
-@_cached(daily=True)
 def listing_stats():
-    """Rounded counts for the three public lists. Stored in the daily snapshot."""
+    """Rounded counts for the three public lists."""
     projects = _projects()
     opportunities = _opportunities()
     artists = _artists()
@@ -1293,42 +1258,35 @@ def listing_stats():
 def project_by_slug(slug):
     from honaryaar.models import Project
 
-    found = next((item for item in _projects() if item["slug"] == slug), None)
-    if found is None:
+    row = _project_queryset().filter(slug=slug).first()
+    if row is None:
         return None
-    return _with_views([found], Project)[0]
+    return _with_views([_project_dict(row)], Project)[0]
 
 
 def artist_by_slug(slug):
-    from honaryaar.models import Profile
+    from honaryaar.models import Profile, ProfileStatus
 
-    found = next((item for item in _artists() if item["slug"] == slug), None)
-    if found is not None:
-        return _with_views([found], Profile)[0]
-    profile = (
-        Profile.objects.filter(slug=slug)
-        .select_related("city", "user")
-        .prefetch_related("profile_roles__role", "credits", "media_items", "skill_links__skill", "contacts")
-        .first()
-    )
-    if profile is None:
+    row = _artist_queryset().filter(slug=slug, status__in=ProfileStatus.values).first()
+    if row is None:
         return None
-    return _with_views([_artist_dict(profile)], Profile)[0]
+    return _with_views([_artist_dict(row)], Profile)[0]
 
 
 def opportunity_by_slug(slug):
     from honaryaar.models import Opportunity
 
-    found = next((item for item in _opportunities() if item["slug"] == slug), None)
-    if found is None:
+    row = _opportunity_queryset().filter(slug=slug).first()
+    if row is None:
         return None
-    return _with_views([found], Opportunity)[0]
+    return _with_views([_opportunity_dict(row)], Opportunity)[0]
 
 
 def opportunities_for_project(slug):
     from honaryaar.models import Opportunity
 
-    return _with_views([item for item in _opportunities() if item["project"] == slug], Opportunity)
+    rows = _opportunity_queryset().filter(project__slug=slug)
+    return _with_views([_opportunity_dict(item) for item in rows], Opportunity)
 
 
 def related_opportunities(opportunity, limit=5):
@@ -1810,11 +1768,13 @@ def clear_filters_href(request, keep=("q", "sort")):
     return f"?{encoded}" if encoded else request.path
 
 
-@_cached(daily=True)
 def cities():
-    from honaryaar.models import City
+    def load():
+        from honaryaar.models import City
 
-    return list(City.objects.order_by("priority", "title").values_list("title", flat=True))
+        return list(City.objects.order_by("priority", "title").values_list("title", flat=True))
+
+    return _once("cities", load)
 
 
 def persian_number(value):
@@ -1853,7 +1813,6 @@ def note_view(request, model, pk):
     return round_up_five(count)
 
 
-@_cached(daily=True)
 def hero_roles():
     from honaryaar.models import Role
 
@@ -1865,7 +1824,6 @@ def hero_roles():
     return ordered or list(titles.values())
 
 
-@_cached(daily=True)
 def hire_stats():
     from honaryaar.models import Profile, ProfileRole, ProfileSkill
 
@@ -1881,12 +1839,10 @@ def hire_stats():
     ]
 
 
-@_cached(daily=True)
 def hero_fields():
     return [item["title"] for item in arts_in_use()]
 
 
-@_cached(daily=True)
 def talent_stats():
     from django.db.models import Q
 
@@ -1953,7 +1909,6 @@ def search_modal_arts():
     return [{"slug": slug, "title": titles[slug], "soon": soon} for slug, soon in shown]
 
 
-@_cached(daily=True)
 def search_shortcuts():
     by_slug = {item["slug"]: item["title"] for item in roles()}
     return {
@@ -1966,9 +1921,15 @@ def search_shortcuts():
     }
 
 
-@_cached(daily=True)
 def footer_shortcuts():
-    from honaryaar.models import City, ArtCategory
+    def load():
+        return _footer_shortcuts()
+
+    return _once("footer", load)
+
+
+def _footer_shortcuts():
+    from honaryaar.models import PUBLIC_PROJECT_STATUSES, ArtCategory, City, Project
 
     cities = list(City.objects.order_by("priority", "title").values_list("title", flat=True)[:3])
     by_slug = {item["slug"]: item["title"] for item in roles()}
@@ -1977,10 +1938,9 @@ def footer_shortcuts():
         for item in ROLES
         if item["slug"] in by_slug
     ]
-    projects = [
-        {"slug": item["slug"], "title": item["title"]}
-        for item in sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:7]
-    ]
+    projects = list(
+        Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).order_by("-pk").values("slug", "title")[:7]
+    )
     productions = []
     seen = set()
     for title in ArtCategory.objects.filter(opportunities__isnull=False).order_by("priority", "title").values_list("title", flat=True):
