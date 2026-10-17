@@ -23,7 +23,9 @@
         <form class="page-search" method="get" action="{% url 'projects' %}" role="search" autocomplete="off" data-remember-search data-search-scope="projects" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
+            {% for value in filters.production %}<input type="hidden" name="production" value="{{ value }}">{% endfor %}
             {% for value in filters.status %}<input type="hidden" name="status" value="{{ value }}">{% endfor %}
+            {% if filters.start %}<input type="hidden" name="start" value="{{ filters.start }}">{% endif %}
             {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
             <label class="sr-only" for="projects-q">جستجو در پروژه‌ها</label>
             <input class="field" id="projects-q" type="search" name="q" value="{{ filters.q }}" placeholder="نام پروژه یا شهر" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
@@ -38,7 +40,7 @@
     {% include "components/skeleton/list.html" with kind="projects" %}
     <div class="live-pane">
     {% if projects %}
-        <div class="catalog-grid mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
+        <div class="catalog-grid catalog-grid--3 mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
             {% for project in projects %}
                 {% include "components/project/project_card.html" %}
             {% endfor %}

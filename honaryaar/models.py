@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from honaryaar.storage import MediaStorage
 
@@ -197,6 +198,7 @@ class Profile(models.Model):
         choices=ProfileStatus.choices,
         default=ProfileStatus.INDEXED,
     )
+    views = models.PositiveIntegerField(default=0)
     roles = models.ManyToManyField("Role", through="ProfileRole", related_name="profiles")
     list_image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     list_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
@@ -215,7 +217,7 @@ class Profile(models.Model):
         if raw:
             phone = normalize_phone(raw)
             if not phone:
-                raise ValidationError({"mobile": "Enter a mobile number like 09123456789."})
+                raise ValidationError({"mobile": _("Enter a mobile number like 09123456789.")})
             self.mobile = phone
         else:
             self.mobile = None
@@ -285,8 +287,8 @@ class ProfileContact(models.Model):
 
     class Meta:
         ordering = ["profile_id", "position", "id"]
-        verbose_name = "Contact"
-        verbose_name_plural = "Contacts"
+        verbose_name = "contact"
+        verbose_name_plural = "contacts"
         constraints = [
             models.UniqueConstraint(fields=["profile", "kind", "value"], name="unique_profile_contact"),
         ]
@@ -422,6 +424,11 @@ class Project(models.Model):
         related_name="led_projects",
     )
     summary = models.TextField(blank=True)
+    lead_name = models.CharField(max_length=120, blank=True)
+    source_channel = models.CharField(max_length=60, blank=True)
+    source_post_id = models.PositiveIntegerField(null=True, blank=True)
+    source_url = models.URLField(max_length=300, blank=True)
+    source_posted_at = models.DateTimeField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True, verbose_name="Start date")
     featured = models.BooleanField(default=False, verbose_name="Featured")
     status = models.CharField(
@@ -429,15 +436,85 @@ class Project(models.Model):
         choices=ProjectStatus.choices,
         default=ProjectStatus.DRAFT,
     )
+    views = models.PositiveIntegerField(default=0)
     image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_public_acl = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["title"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source_channel", "source_post_id"],
+                condition=models.Q(source_post_id__isnull=False),
+                name="unique_project_source_post",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not (self.slug or "").strip():
+            from honaryaar.slugs import unique_slug
+
+            self.slug = unique_slug(Project, self.title, fallback="project", exclude_pk=self.pk)
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                fields = list(update_fields)
+                if "slug" not in fields:
+                    fields.append("slug")
+                kwargs["update_fields"] = fields
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+
+_PROJECT_CONTACT_KINDS = {
+    ContactKind.PHONE,
+    ContactKind.WHATSAPP,
+    ContactKind.TELEGRAM,
+    ContactKind.INSTAGRAM,
+    ContactKind.EMAIL,
+    ContactKind.WEBSITE,
+}
+
+
+class ProjectContact(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="contacts")
+    kind = models.CharField(max_length=20, choices=ContactKind.choices)
+    value = models.CharField(max_length=200)
+    is_public = models.BooleanField(default=True)
+    position = models.PositiveSmallIntegerField(default=0)
+    source = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["project_id", "position", "id"]
+        verbose_name = "Project contact"
+        verbose_name_plural = "Project contacts"
+        constraints = [
+            models.UniqueConstraint(fields=["project", "kind", "value"], name="unique_project_contact"),
+        ]
+        indexes = [
+            models.Index(fields=["kind"]),
+        ]
+
+    def clean(self):
+        super().clean()
+        self._normalize()
+
+    def save(self, *args, **kwargs):
+        self._normalize()
+        super().save(*args, **kwargs)
+
+    def _normalize(self):
+        from honaryaar.contacts import normalize_contact
+
+        if self.kind not in _PROJECT_CONTACT_KINDS:
+            raise ValidationError({"kind": "This contact kind is not allowed on a project."})
+        self.value = normalize_contact(self.kind, self.value)
+
+    def __str__(self):
+        return f"{self.project} · {self.kind}"
 
 
 class Testimonial(models.Model):
@@ -568,6 +645,13 @@ class OpportunityStatus(models.TextChoices):
     CLOSED = "closed", "Closed"
 
 
+class PayType(models.TextChoices):
+    NEGOTIABLE = "negotiable", "توافقی"
+    GIFT = "gift", "در حد هدیه"
+    BOX_OFFICE = "box_office", "درصدی از گیشه"
+    FIXED = "fixed", "مبلغ مشخص"
+
+
 class Gender(models.TextChoices):
     MALE = "male", "Male"
     FEMALE = "female", "Female"
@@ -641,8 +725,9 @@ class Opportunity(models.Model):
     special_conditions = models.JSONField(default=list, blank=True, verbose_name="Special conditions")
     count = models.PositiveSmallIntegerField(default=1)
     paid = models.BooleanField(default=False)
+    pay_type = models.CharField(max_length=20, blank=True, choices=PayType.choices)
+    pay_amount = models.PositiveIntegerField(null=True, blank=True)
     featured = models.BooleanField(default=False)
-    pay_note = models.CharField(max_length=240, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     deadline = models.DateField(null=True, blank=True)
@@ -653,10 +738,73 @@ class Opportunity(models.Model):
         choices=OpportunityStatus.choices,
         default=OpportunityStatus.OPEN,
     )
+    views = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["title"]
         verbose_name_plural = "opportunities"
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(paid=False, pay_type="", pay_amount__isnull=True)
+                    | models.Q(
+                        paid=True,
+                        pay_type__in=[
+                            PayType.NEGOTIABLE,
+                            PayType.GIFT,
+                            PayType.BOX_OFFICE,
+                        ],
+                        pay_amount__isnull=True,
+                    )
+                    | models.Q(paid=True, pay_type=PayType.FIXED, pay_amount__gt=0)
+                ),
+                name="opportunity_pay_consistent",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        self._check_pay()
+
+    def _check_pay(self):
+        from honaryaar.pay import normalize_pay
+
+        paid, pay_type, pay_amount, problems = normalize_pay(self.paid, self.pay_type, self.pay_amount)
+        if problems:
+            raise ValidationError(problems)
+        self.paid = paid
+        self.pay_type = pay_type
+        self.pay_amount = pay_amount
+
+    def save(self, *args, **kwargs):
+        if not (self.slug or "").strip():
+            from honaryaar.slugs import opportunity_slug
+
+            project_slug = self.project.slug if self.project_id else ""
+            role_slug = self.role.slug if self.role_id else ""
+            role_title = self.role.title if self.role_id else self.title
+            self.slug = opportunity_slug(
+                project_slug,
+                role_slug=role_slug,
+                role_title=role_title,
+                model=Opportunity,
+                exclude_pk=self.pk,
+            )
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                fields = list(update_fields)
+                if "slug" not in fields:
+                    fields.append("slug")
+                kwargs["update_fields"] = fields
+        self._check_pay()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            fields = list(kwargs["update_fields"])
+            for name in ("pay_type", "pay_amount"):
+                if name not in fields:
+                    fields.append(name)
+            kwargs["update_fields"] = fields
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.project} · {self.title}"
@@ -922,15 +1070,15 @@ class SupportTicket(models.Model):
         super().clean()
         allowed = KIND_REASON_VALUES.get(self.kind, set())
         if self.kind_reason not in allowed:
-            raise ValidationError({"kind_reason": "This reason does not belong to the selected kind."})
+            raise ValidationError({"kind_reason": _("This reason does not belong to the selected kind.")})
         has_target = bool(self.content_type_id and self.object_id)
         if self.kind == TicketKind.REPORT:
             if not has_target or self.content_type.model not in REPORT_TARGET_MODELS:
-                raise ValidationError({"content_type": "A report points at a profile, project, or opportunity."})
+                raise ValidationError({"content_type": _("A report points at a profile, project, or opportunity.")})
         elif self.content_type_id or self.object_id:
-            raise ValidationError({"content_type": "Only a report has a target."})
+            raise ValidationError({"content_type": _("Only a report has a target.")})
         if self.kind == TicketKind.TICKET and not self.user_id:
-            raise ValidationError({"user": "A ticket requires a user."})
+            raise ValidationError({"user": _("A ticket requires a user.")})
 
     def __str__(self):
         return f"{self.get_kind_display()} #{self.pk}"

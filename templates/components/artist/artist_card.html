@@ -25,11 +25,12 @@
             </ul>
         {% endif %}
         <div class="artist-tile__foot">
-            {% if artist.city %}
-                <p class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ artist.city }}</span></p>
-            {% else %}
-                <span></span>
-            {% endif %}
+            <div class="artist-tile__meta">
+                {% if artist.city %}
+                    <p class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ artist.city }}</span></p>
+                {% endif %}
+                {% include "components/view_count.html" with views=artist.views %}
+            </div>
             <div class="artist-tile__marks">
                 {% if request.user.is_authenticated %}
                     <button class="card-mark__btn" type="button" data-invite-open data-invite-slug="{{ artist.slug }}" data-invite-name="{{ artist.legal_name }}" data-invite-roles="{{ artist.role_titles|join:'||' }}" aria-label="دعوت">

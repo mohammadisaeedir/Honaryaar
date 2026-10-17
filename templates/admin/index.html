@@ -19,16 +19,20 @@
         </div>
 
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
-            {% component "unfold/components/card.html" with title="Nearest open deadlines" %}
+            {% translate "Nearest open deadlines" as deadlines_title %}
+            {% translate "Latest applications" as applications_title %}
+            {% translate "Invites waiting for a reply" as invites_title %}
+            {% translate "Profiles with no role" as missing_roles_title %}
+            {% component "unfold/components/card.html" with title=deadlines_title %}
                 {% component "unfold/components/table.html" with table=reports.deadlines card_included=1 %}{% endcomponent %}
             {% endcomponent %}
-            {% component "unfold/components/card.html" with title="Latest applications" %}
+            {% component "unfold/components/card.html" with title=applications_title %}
                 {% component "unfold/components/table.html" with table=reports.applications card_included=1 %}{% endcomponent %}
             {% endcomponent %}
-            {% component "unfold/components/card.html" with title="Invites waiting for a reply" %}
+            {% component "unfold/components/card.html" with title=invites_title %}
                 {% component "unfold/components/table.html" with table=reports.invites card_included=1 %}{% endcomponent %}
             {% endcomponent %}
-            {% component "unfold/components/card.html" with title="Profiles with no role" %}
+            {% component "unfold/components/card.html" with title=missing_roles_title %}
                 {% component "unfold/components/table.html" with table=reports.missing_roles card_included=1 %}{% endcomponent %}
             {% endcomponent %}
         </div>

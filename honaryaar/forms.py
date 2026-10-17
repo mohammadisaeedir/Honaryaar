@@ -16,6 +16,7 @@ from honaryaar.models import (
     Bookmark,
     City,
     Opportunity,
+    PayType,
     Profile,
     ProjectStatus,
     Role,
@@ -287,22 +288,26 @@ class OpportunityForm(forms.Form):
     special_conditions = forms.MultipleChoiceField(choices=SPECIAL_CONDITIONS, required=False)
     age_min = forms.IntegerField(required=False, min_value=AGE_FLOOR, max_value=AGE_CEILING)
     age_max = forms.IntegerField(required=False, min_value=AGE_FLOOR, max_value=AGE_CEILING)
+    paid = forms.BooleanField(required=False)
+    pay_type = forms.ChoiceField(choices=[("", "انتخاب نوع دستمزد")] + list(PayType.choices), required=False)
+    pay_amount = forms.IntegerField(required=False, min_value=1)
 
     def clean(self):
+        from honaryaar.pay import pay_problems
+
         cleaned = super().clean()
         start = cleaned.get("age_min")
         end = cleaned.get("age_max")
-        if start is None and end is None:
-            return cleaned
-        if start is None or end is None:
-            self.add_error("age_min", "هر دو سر رنج سنی را مشخص کنید.")
-            return cleaned
-        if start > end:
-            self.add_error("age_min", "شروع رنج سنی از پایان آن بیشتر است.")
-            return cleaned
-        if start == AGE_FLOOR and end == AGE_CEILING:
-            cleaned["age_min"] = None
-            cleaned["age_max"] = None
+        if start is not None or end is not None:
+            if start is None or end is None:
+                self.add_error("age_min", "هر دو سر رنج سنی را مشخص کنید.")
+            elif start > end:
+                self.add_error("age_min", "شروع رنج سنی از پایان آن بیشتر است.")
+            elif start == AGE_FLOOR and end == AGE_CEILING:
+                cleaned["age_min"] = None
+                cleaned["age_max"] = None
+        for field, message in pay_problems(cleaned.get("paid"), cleaned.get("pay_type"), cleaned.get("pay_amount")).items():
+            self.add_error(field if field in self.fields else None, message)
         return cleaned
 
     def clean_title(self):

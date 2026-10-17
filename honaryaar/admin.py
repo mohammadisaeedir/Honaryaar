@@ -1,5 +1,4 @@
 import json
-import secrets
 from urllib.parse import urlencode
 
 from django import forms
@@ -14,6 +13,7 @@ from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from django.contrib.admin.options import ActionLocation
 from unfold.admin import ModelAdmin as UnfoldModelAdmin
 from unfold.admin import TabularInline
@@ -49,6 +49,7 @@ from honaryaar.models import (
     SpecialCondition,
     Profile,
     ProfileContact,
+    ProjectContact,
     ProfileMedia,
     ProfileRole,
     ProfileSkill,
@@ -109,7 +110,7 @@ def _id_first(display):
 
 
 class AdminTableMixin:
-    @admin.display(description="ID", ordering="pk")
+    @admin.display(description=_("ID"), ordering="pk")
     def row_id(self, obj):
         return obj.pk if getattr(obj, "pk", None) else "—"
 
@@ -142,7 +143,7 @@ class ModelAdmin(AdminTableMixin, UnfoldModelAdmin):
             ordered["export_csv"] = export
         return ordered
 
-    @admin.action(description="Export to CSV")
+    @admin.action(description=_("Export to CSV"))
     def export_csv(self, request, queryset):
         return csv_response(queryset)
 
@@ -195,14 +196,14 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         fieldsets[0] = (title, {**options, "fields": tuple(fields)})
         return fieldsets
 
-    @admin.display(description="Mobile")
+    @admin.display(description=_("Mobile"))
     def profile_mobile(self, user):
         try:
             return user.profile.mobile or ""
         except Profile.DoesNotExist:
             return ""
 
-    @admin.display(description="Profile")
+    @admin.display(description=_("Profile"))
     def profile_link(self, user):
         try:
             profile = user.profile
@@ -253,30 +254,30 @@ class CreditInline(HonarInline):
 class ProfileRoleInline(HonarInline):
     model = ProfileRole
     extra = 0
-    verbose_name = "Role"
-    verbose_name_plural = "Roles"
+    verbose_name = _("Role")
+    verbose_name_plural = _("Roles")
 
 
 class ProfileSkillInline(HonarInline):
     model = ProfileSkill
     extra = 0
-    verbose_name = "Skill"
-    verbose_name_plural = "Skills"
+    verbose_name = _("Skill")
+    verbose_name_plural = _("Skills")
 
 
 class ProfileContactInline(HonarInline):
     model = ProfileContact
     extra = 0
     fields = ("kind", "value", "is_public")
-    verbose_name = "Contact"
-    verbose_name_plural = "Contacts"
+    verbose_name = _("Contact")
+    verbose_name_plural = _("Contacts")
 
 
 class ProfileMediaForm(forms.ModelForm):
     parent_id = ""
     upload_id = forms.CharField(
         required=False,
-        label="File",
+        label=_("File"),
         widget=DirectUploadWidget(purpose="profile", fixed=False),
     )
 
@@ -329,7 +330,7 @@ def _posted_flag(form, name):
 class ProjectAdminForm(forms.ModelForm):
     image_upload = forms.CharField(
         required=False,
-        label="Image",
+        label=_("Image"),
         widget=DirectUploadWidget(purpose="project", kind="photo", fixed=True),
     )
 
@@ -339,6 +340,8 @@ class ProjectAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if "slug" in self.fields:
+            self.fields["slug"].required = False
         self.fields["image_upload"].widget = DirectUploadWidget(
             purpose="project",
             kind="photo",
@@ -368,7 +371,7 @@ class ProjectAdminForm(forms.ModelForm):
 class TestimonialAdminForm(forms.ModelForm):
     image_upload = forms.CharField(
         required=False,
-        label="Image",
+        label=_("Image"),
         widget=DirectUploadWidget(purpose="testimonial", kind="photo", fixed=True),
     )
 
@@ -503,7 +506,7 @@ class RoleAdmin(ModelAdmin):
     autocomplete_fields = ("art_category",)
     list_select_related = ("art_category",)
 
-    @admin.display(description="Art", ordering="art_category__art")
+    @admin.display(description=_("Art"), ordering="art_category__art")
     def art_name(self, role):
         if role.art_category_id:
             return role.art_category.get_art_display()
@@ -531,17 +534,17 @@ class ProfileAdminForm(forms.ModelForm):
         choices=[("", "—"), ("male", "مرد"), ("female", "زن")],
         required=False,
         widget=GenderPickerWidget,
-        label="Gender",
+        label=_("Gender"),
     )
     arts = forms.MultipleChoiceField(
         choices=Art.choices,
         widget=ArtPickerWidget,
         required=False,
-        label="Arts",
-        help_text="Arts this person works in or is interested in.",
+        label=_("Arts"),
+        help_text=_("Arts this person works in or is interested in."),
     )
-    list_upload = forms.CharField(required=False, label="Main image")
-    banner_upload = forms.CharField(required=False, label="Banner")
+    list_upload = forms.CharField(required=False, label=_("Main image"))
+    banner_upload = forms.CharField(required=False, label=_("Banner"))
 
     class Meta:
         model = Profile
@@ -591,7 +594,7 @@ class ProfileAdminForm(forms.ModelForm):
 
 
 class StatusChipMixin:
-    @admin.display(description="Status", ordering="status")
+    @admin.display(description=_("Status"), ordering="status")
     def status_chip(self, obj):
         return status_chip_html(obj.status, obj.get_status_display())
 
@@ -653,38 +656,38 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
             )
         )
 
-    @admin.display(description="User")
+    @admin.display(description=_("User"))
     def user_link(self, profile):
         if not profile.user_id:
             return ""
         href = reverse("admin:auth_user_change", args=[profile.user_id])
         return format_html('<a href="{}">{}</a>', href, profile.user.username)
 
-    @admin.display(description="First name")
+    @admin.display(description=_("First name"))
     def first_name(self, profile):
         if not profile.user_id:
             return ""
         return profile.user.first_name
 
-    @admin.display(description="Last name")
+    @admin.display(description=_("Last name"))
     def last_name(self, profile):
         if not profile.user_id:
             return ""
         return profile.user.last_name
 
-    @admin.display(description="Mobile", ordering="mobile")
+    @admin.display(description=_("Mobile"), ordering="mobile")
     def mobile(self, profile):
         return profile.mobile or ""
 
-    @admin.display(description="Projects")
+    @admin.display(description=_("Projects"))
     def project_link(self, profile):
         return _count_link("admin:honaryaar_project_changelist", {"owner__id__exact": profile.pk}, profile.project_count)
 
-    @admin.display(description="Credits")
+    @admin.display(description=_("Credits"))
     def credit_link(self, profile):
         return _count_link("admin:honaryaar_credit_changelist", {"profile__id__exact": profile.pk}, profile.credit_count)
 
-    @admin.display(description="Opportunities")
+    @admin.display(description=_("Opportunities"))
     def opportunity_link(self, profile):
         return _count_link(
             "admin:honaryaar_opportunity_changelist",
@@ -692,7 +695,7 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
             profile.opportunity_count,
         )
 
-    @admin.display(description="Applications")
+    @admin.display(description=_("Applications"))
     def application_link(self, profile):
         return _count_link(
             "admin:honaryaar_application_changelist",
@@ -700,15 +703,15 @@ class ProfileAdmin(StatusChipMixin, ModelAdmin):
             profile.application_count,
         )
 
-    @admin.display(description="Invites")
+    @admin.display(description=_("Invites"))
     def invite_link(self, profile):
         return _count_link("admin:honaryaar_invite_changelist", {"profile__id__exact": profile.pk}, profile.invite_count)
 
-    @admin.display(description="Matches")
+    @admin.display(description=_("Matches"))
     def match_link(self, profile):
         return _count_link("admin:honaryaar_match_changelist", {"profile__id__exact": profile.pk}, profile.match_count)
 
-    @admin.display(description="Contacts")
+    @admin.display(description=_("Contacts"))
     def contacts_link(self, profile):
         count = profile.contact_count if hasattr(profile, "contact_count") else profile.contacts.count()
         return _count_link(
@@ -734,7 +737,7 @@ class BookmarkAdmin(ModelAdmin):
     search_fields = ("user__username",)
     autocomplete_fields = ("user",)
 
-    @admin.display(description="Target")
+    @admin.display(description=_("Target"))
     def target_label(self, bookmark):
         return bookmark.target_label()
 
@@ -775,12 +778,16 @@ class CreditAdmin(ModelAdmin):
     autocomplete_fields = ("profile", "role")
 
 
-def _opportunity_slug():
-    for _ in range(5):
-        slug = f"o-{secrets.token_hex(4)}"
-        if not Opportunity.objects.filter(slug=slug).exists():
-            return slug
-    return f"o-{secrets.token_hex(8)}"
+def _opportunity_slug(obj):
+    from honaryaar.slugs import opportunity_slug
+
+    return opportunity_slug(
+        obj.project.slug if obj.project_id else "",
+        role_slug=obj.role.slug if obj.role_id else "",
+        role_title=obj.role.title if obj.role_id else obj.title,
+        model=Opportunity,
+        exclude_pk=obj.pk,
+    )
 
 
 class OpportunityAdminForm(forms.ModelForm):
@@ -788,7 +795,7 @@ class OpportunityAdminForm(forms.ModelForm):
         choices=SpecialCondition.choices,
         widget=forms.CheckboxSelectMultiple,
         required=False,
-        label="Special conditions",
+        label=_("Special conditions"),
     )
 
     class Meta:
@@ -800,6 +807,8 @@ class OpportunityAdminForm(forms.ModelForm):
         current = self.instance.special_conditions or []
         if isinstance(current, list):
             self.initial.setdefault("special_conditions", current)
+        if "slug" in self.fields:
+            self.fields["slug"].required = False
 
 
 class OpportunityInline(HonarInline):
@@ -809,8 +818,8 @@ class OpportunityInline(HonarInline):
     fields = ("title", "role", "city", "deadline", "gender", "collaboration_type", "experience_level", "special_conditions", "status")
     autocomplete_fields = ("role", "city")
     show_change_link = True
-    verbose_name = "Opportunity"
-    verbose_name_plural = "Opportunities"
+    verbose_name = _("Opportunity")
+    verbose_name_plural = _("Opportunities")
 
 
 class TestimonialInline(HonarInline):
@@ -846,7 +855,7 @@ class TestimonialAdmin(ModelAdmin):
         except MediaError as exc:
             messages.error(request, exc.message)
 
-    @admin.display(description="Name")
+    @admin.display(description=_("Name"))
     def display_name(self, item):
         if item.name:
             return item.name
@@ -858,16 +867,16 @@ class TestimonialAdmin(ModelAdmin):
 @admin.register(Project)
 class ProjectAdmin(StatusChipMixin, ModelAdmin):
     form = ProjectAdminForm
-    list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link")
+    list_display = ("title", "owner", "city", "art_name", "art_category", "start_date", "featured", "status_chip", "opportunity_link", "contacts_link")
     list_filter = ("status", "featured", "art_category__art", "art_category", "city")
     list_editable = ("featured",)
     search_fields = ("title", "owner__user__first_name", "owner__user__last_name", "owner__name", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("owner", "art_category", "lead_role", "city")
     list_select_related = ("owner", "city", "art_category")
-    readonly_fields = ("image_preview",)
+    readonly_fields = ("image_preview", "source_channel", "source_post_id", "source_url", "source_posted_at")
     Media = AdminMedia
 
-    @admin.display(description="Art", ordering="art_category__art")
+    @admin.display(description=_("Art"), ordering="art_category__art")
     def art_name(self, project):
         if project.art_category_id:
             return project.art_category.get_art_display()
@@ -896,7 +905,7 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
             obj.delete()
         for obj in instances:
             if not obj.slug:
-                obj.slug = _opportunity_slug()
+                obj.slug = _opportunity_slug(obj)
             if not obj.art_category_id:
                 obj.art_category_id = form.instance.art_category_id
             if not obj.pk and not obj.city_id:
@@ -905,9 +914,12 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
         formset.save_m2m()
 
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(opportunity_count=Count("opportunities", distinct=True))
+        return super().get_queryset(request).annotate(
+            opportunity_count=Count("opportunities", distinct=True),
+            contact_count=Count("contacts", distinct=True),
+        )
 
-    @admin.display(description="Opportunities")
+    @admin.display(description=_("Opportunities"))
     def opportunity_link(self, project):
         return _count_link(
             "admin:honaryaar_opportunity_changelist",
@@ -915,10 +927,31 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
             project.opportunity_count,
         )
 
+    @admin.display(description=_("Contacts"))
+    def contacts_link(self, project):
+        count = project.contact_count if hasattr(project, "contact_count") else project.contacts.count()
+        return _count_link(
+            "admin:honaryaar_projectcontact_changelist",
+            {"project__id__exact": project.pk},
+            f"Contacts ({count})",
+        )
+
+
+@admin.register(ProjectContact)
+class ProjectContactAdmin(ModelAdmin):
+    list_display = ("project", "kind", "value", "is_public", "source", "position")
+    list_filter = ("kind", "is_public", "source")
+    search_fields = ("value", "kind", "project__title", "project__slug")
+    autocomplete_fields = ("project",)
+    list_select_related = ("project",)
+
 
 @admin.register(Opportunity)
 class OpportunityAdmin(StatusChipMixin, ModelAdmin):
     form = OpportunityAdminForm
+    class Media:
+        js = ("js/admin-pay.js",)
+
     list_display = (
         "title",
         "project",
@@ -929,19 +962,20 @@ class OpportunityAdmin(StatusChipMixin, ModelAdmin):
         "deadline",
         "gender",
         "paid",
+        "pay_type",
         "featured",
         "status_chip",
         "application_link",
         "invite_link",
     )
-    list_filter = ("status", "paid", "featured", "gender", "collaboration_type", "experience_level", "city", "role", "art_category__art", "art_category")
+    list_filter = ("status", "paid", "pay_type", "featured", "gender", "collaboration_type", "experience_level", "city", "role", "art_category__art", "art_category")
     list_editable = ("featured",)
     date_hierarchy = "deadline"
     search_fields = ("title", "project__title", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("project", "role", "city", "art_category")
     list_select_related = ("project", "role", "city", "art_category")
 
-    @admin.display(description="Art", ordering="art_category__art")
+    @admin.display(description=_("Art"), ordering="art_category__art")
     def art_name(self, opportunity):
         if opportunity.art_category_id:
             return opportunity.art_category.get_art_display()
@@ -982,7 +1016,7 @@ class OpportunityAdmin(StatusChipMixin, ModelAdmin):
             return True
         return super().lookup_allowed(lookup, value, request)
 
-    @admin.display(description="Applications")
+    @admin.display(description=_("Applications"))
     def application_link(self, opportunity):
         return _count_link(
             "admin:honaryaar_application_changelist",
@@ -990,7 +1024,7 @@ class OpportunityAdmin(StatusChipMixin, ModelAdmin):
             opportunity.application_count,
         )
 
-    @admin.display(description="Invites")
+    @admin.display(description=_("Invites"))
     def invite_link(self, opportunity):
         return _count_link(
             "admin:honaryaar_invite_changelist",
@@ -1101,10 +1135,10 @@ class SupportTicketAdmin(StatusChipMixin, ModelAdmin):
             messages.success(request, "Reply sent.")
         return redirect(change_url)
 
-    @admin.display(description="Target")
+    @admin.display(description=_("Target"))
     def target_label(self, item):
         return item.target_label()
 
-    @admin.display(description="Messages", ordering="message_total")
+    @admin.display(description=_("Messages"), ordering="message_total")
     def message_count(self, item):
         return item.message_total

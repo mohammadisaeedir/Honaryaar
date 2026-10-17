@@ -230,10 +230,10 @@ def applied_filters(context, groups):
     request = context["request"]
     items = []
     for group in groups:
-        if group["kind"] == "text":
+        if group["kind"] in {"text", "date"}:
             if not group["value"]:
                 continue
-            label = group["value"]
+            label = group.get("chip") or group.get("display") or group["value"]
         elif group["kind"] == "age":
             if not group["selected"]:
                 continue

@@ -5,36 +5,38 @@
 
 .jalali-date__text {
     width: 100%;
-    padding-inline-end: 40px;
+    padding-inline-start: 40px;
+    text-align: start;
 }
 
 .jalali-date__open {
     position: absolute;
-    top: 50%;
-    inset-inline-end: 6px;
+    top: 0;
+    bottom: 0;
+    inset-inline-start: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 32px;
     height: 32px;
-    margin-top: -16px;
+    margin-block: auto;
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: #6f6863;
+    color: var(--color-muted-foreground, #6f6863);
     cursor: pointer;
 }
 
 .jalali-panel {
     position: fixed;
     z-index: 4200;
-    width: 280px;
+    width: 292px;
     padding: 12px;
-    border: 1px solid #e7e4e2;
+    border: 1px solid var(--color-border, #e7e4e2);
     border-radius: 12px;
-    background: #fff;
+    background: var(--color-card, #fff);
     box-shadow: 0 16px 40px rgb(23 19 26 / 16%);
-    color: #17131a;
+    color: var(--color-foreground, #17131a);
     direction: rtl;
 }
 
@@ -47,17 +49,39 @@
 }
 
 .jalali-panel__title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.jalali-panel__pick {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
     font-size: 14px;
     font-weight: 700;
+    line-height: 24px;
+    padding: 2px 8px;
+}
+
+.jalali-panel__pick:hover,
+.jalali-panel__pick.is-on {
+    background: var(--color-muted, #f6f4ef);
 }
 
 .jalali-panel__nav {
     width: 32px;
     height: 32px;
+    flex-shrink: 0;
     border: 0;
     border-radius: 8px;
-    background: #f6f4ef;
-    color: #17131a;
+    background: var(--color-muted, #f6f4ef);
+    color: var(--color-foreground, #17131a);
     cursor: pointer;
     font: inherit;
     font-size: 16px;
@@ -71,25 +95,44 @@
 }
 
 .jalali-panel__week span {
-    color: #6f6863;
+    color: var(--color-muted-foreground, #6f6863);
     font-size: 11px;
     line-height: 24px;
     text-align: center;
 }
 
-.jalali-panel__days button {
-    height: 32px;
+.jalali-panel__days button,
+.jalali-panel__months button,
+.jalali-panel__years button {
+    height: 36px;
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: #17131a;
+    color: var(--color-foreground, #17131a);
     cursor: pointer;
     font: inherit;
     font-size: 13px;
 }
 
+.jalali-panel__months,
+.jalali-panel__years {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.jalali-panel__years {
+    max-height: 162px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 .jalali-panel__days button:hover,
-.jalali-panel__days button.is-on {
+.jalali-panel__days button.is-on,
+.jalali-panel__months button:hover,
+.jalali-panel__months button.is-on,
+.jalali-panel__years button:hover,
+.jalali-panel__years button.is-on {
     background: #c13281;
     color: #fff;
 }

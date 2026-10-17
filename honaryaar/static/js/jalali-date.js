@@ -8,7 +8,10 @@
     var active = null;
     var viewYear = 1400;
     var viewMonth = 1;
+    var viewMode = "days";
     var panel = null;
+    var YEAR_FROM = 1300;
+    var YEAR_TO = 1450;
 
     function toPersian(number, width) {
         var text = String(number);
@@ -120,19 +123,22 @@
         var text = root.querySelector(".jalali-date__text");
         var hidden = root.querySelector("[data-jalali-value]");
         if (!text || !hidden) return;
+        var next = "";
         if (!text.value.trim()) {
-            hidden.value = "";
             text.setCustomValidity("");
-            return;
+        } else {
+            var parts = parse(text.value);
+            if (!parts) {
+                text.setCustomValidity("تاریخ را درست وارد کنید.");
+                return;
+            }
+            text.setCustomValidity("");
+            text.value = display(parts);
+            next = iso(parts);
         }
-        var parts = parse(text.value);
-        if (!parts) {
-            text.setCustomValidity("تاریخ را درست وارد کنید.");
-            return;
-        }
-        text.setCustomValidity("");
-        text.value = display(parts);
-        hidden.value = iso(parts);
+        if (hidden.value === next) return;
+        hidden.value = next;
+        if (root.hasAttribute("data-filter-date")) hidden.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
     function ensurePanel() {
@@ -140,19 +146,49 @@
         panel = document.createElement("div");
         panel.className = "jalali-panel";
         panel.hidden = true;
-        panel.innerHTML = '<div class="jalali-panel__bar"><button class="jalali-panel__nav" type="button" data-nav="-1">›</button><div class="jalali-panel__title"></div><button class="jalali-panel__nav" type="button" data-nav="1">‹</button></div><div class="jalali-panel__week"></div><div class="jalali-panel__days"></div><div class="jalali-panel__foot"><button type="button" data-today>امروز</button><button type="button" data-clear>پاک کردن</button></div>';
+        panel.innerHTML = '<div class="jalali-panel__bar"><button class="jalali-panel__nav" type="button" data-nav="-1">›</button><div class="jalali-panel__title"><button class="jalali-panel__pick" type="button" data-mode="months"></button><button class="jalali-panel__pick" type="button" data-mode="years"></button></div><button class="jalali-panel__nav" type="button" data-nav="1">‹</button></div><div class="jalali-panel__week"></div><div class="jalali-panel__days"></div><div class="jalali-panel__months" hidden></div><div class="jalali-panel__years" hidden></div><div class="jalali-panel__foot"><button type="button" data-today>امروز</button><button type="button" data-clear>پاک کردن</button></div>';
         panel.querySelector(".jalali-panel__week").innerHTML = WEEK.map(function (day) { return "<span>" + day + "</span>"; }).join("");
         document.body.appendChild(panel);
         return panel;
     }
 
+    function showMode(box) {
+        box.querySelector(".jalali-panel__week").hidden = viewMode !== "days";
+        box.querySelector(".jalali-panel__days").hidden = viewMode !== "days";
+        box.querySelector(".jalali-panel__months").hidden = viewMode !== "months";
+        box.querySelector(".jalali-panel__years").hidden = viewMode !== "years";
+        box.querySelector('[data-mode="months"]').classList.toggle("is-on", viewMode === "months");
+        box.querySelector('[data-mode="years"]').classList.toggle("is-on", viewMode === "years");
+    }
+
     function renderPanel() {
         var box = ensurePanel();
+        var selected = active ? parse(active.querySelector(".jalali-date__text").value) : null;
+        box.querySelector('[data-mode="months"]').textContent = MONTHS[viewMonth - 1];
+        box.querySelector('[data-mode="years"]').textContent = toPersian(viewYear, 4);
+        showMode(box);
+        if (viewMode === "months") {
+            box.querySelector(".jalali-panel__months").innerHTML = MONTHS.map(function (name, index) {
+                var month = index + 1;
+                var on = month === viewMonth;
+                return '<button type="button" data-month="' + month + '"' + (on ? ' class="is-on"' : "") + ">" + name + "</button>";
+            }).join("");
+            return;
+        }
+        if (viewMode === "years") {
+            var years = "";
+            for (var year = YEAR_FROM; year <= YEAR_TO; year += 1) {
+                years += '<button type="button" data-year="' + year + '"' + (year === viewYear ? ' class="is-on"' : "") + ">" + toPersian(year, 4) + "</button>";
+            }
+            var list = box.querySelector(".jalali-panel__years");
+            list.innerHTML = years;
+            var current = list.querySelector(".is-on");
+            if (current) list.scrollTop = Math.max(0, current.offsetTop - list.clientHeight / 2 + current.offsetHeight / 2);
+            return;
+        }
         var length = monthLength(viewYear, viewMonth);
         var first = toGregorian(viewYear, viewMonth, 1);
         var offset = (new Date(Date.UTC(first.y, first.m - 1, first.d)).getUTCDay() + 1) % 7;
-        var selected = active ? parse(active.querySelector(".jalali-date__text").value) : null;
-        box.querySelector(".jalali-panel__title").textContent = MONTHS[viewMonth - 1] + " " + toPersian(viewYear, 4);
         var html = "";
         for (var blank = 0; blank < offset; blank += 1) html += "<span></span>";
         for (var day = 1; day <= length; day += 1) {
@@ -166,7 +202,7 @@
         var box = ensurePanel();
         var field = root.querySelector(".jalali-date__text");
         var rect = field.getBoundingClientRect();
-        var width = 280;
+        var width = 292;
         var left = rect.left;
         if (getComputedStyle(field).direction === "rtl") left = rect.right - width;
         left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
@@ -185,6 +221,7 @@
         }
         viewYear = parts.y;
         viewMonth = parts.m;
+        viewMode = "days";
         ensurePanel().hidden = false;
         renderPanel();
         place(root);
@@ -223,6 +260,29 @@
             viewMonth += Number(nav.getAttribute("data-nav"));
             if (viewMonth < 1) { viewMonth = 12; viewYear -= 1; }
             if (viewMonth > 12) { viewMonth = 1; viewYear += 1; }
+            if (viewYear < YEAR_FROM) viewYear = YEAR_FROM;
+            if (viewYear > YEAR_TO) viewYear = YEAR_TO;
+            renderPanel();
+            return;
+        }
+        var mode = event.target.closest("[data-mode]");
+        if (mode) {
+            var next = mode.getAttribute("data-mode");
+            viewMode = viewMode === next ? "days" : next;
+            renderPanel();
+            return;
+        }
+        var month = event.target.closest("[data-month]");
+        if (month) {
+            viewMonth = Number(month.getAttribute("data-month"));
+            viewMode = "days";
+            renderPanel();
+            return;
+        }
+        var year = event.target.closest("[data-year]");
+        if (year) {
+            viewYear = Number(year.getAttribute("data-year"));
+            viewMode = "days";
             renderPanel();
             return;
         }

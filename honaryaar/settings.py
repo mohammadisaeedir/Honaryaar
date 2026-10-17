@@ -133,19 +133,20 @@ def _nav(title, icon, url_name):
 
 def _sidebar(request):
     from django.urls import reverse
+    from django.utils.translation import gettext_lazy as _
 
     groups = []
     if getattr(request.user, "is_staff", False):
         basic_data = [
-            _nav("Cities", "location_city", "admin:honaryaar_city_changelist"),
-            _nav("Art categories", "category", "admin:honaryaar_artcategory_changelist"),
-            _nav("Roles", "badge", "admin:honaryaar_role_changelist"),
-            _nav("Skills", "star", "admin:honaryaar_skill_changelist"),
+            _nav(_("Cities"), "location_city", "admin:honaryaar_city_changelist"),
+            _nav(_("Art categories"), "category", "admin:honaryaar_artcategory_changelist"),
+            _nav(_("Roles"), "badge", "admin:honaryaar_role_changelist"),
+            _nav(_("Skills"), "star", "admin:honaryaar_skill_changelist"),
         ]
         if getattr(request.user, "is_superuser", False):
             basic_data.append(
                 {
-                    "title": "Documents",
+                    "title": _("Documents"),
                     "icon": "description",
                     "link": reverse("admin-documents"),
                 }
@@ -153,56 +154,57 @@ def _sidebar(request):
         groups.extend(
             [
                 {
-                    "title": "Basic data",
+                    "title": _("Basic data"),
                     "items": basic_data,
                 },
                 {
-                    "title": "People",
+                    "title": _("People"),
                     "items": [
-                        _nav("Profiles", "person", "admin:honaryaar_profile_changelist"),
-                        _nav("Profile roles", "badge", "admin:honaryaar_profilerole_changelist"),
-                        _nav("Profile skills", "star", "admin:honaryaar_profileskill_changelist"),
-                        _nav("Credits", "history_edu", "admin:honaryaar_credit_changelist"),
-                        _nav("Media", "perm_media", "admin:honaryaar_profilemedia_changelist"),
-                        _nav("Contacts", "contacts", "admin:honaryaar_profilecontact_changelist"),
+                        _nav(_("Profiles"), "person", "admin:honaryaar_profile_changelist"),
+                        _nav(_("Profile roles"), "badge", "admin:honaryaar_profilerole_changelist"),
+                        _nav(_("Profile skills"), "star", "admin:honaryaar_profileskill_changelist"),
+                        _nav(_("Credits"), "history_edu", "admin:honaryaar_credit_changelist"),
+                        _nav(_("Media"), "perm_media", "admin:honaryaar_profilemedia_changelist"),
+                        _nav(_("Contacts"), "contacts", "admin:honaryaar_profilecontact_changelist"),
                     ],
                 },
                 {
-                    "title": "Projects",
+                    "title": _("Projects"),
                     "items": [
-                        _nav("Projects", "theater_comedy", "admin:honaryaar_project_changelist"),
-                        _nav("Opportunities", "campaign", "admin:honaryaar_opportunity_changelist"),
-                        _nav("Testimonials", "format_quote", "admin:honaryaar_testimonial_changelist"),
+                        _nav(_("Projects"), "theater_comedy", "admin:honaryaar_project_changelist"),
+                        _nav(_("Opportunities"), "campaign", "admin:honaryaar_opportunity_changelist"),
+                        _nav(_("Testimonials"), "format_quote", "admin:honaryaar_testimonial_changelist"),
+                        _nav(_("Project contacts"), "contacts", "admin:honaryaar_projectcontact_changelist"),
                     ],
                 },
                 {
-                    "title": "Casting",
+                    "title": _("Casting"),
                     "items": [
-                        _nav("Applications", "assignment", "admin:honaryaar_application_changelist"),
-                        _nav("Invites", "forward_to_inbox", "admin:honaryaar_invite_changelist"),
-                        _nav("Matches", "handshake", "admin:honaryaar_match_changelist"),
+                        _nav(_("Applications"), "assignment", "admin:honaryaar_application_changelist"),
+                        _nav(_("Invites"), "forward_to_inbox", "admin:honaryaar_invite_changelist"),
+                        _nav(_("Matches"), "handshake", "admin:honaryaar_match_changelist"),
                     ],
                 },
                 {
-                    "title": "Support",
+                    "title": _("Support"),
                     "items": [
-                        _nav("Support tickets", "support_agent", "admin:honaryaar_supportticket_changelist"),
-                        _nav("Bookmarks", "bookmark", "admin:honaryaar_bookmark_changelist"),
+                        _nav(_("Support tickets"), "support_agent", "admin:honaryaar_supportticket_changelist"),
+                        _nav(_("Bookmarks"), "bookmark", "admin:honaryaar_bookmark_changelist"),
                     ],
                 },
             ]
         )
     groups.append(
         {
-            "title": "Authentication",
+            "title": _("Authentication"),
             "items": [
                 {
-                    "title": "Users",
+                    "title": _("Users"),
                     "icon": "person",
                     "link": reverse("admin:auth_user_changelist"),
                 },
                 {
-                    "title": "Groups",
+                    "title": _("Groups"),
                     "icon": "group",
                     "link": reverse("admin:auth_group_changelist"),
                 },
@@ -269,6 +271,7 @@ UNFOLD = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'honaryaar.admin_language.AdminLanguageMiddleware',
     'django.middleware.common.CommonMiddleware',
     'honaryaar.digits.PersianDigitsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -418,6 +421,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 TIME_ZONE = 'UTC'
 

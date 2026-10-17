@@ -1,11 +1,20 @@
 {% load honaryaar_ui %}
 {% media_src project.image_thumb_key project.image_public project.image_public_acl project.image_key "photo" as card_image %}
+{% url 'project' project.slug as project_url %}
 <article class="project-card flex h-full flex-col rounded-card border border-border bg-background p-4">
+    <a class="project-card__hit" href="{{ project_url }}" aria-label="{{ project.title }}"></a>
     <div class="project-card__media">
         {% include "components/media/card_photo.html" with src=card_image alt=project.title %}
     </div>
     <div class="flex items-start justify-between gap-2">
-        <p class="text-xs leading-[18px] text-muted-foreground"><span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span> · {{ project.city }}</p>
+        <span class="role-card__type">
+            <span class="project-card__art art-{{ project.art }}">{% include "components/art_icon.html" with slug=project.art size="18" %}</span>
+            {% if project.production %}
+                <span class="project-card__kind">{{ project.production }}</span>
+            {% elif project.art %}
+                <span class="project-card__kind">{{ project.art|art_title }}</span>
+            {% endif %}
+        </span>
         {% if project.urgent or project.featured %}
             <div class="project-tags">
                 {% if project.urgent %}<span class="project-tag project-tag--urgent">فوری</span>{% endif %}
@@ -13,13 +22,24 @@
             </div>
         {% endif %}
     </div>
-    <h3 class="mt-1 text-[18px] font-semibold leading-[26px]">{{ project.title }}</h3>
-    <p class="mt-3 text-sm leading-[22px] text-muted-foreground">{{ project.summary }}</p>
+    <div class="project-card__title">
+        <h3 class="text-[18px] font-semibold leading-[26px]">{{ project.title }}</h3>
+        {% status_chip project.status_code %}
+    </div>
     <p class="mt-3 text-sm leading-[22px]">{% if project.lead %}{{ project.lead }} · {% endif %}{{ project.lead_role|role_title }}</p>
-    <div class="mt-3">{% status_chip project.status_code %}</div>
     <div class="project-card__foot">
-        {% url 'project' project.slug as project_url %}
-        {% include "components/button.html" with href=project_url label="مشاهده پروژه" variant="soft" extra="w-full" %}
-        {% include "components/card_mark.html" with kind="project" slug=project.slug title=project.title marks=bookmarked_projects %}
+        <div class="project-card__meta">
+            {% if project.city %}
+                <p class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ project.city }}</span></p>
+            {% endif %}
+            {% if project.start_date %}
+                <p class="project-card__start">{% include "components/icon.html" with name="calendar" size="16" %}{{ project.start_date|jalali }}</p>
+            {% endif %}
+            {% include "components/view_count.html" with views=project.views %}
+        </div>
+        <div class="project-card__actions">
+            <p class="project-card__calls">{{ project.open_calls }} فراخوان باز</p>
+            {% include "components/card_mark.html" with kind="project" slug=project.slug title=project.title marks=bookmarked_projects %}
+        </div>
     </div>
 </article>

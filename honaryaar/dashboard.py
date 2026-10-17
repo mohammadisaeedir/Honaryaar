@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 
 from honaryaar.catalog import format_date, format_datetime
 from honaryaar.labels import status_chip_html
@@ -25,12 +26,12 @@ def _deadline_label(deadline, today):
     label = format_date(deadline)
     days = (deadline - today).days
     if days < 0:
-        return f"Overdue · {label}"
+        return _("%(date)s · Overdue") % {"date": label}
     if days == 0:
-        return f"{label} · Today"
+        return _("%(date)s · Today") % {"date": label}
     if days == 1:
-        return f"{label} · Tomorrow"
-    return f"{label} · {days} days"
+        return _("%(date)s · Tomorrow") % {"date": label}
+    return _("%(date)s · %(count)s days") % {"date": label, "count": days}
 
 
 def _link(url, label):
@@ -61,42 +62,42 @@ def dashboard_callback(request, context):
 
     context.update(
         {
-            "title": "Dashboard",
+            "title": _("Dashboard"),
             "reports": {
                 "cards": [
                     {
-                        "title": "Open opportunities",
+                        "title": _("Open opportunities"),
                         "value": Opportunity.objects.filter(status="open").count(),
                         "href": _changelist("opportunity", status__exact="open"),
                     },
                     {
-                        "title": "Applications to review",
+                        "title": _("Applications to review"),
                         "value": Application.objects.filter(status="submitted").count(),
                         "href": _changelist("application", status__exact="submitted"),
                     },
                     {
-                        "title": "Invites waiting",
+                        "title": _("Invites waiting"),
                         "value": Invite.objects.filter(status="sent").count(),
                         "href": _changelist("invite", status__exact="sent"),
                     },
                     {
-                        "title": "Active matches",
+                        "title": _("Active matches"),
                         "value": Match.objects.filter(status="active").count(),
                         "href": _changelist("match", status__exact="active"),
                     },
                     {
-                        "title": "Claimed profiles",
+                        "title": _("Claimed profiles"),
                         "value": Profile.objects.filter(status="claimed").count(),
                         "href": _changelist("profile", status__exact="claimed"),
                     },
                     {
-                        "title": "Projects without an owner",
+                        "title": _("Projects without an owner"),
                         "value": Project.objects.filter(owner__isnull=True).count(),
                         "href": _changelist("project", owner__isnull="True"),
                     },
                 ],
                 "deadlines": _table(
-                    ["Opportunity", "Project", "Deadline", "Applications"],
+                    [_("Opportunity"), _("Project"), _("Deadline"), _("Applications")],
                     [
                         [
                             _link(_change("opportunity", item.pk), item.title),
@@ -108,7 +109,7 @@ def dashboard_callback(request, context):
                     ],
                 ),
                 "applications": _table(
-                    ["Profile", "Opportunity", "Status", "Created"],
+                    [_("Profile"), _("Opportunity"), _("Status"), _("Created")],
                     [
                         [
                             _link(_change("profile", item.profile_id), str(item.profile)),
@@ -120,7 +121,7 @@ def dashboard_callback(request, context):
                     ],
                 ),
                 "invites": _table(
-                    ["Profile", "Opportunity", "Status", "Sent"],
+                    [_("Profile"), _("Opportunity"), _("Status"), _("Sent")],
                     [
                         [
                             _link(_change("profile", item.profile_id), str(item.profile)),
@@ -132,7 +133,7 @@ def dashboard_callback(request, context):
                     ],
                 ),
                 "missing_roles": _table(
-                    ["Profile", "Mobile", "City"],
+                    [_("Profile"), _("Mobile"), _("City")],
                     [
                         [
                             _link(_change("profile", item.pk), str(item)),

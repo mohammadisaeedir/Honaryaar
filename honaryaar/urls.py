@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
+from honaryaar.admin_language import switch_admin_language
 from honaryaar.data_source import switch_data_source
 from honaryaar.document_views import superuser_document, superuser_documents
 from honaryaar.media_views import media_upload_complete, media_upload_start
@@ -114,6 +115,7 @@ urlpatterns = [
     path("manifest.webmanifest", web_manifest, name="manifest"),
     path("sw.js", service_worker, name="service-worker"),
     path("admin/data-source/", admin.site.admin_view(switch_data_source), name="admin-data-source"),
+    path("admin/language/", admin.site.admin_view(switch_admin_language), name="admin-language"),
     path("admin/documents/", admin.site.admin_view(superuser_documents), name="admin-documents"),
     path(
         "admin/documents/<slug:slug>/",

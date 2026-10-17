@@ -2,7 +2,7 @@
 <div class="fact-chips">
     <span class="fact-chip {% if opportunity.paid %}fact-chip--pay{% endif %}">
         {% include "components/icon.html" with name="circle-dollar" size="16" %}
-        {% if opportunity.pay_note %}{{ opportunity.pay_note }}{% elif opportunity.paid %}با دستمزد{% else %}داوطلبانه{% endif %}
+        {{ opportunity.pay_label }}
     </span>
     <span class="fact-chip fact-chip--gender">
         {% if opportunity.gender == "female" %}

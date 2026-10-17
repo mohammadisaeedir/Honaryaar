@@ -55,11 +55,21 @@
             </select>
         </label>
         <label class="mb-4 block">
-            <span class="field-label">پرداخت</span>
+            <span class="field-label">دستمزد</span>
             <select class="field field-select" name="paid">
                 <option value="">همه</option>
-                <option value="paid" {% if filters.paid == "paid" %}selected{% endif %}>پرداختی</option>
-                <option value="unpaid" {% if filters.paid == "unpaid" %}selected{% endif %}>غیرپرداختی</option>
+                <option value="paid" {% if "paid" in filters.paid %}selected{% endif %}>با دستمزد</option>
+                <option value="unpaid" {% if "unpaid" in filters.paid %}selected{% endif %}>بدون دستمزد</option>
+            </select>
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">نوع دستمزد</span>
+            <select class="field field-select" name="pay_type">
+                <option value="">همه</option>
+                <option value="negotiable" {% if "negotiable" in filters.pay_type %}selected{% endif %}>توافقی</option>
+                <option value="gift" {% if "gift" in filters.pay_type %}selected{% endif %}>در حد هدیه</option>
+                <option value="box_office" {% if "box_office" in filters.pay_type %}selected{% endif %}>درصدی از گیشه</option>
+                <option value="fixed" {% if "fixed" in filters.pay_type %}selected{% endif %}>مبلغ مشخص</option>
             </select>
         </label>
         <label class="mb-6 block">

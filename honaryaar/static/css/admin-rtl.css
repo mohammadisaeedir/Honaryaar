@@ -1,0 +1,23 @@
+html[dir="rtl"] #nav-sidebar {
+    left: auto;
+    right: 0;
+}
+
+html[dir="rtl"] #nav-sidebar .resize {
+    right: auto;
+    left: -3px;
+}
+
+html[dir="rtl"] .text-left {
+    text-align: right;
+}
+
+html[dir="rtl"] .ml-auto {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+html[dir="rtl"] .mr-3 {
+    margin-right: 0;
+    margin-left: 0.75rem;
+}

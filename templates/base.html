@@ -376,42 +376,51 @@
             paint();
         })();
         (function () {
-            var examples = ["مثلاً: بازیگر", "مثلاً: تهران", "مثلاً: گیتار", "مثلاً: طراح صحنه", "مثلاً: تئاتر"];
-            var index = 0;
-            var count = 0;
-            var mode = "type";
+            var shared = ["مثلاً: بازیگر", "مثلاً: تهران", "مثلاً: گیتار", "مثلاً: طراح صحنه", "مثلاً: تئاتر"];
+            var states = new WeakMap();
             function chars(word) { return Array.from(word); }
+            function listFor(el) {
+                var custom = el.getAttribute("data-search-examples");
+                if (!custom) return shared;
+                var list = custom.split("|").filter(Boolean);
+                return list.length ? list : shared;
+            }
             function nodes() {
                 return Array.prototype.filter.call(document.querySelectorAll("[data-search-typewriter]"), function (el) {
                     return (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") || !el.value;
                 });
             }
-            function paint(value) {
+            function tick() {
                 nodes().forEach(function (el) {
+                    var list = listFor(el);
+                    var key = list.join("|");
+                    var state = states.get(el);
+                    if (!state || state.key !== key) {
+                        state = { key: key, index: 0, count: 0, mode: "type", hold: 0 };
+                        states.set(el, state);
+                    }
+                    var word = chars(list[state.index % list.length]);
+                    if (state.mode === "type") {
+                        state.count = Math.min(word.length, state.count + 1);
+                        if (state.count >= word.length) state.mode = "hold";
+                    } else if (state.mode === "hold") {
+                        state.hold += 1;
+                        if (state.hold >= 25) {
+                            state.hold = 0;
+                            state.mode = "delete";
+                        }
+                    } else {
+                        state.count = Math.max(0, state.count - 2);
+                        if (state.count === 0) {
+                            state.index = (state.index + 1) % list.length;
+                            state.mode = "type";
+                        }
+                    }
+                    var value = word.slice(0, state.count).join("");
                     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.placeholder = value;
                     else el.textContent = value;
                 });
-            }
-            function tick() {
-                var word = chars(examples[index]);
-                var wait = 85;
-                if (mode === "type") {
-                    count = Math.min(word.length, count + 1);
-                    if (count >= word.length) {
-                        mode = "hold";
-                        wait = 2100;
-                    }
-                } else if (mode === "hold") {
-                    mode = "delete";
-                } else {
-                    count = Math.max(0, count - 2);
-                    if (count === 0) {
-                        index = (index + 1) % examples.length;
-                        mode = "type";
-                    }
-                }
-                paint(word.slice(0, count).join(""));
-                window.setTimeout(tick, wait);
+                window.setTimeout(tick, 85);
             }
             tick();
         })();
