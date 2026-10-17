@@ -1140,10 +1140,22 @@ def is_urgent(start, today=None):
     return 0 <= (start - today).days < 14
 
 
+def _without_private_contacts(text, contacts):
+    cleaned = text or ""
+    for item in contacts:
+        value = (getattr(item, "value", "") or "").strip()
+        if len(value) < 4:
+            continue
+        cleaned = cleaned.replace("@" + value, "")
+        cleaned = cleaned.replace(value, "")
+    return cleaned
+
+
 def _project_dict(project):
     from honaryaar.models import PUBLIC_PROJECT_STATUSES
 
     art = project.art_category.art if project.art_category_id else ""
+    summary = _without_private_contacts(project.summary, project.contacts.all())
     return {
         "pk": project.pk,
         "slug": project.slug,
@@ -1154,7 +1166,7 @@ def _project_dict(project):
         "art": art,
         "art_title": project.art_category.get_art_display() if project.art_category_id else "",
         "production": project.art_category.title if project.art_category_id else "",
-        "summary": project.summary,
+        "summary": summary,
         "open_calls": getattr(project, "open_calls", 0),
         "start_date": project.start_date,
         "urgent": is_urgent(project.start_date),
@@ -1195,7 +1207,7 @@ def _opportunity_dict(item):
         "dates": format_date_range(item.start_date, item.end_date),
         "deadline": format_date(item.deadline),
         "deadline_on": item.deadline,
-        "description": item.description,
+        "description": _without_private_contacts(item.description, item.project.contacts.all()),
         "requirements": item.requirements or [],
         "status": item.status,
         "collaboration_type": item.collaboration_type,
@@ -1228,7 +1240,7 @@ def _projects():
         Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
         .select_related("owner", "owner__user", "art_category", "lead_role", "city")
         .annotate(open_calls=Count("opportunities", filter=Q(opportunities__status="open"), distinct=True))
-        .prefetch_related(Prefetch("testimonials", queryset=quotes))
+        .prefetch_related(Prefetch("testimonials", queryset=quotes), "contacts")
     )
     return [_project_dict(item) for item in projects]
 
@@ -1244,7 +1256,7 @@ def latest_projects(limit=5):
 def _opportunities():
     from honaryaar.models import PUBLIC_PROJECT_STATUSES, Opportunity
 
-    items = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related("project", "project__art_category", "role", "city", "art_category")
+    items = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related("project", "project__art_category", "role", "city", "art_category").prefetch_related("project__contacts")
     return [_opportunity_dict(item) for item in items]
 
 

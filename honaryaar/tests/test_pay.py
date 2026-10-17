@@ -121,7 +121,7 @@ class PayRuleTests(TestCase):
             art_category=category,
             city=city,
             status="casting",
-            summary="خلاصه‌ای بدون راه تماس.",
+            summary="خلاصه. تماس 09120000000.",
         )
         ProjectContact.objects.create(
             project=project,
