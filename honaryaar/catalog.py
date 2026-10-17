@@ -512,8 +512,10 @@ OPPORTUNITIES = [
         "gender": "female",
         "count": 1,
         "paid": True,
-        "featured": True,
+        "pay_type": "negotiable",
+        "pay_amount": None,
         "pay_note": "دستمزد توافقی، پرداخت بعد از شروع اجرا.",
+        "featured": True,
         "start_date": date(2026, 11, 22),
         "end_date": date(2027, 2, 19),
         "deadline": date(2026, 11, 6),
@@ -533,8 +535,10 @@ OPPORTUNITIES = [
         "gender": "male",
         "count": 1,
         "paid": True,
-        "featured": True,
+        "pay_type": "gift",
+        "pay_amount": None,
         "pay_note": "مبلغ بعد از انتخاب نهایی اعلام می‌شود.",
+        "featured": True,
         "start_date": date(2027, 3, 21),
         "end_date": date(2027, 4, 20),
         "deadline": date(2026, 11, 22),
@@ -554,8 +558,10 @@ OPPORTUNITIES = [
         "gender": "any",
         "count": 2,
         "paid": False,
-        "featured": True,
+        "pay_type": "",
+        "pay_amount": None,
         "pay_note": "این پروژه دستمزد ندارد. گواهی کارگاه داده می‌شود.",
+        "featured": True,
         "start_date": date(2026, 12, 22),
         "end_date": date(2027, 1, 20),
         "deadline": date(2026, 11, 11),
@@ -575,8 +581,10 @@ OPPORTUNITIES = [
         "gender": "female",
         "count": 1,
         "paid": True,
-        "featured": True,
+        "pay_type": "gift",
+        "pay_amount": None,
         "pay_note": "قرارداد کوتاه تمرین و اجرا.",
+        "featured": True,
         "start_date": date(2026, 12, 22),
         "end_date": date(2027, 3, 20),
         "deadline": date(2026, 11, 21),
@@ -596,8 +604,10 @@ OPPORTUNITIES = [
         "gender": "any",
         "count": 3,
         "paid": False,
-        "featured": True,
+        "pay_type": "",
+        "pay_amount": None,
         "pay_note": "خوانش داوطلبانه. اگر به اجرا برسد، شرایط دوباره گفته می‌شود.",
+        "featured": True,
         "start_date": date(2026, 11, 22),
         "end_date": date(2026, 12, 21),
         "deadline": date(2026, 12, 1),
@@ -617,8 +627,10 @@ OPPORTUNITIES = [
         "gender": "male",
         "count": 1,
         "paid": True,
-        "featured": True,
+        "pay_type": "gift",
+        "pay_amount": None,
         "pay_note": "دستمزد متناسب با نقش نوجوان، با هماهنگی خانواده.",
+        "featured": True,
         "start_date": date(2027, 3, 21),
         "end_date": date(2027, 4, 2),
         "deadline": date(2026, 11, 26),
@@ -1132,7 +1144,6 @@ def _project_dict(project):
     from honaryaar.models import PUBLIC_PROJECT_STATUSES
 
     art = project.art_category.art if project.art_category_id else ""
-    contact_channels, contact_links = _contact_groups(project)
     return {
         "pk": project.pk,
         "slug": project.slug,
@@ -1154,13 +1165,13 @@ def _project_dict(project):
         "image_thumb_key": project.image_thumb.name if project.image_thumb else "",
         "image_public": project.status in PUBLIC_PROJECT_STATUSES,
         "image_public_acl": bool(project.image_public_acl),
-        "contact_channels": contact_channels,
-        "contact_links": contact_links,
         "testimonials": [_testimonial_dict(item) for item in project.testimonials.all()],
     }
 
 
 def _opportunity_dict(item):
+    from honaryaar.pay import pay_label
+
     return {
         "pk": item.pk,
         "slug": item.slug,
@@ -1177,8 +1188,10 @@ def _opportunity_dict(item):
         "gender": item.gender,
         "count": item.count,
         "paid": item.paid,
+        "pay_type": item.pay_type,
+        "pay_amount": item.pay_amount,
+        "pay_label": pay_label(item.paid, item.pay_type, item.pay_amount),
         "featured": item.featured,
-        "pay_note": item.pay_note,
         "dates": format_date_range(item.start_date, item.end_date),
         "deadline": format_date(item.deadline),
         "deadline_on": item.deadline,
@@ -1215,7 +1228,7 @@ def _projects():
         Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
         .select_related("owner", "owner__user", "art_category", "lead_role", "city")
         .annotate(open_calls=Count("opportunities", filter=Q(opportunities__status="open"), distinct=True))
-        .prefetch_related(Prefetch("testimonials", queryset=quotes), "contacts")
+        .prefetch_related(Prefetch("testimonials", queryset=quotes))
     )
     return [_project_dict(item) for item in projects]
 
@@ -1481,7 +1494,7 @@ def _age_overlaps(item, start, end):
     return True
 
 
-def _opportunity_matches(item, query, city, paid, gender, production, role, age_from, age_to, art, status):
+def _opportunity_matches(item, query, city, paid, gender, production, role, age_from, age_to, art, status, pay_type=""):
     cities = _picked(city)
     arts = _picked(art)
     paid_values = _picked(paid)
@@ -1500,6 +1513,9 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
             return False
         if "unpaid" in paid_values and item["paid"]:
             return False
+    pay_types = _picked(pay_type)
+    if pay_types and item.get("pay_type") not in pay_types:
+        return False
     if genders and item["gender"] not in genders and not (item["gender"] == "any" and genders - {"any"}):
         return False
     if productions and item["production"] not in productions:
@@ -1531,11 +1547,11 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
     return True
 
 
-def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status="", sort=""):
+def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status="", sort="", pay_type=""):
     items = [
         item
         for item in _opportunities()
-        if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status)
+        if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status, pay_type)
     ]
     from honaryaar.models import Opportunity
 
@@ -1568,18 +1584,16 @@ def opportunity_facets():
         for value in ("male", "female", "any")
         if value in present_genders
     ]
-    paid = []
-    if any(item["paid"] for item in items):
-        paid.append(("paid", "پرداختی"))
-    if any(not item["paid"] for item in items):
-        paid.append(("unpaid", "غیرپرداختی"))
+    from honaryaar.pay import PAY_LABELS, PAY_TYPES
+
     return {
         "cities": city_names,
         "roles": role_rows,
         "arts": arts,
         "productions": productions,
         "genders": genders,
-        "paid": paid,
+        "paid": [("paid", "با دستمزد"), ("unpaid", "بدون دستمزد")],
+        "pay_type": [(value, PAY_LABELS[value]) for value in PAY_TYPES],
     }
 
 
@@ -1675,7 +1689,7 @@ def arts():
     return arts_in_use()
 
 
-_PLAIN_FILTERS = {"status", "art", "gender", "paid"}
+_PLAIN_FILTERS = {"status", "art", "gender", "paid", "pay_type"}
 _FILTER_PREVIEW = 5
 
 
@@ -2108,27 +2122,34 @@ def seed():
                 "status": PROJECT_STATUS[item["status"]],
             },
         )
+    opportunity_fields = {field.name for field in Opportunity._meta.concrete_fields}
     for item in OPPORTUNITIES:
-        Opportunity.objects.get_or_create(
-            slug=item["slug"],
-            defaults={
-                "title": item["title"],
-                "project": projects[item["project"]],
-                "role": roles_by_slug[item["role"]],
-                "art_category": productions_by_title[item["production"]],
-                "city": cities_by_title[item["city"]],
-                "age_min": item["age_min"],
-                "age_max": item["age_max"],
-                "gender": item["gender"],
-                "count": item["count"],
-                "paid": item["paid"],
-                "featured": item.get("featured", False),
-                "pay_note": item["pay_note"],
-                "start_date": item["start_date"],
-                "end_date": item["end_date"],
-                "deadline": item["deadline"],
-                "description": item["description"],
-                "requirements": item["requirements"],
-                "status": "open",
-            },
-        )
+        defaults = {
+            "title": item["title"],
+            "project": projects[item["project"]],
+            "role": roles_by_slug[item["role"]],
+            "art_category": productions_by_title[item["production"]],
+            "city": cities_by_title[item["city"]],
+            "age_min": item["age_min"],
+            "age_max": item["age_max"],
+            "gender": item["gender"],
+            "count": item["count"],
+            "paid": item["paid"],
+            "featured": item.get("featured", False),
+            "start_date": item["start_date"],
+            "end_date": item["end_date"],
+            "deadline": item["deadline"],
+            "description": item["description"],
+            "requirements": item["requirements"],
+            "status": "open",
+        }
+        if "pay_note" in opportunity_fields:
+            defaults["pay_note"] = item["pay_note"]
+        if "pay_type" in opportunity_fields and "pay_amount" in opportunity_fields:
+            if item["paid"]:
+                defaults["pay_type"] = item["pay_type"]
+                defaults["pay_amount"] = item["pay_amount"]
+            else:
+                defaults["pay_type"] = ""
+                defaults["pay_amount"] = None
+        Opportunity.objects.get_or_create(slug=item["slug"], defaults=defaults)

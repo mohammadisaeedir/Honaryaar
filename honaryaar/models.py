@@ -645,6 +645,13 @@ class OpportunityStatus(models.TextChoices):
     CLOSED = "closed", "Closed"
 
 
+class PayType(models.TextChoices):
+    NEGOTIABLE = "negotiable", "توافقی"
+    GIFT = "gift", "در حد هدیه"
+    BOX_OFFICE = "box_office", "درصدی از گیشه"
+    FIXED = "fixed", "مبلغ مشخص"
+
+
 class Gender(models.TextChoices):
     MALE = "male", "Male"
     FEMALE = "female", "Female"
@@ -718,8 +725,9 @@ class Opportunity(models.Model):
     special_conditions = models.JSONField(default=list, blank=True, verbose_name="Special conditions")
     count = models.PositiveSmallIntegerField(default=1)
     paid = models.BooleanField(default=False)
+    pay_type = models.CharField(max_length=20, blank=True, choices=PayType.choices)
+    pay_amount = models.PositiveIntegerField(null=True, blank=True)
     featured = models.BooleanField(default=False)
-    pay_note = models.CharField(max_length=240, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     deadline = models.DateField(null=True, blank=True)
@@ -735,6 +743,38 @@ class Opportunity(models.Model):
     class Meta:
         ordering = ["title"]
         verbose_name_plural = "opportunities"
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(paid=False, pay_type="", pay_amount__isnull=True)
+                    | models.Q(
+                        paid=True,
+                        pay_type__in=[
+                            PayType.NEGOTIABLE,
+                            PayType.GIFT,
+                            PayType.BOX_OFFICE,
+                        ],
+                        pay_amount__isnull=True,
+                    )
+                    | models.Q(paid=True, pay_type=PayType.FIXED, pay_amount__gt=0)
+                ),
+                name="opportunity_pay_consistent",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        self._check_pay()
+
+    def _check_pay(self):
+        from honaryaar.pay import normalize_pay
+
+        paid, pay_type, pay_amount, problems = normalize_pay(self.paid, self.pay_type, self.pay_amount)
+        if problems:
+            raise ValidationError(problems)
+        self.paid = paid
+        self.pay_type = pay_type
+        self.pay_amount = pay_amount
 
     def save(self, *args, **kwargs):
         if not (self.slug or "").strip():
@@ -756,6 +796,14 @@ class Opportunity(models.Model):
                 if "slug" not in fields:
                     fields.append("slug")
                 kwargs["update_fields"] = fields
+        self._check_pay()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            fields = list(kwargs["update_fields"])
+            for name in ("pay_type", "pay_amount"):
+                if name not in fields:
+                    fields.append(name)
+            kwargs["update_fields"] = fields
         super().save(*args, **kwargs)
 
     def __str__(self):
