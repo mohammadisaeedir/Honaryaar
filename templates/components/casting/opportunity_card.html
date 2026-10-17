@@ -10,7 +10,6 @@
         {% if opportunity.deadline_on %}
             <p class="role-card__deadline">{% include "components/icon.html" with name="clock" size="16" %}مهلت {{ opportunity.deadline_on|day_month }}</p>
         {% endif %}
-        {% include "components/view_count.html" with views=opportunity.views %}
         <div class="role-card__actions">
             {% if opportunity.status == "open" %}
                 {% if request.user.is_authenticated %}

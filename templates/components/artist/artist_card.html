@@ -8,12 +8,8 @@
     <div class="artist-tile__body">
         <h3 class="artist-tile__name">
             <a href="{% url 'artist' artist.slug %}">
-                {% if artist.first_name or artist.last_name %}
-                    {% if artist.first_name %}<span>{{ artist.first_name }}</span>{% endif %}
-                    {% if artist.last_name %}<span class="artist-tile__family">{{ artist.last_name }}</span>{% endif %}
-                {% else %}
-                    {{ artist.legal_name }}
-                {% endif %}
+                {% if artist.first_name %}<span>{{ artist.first_name }}</span>{% endif %}
+                {% if artist.last_name %}<span class="artist-tile__family">{{ artist.last_name }}</span>{% endif %}
             </a>
         </h3>
         {% if artist.role_titles %}

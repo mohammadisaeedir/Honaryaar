@@ -31,6 +31,17 @@ def jalali(value):
 
 
 @register.filter
+def jalali_num(value):
+    if isinstance(value, datetime):
+        if timezone.is_aware(value):
+            value = timezone.localtime(value)
+        value = value.date()
+    if isinstance(value, date):
+        return catalog.format_jalali_numeric(value)
+    return ""
+
+
+@register.filter
 def phone_fa(value):
     digits = "".join(ch for ch in str(value or "") if ch.isdigit())
     if len(digits) == 11:

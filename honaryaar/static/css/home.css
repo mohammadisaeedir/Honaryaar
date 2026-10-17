@@ -334,7 +334,7 @@
 
 .faq-item p {
     margin: 0 0 16px;
-    color: #3d3834;
+    color: var(--color-foreground);
     font-size: 13px;
     line-height: 24px;
 }
@@ -375,7 +375,7 @@
 
 .join-copy > p {
     margin: 12px 0 0;
-    color: #3d3834;
+    color: var(--color-foreground);
     font-size: 12px;
     line-height: 24px;
 }

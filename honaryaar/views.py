@@ -666,19 +666,25 @@ def project_list(request):
 
 
 def project_detail(request, slug):
-    from honaryaar.models import Project
+    from honaryaar.models import Application, Project
 
     project = catalog.project_by_slug(slug)
     if project is None:
         raise Http404
     project["views"] = catalog.note_view(request, Project, project["pk"])
+    calls = catalog.opportunities_for_project(slug)
+    applied = Application.objects.filter(opportunity__project__slug=slug).count()
     return render(
         request,
         "pages/project.html",
         {
             "project": project,
             "saved": _is_bookmarked(request.user, Project, slug),
-            "opportunities": catalog.opportunities_for_project(slug),
+            "opportunities": [item for item in calls if item["status"] == "open"],
+            "open_calls": sum(item["status"] == "open" for item in calls),
+            "closed_calls": sum(item["status"] == "closed" for item in calls),
+            "applications": catalog.persian_number(catalog.round_up_five(applied)),
+            "timeline": catalog.project_timeline(project, calls),
             "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
             "report_title": project["title"],
             "report_action": reverse("report-project", args=[slug]),

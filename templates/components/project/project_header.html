@@ -1,23 +1,65 @@
-{% load honaryaar_ui static %}
-{% media_src project.image_key project.image_public project.image_public_acl project.image_thumb_key "photo" as hero %}
-<header>
-    <div class="project-hero">
-        {% if hero %}
-            <img src="{{ hero }}" alt="{{ project.title }}">
-        {% else %}
-            <img src="{% static 'brand/project-placeholder.svg' %}" alt="">
+{% load honaryaar_ui %}
+<header class="project-pdp">
+    <p class="project-pdp__kind">
+        <span class="project-card__art art-{{ project.art }}">{% include "components/art_icon.html" with slug=project.art size="18" %}</span>
+        {% if project.production %}
+            <span class="project-card__kind">{{ project.production }}</span>
+        {% elif project.art %}
+            <span class="project-card__kind">{{ project.art|art_title }}</span>
         {% endif %}
-    </div>
-    <p class="text-sm leading-[22px] text-muted-foreground"><span class="art-name art-{{ project.art }}">{{ project.art|art_title }}</span> · {{ project.city }}</p>
-    <div class="pdp-title mt-2">
-        <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
-        {% include "components/pdp_actions.html" with kind="project" slug=project.slug title=project.title %}
-    </div>
-    <p class="mt-3 max-w-2xl text-sm leading-[22px]">{{ project.summary }}</p>
-    <p class="mt-4 text-sm leading-[22px] text-muted-foreground">{% if project.lead %}{{ project.lead }} · {% endif %}{{ project.lead_role|role_title }}</p>
-    <div class="mt-3 flex flex-wrap items-center gap-2">
-        {% status_chip project.status_code %}
+        {% if project.city %}
+            <span class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ project.city }}</span></span>
+        {% endif %}
         {% if project.urgent %}<span class="project-tag project-tag--urgent">فوری</span>{% endif %}
         {% if project.featured %}<span class="project-tag project-tag--featured">ویژه</span>{% endif %}
+    </p>
+    <div class="pdp-title">
+        <div class="project-pdp__title">
+            <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
+            {% status_chip project.status_code %}
+        </div>
+        {% include "components/pdp_actions.html" with kind="project" slug=project.slug title=project.title %}
     </div>
+    {% if project.lead or project.lead_role %}
+        <p class="project-pdp__lead">
+            {% if project.lead_slug %}
+                <a href="{% url 'artist' project.lead_slug %}">{{ project.lead }}</a>
+            {% elif project.lead %}
+                {{ project.lead }}
+            {% endif %}
+            {% if project.lead and project.lead_role %} · {% endif %}
+            {% if project.lead_role %}{{ project.lead_role|role_title }}{% endif %}
+        </p>
+    {% endif %}
+    {% if project.summary %}<p class="project-pdp__summary">{{ project.summary }}</p>{% endif %}
+    <dl class="pdp-facts">
+        <div>
+            <dt>بودجه</dt>
+            <dd>{% if project.budget %}{{ project.budget }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        <div>
+            <dt>شروع تولید</dt>
+            <dd>{% if project.start_date %}{{ project.start_date|jalali_num }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        <div>
+            <dt>پایان تولید</dt>
+            <dd>{% if project.end_date %}{{ project.end_date|jalali_num }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        <div>
+            <dt>انتشار</dt>
+            <dd>{% if project.created_at %}<span dir="ltr">{{ project.created_at|jalali_num }}</span>{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        <div>
+            <dt>شناسه</dt>
+            <dd><span dir="ltr">{{ project.slug }}</span></dd>
+        </div>
+        <div>
+            <dt>مجوز</dt>
+            <dd>{% if project.permit_label %}{{ project.permit_label }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+        <div>
+            <dt>قرارداد</dt>
+            <dd>{% if project.contract_label %}{{ project.contract_label }}{% else %}ثبت نشده{% endif %}</dd>
+        </div>
+    </dl>
 </header>

@@ -873,7 +873,7 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
     search_fields = ("title", "owner__user__first_name", "owner__user__last_name", "owner__name", "city__title", "art_category__title", "slug")
     autocomplete_fields = ("owner", "art_category", "lead_role", "city")
     list_select_related = ("owner", "city", "art_category")
-    readonly_fields = ("image_preview", "source_channel", "source_post_id", "source_url", "source_posted_at")
+    readonly_fields = ("image_preview", "created_at", "source_channel", "source_post_id", "source_url", "source_posted_at")
     Media = AdminMedia
 
     @admin.display(description=_("Art"), ordering="art_category__art")

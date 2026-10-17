@@ -924,3 +924,27 @@ msgstr "نام"
 msgid "Messages"
 msgstr "پیام‌ها"
 
+msgid "Production start"
+msgstr "شروع تولید"
+
+msgid "Production end"
+msgstr "پایان تولید"
+
+msgid "Budget"
+msgstr "بودجه"
+
+msgid "Permit"
+msgstr "مجوز"
+
+msgid "Contract"
+msgstr "قرارداد"
+
+msgid "Publication date"
+msgstr "تاریخ انتشار"
+
+msgid "All dates"
+msgstr "همه تاریخ‌ها"
+
+msgid "User"
+msgstr "کاربر"
+

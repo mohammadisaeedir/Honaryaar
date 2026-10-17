@@ -391,6 +391,19 @@ class ProjectStatus(models.TextChoices):
     COMPLETED = "completed", "اتمام"
 
 
+class PermitStatus(models.TextChoices):
+    PENDING = "pending", "در حال دریافت مجوز"
+    RECEIVED = "received", "دریافت شده"
+    NONE = "none", "ندارد"
+
+
+class ContractStatus(models.TextChoices):
+    SIGNED = "signed", "دارای قرارداد"
+    DRAFTING = "drafting", "در حال تنظیم قرارداد"
+    NONE = "none", "بدون قرارداد / نیاز نیست"
+    WAITING = "waiting", "در انتظار"
+
+
 PUBLIC_PROJECT_STATUSES = (ProjectStatus.CASTING, ProjectStatus.COMPLETED)
 
 
@@ -429,7 +442,12 @@ class Project(models.Model):
     source_post_id = models.PositiveIntegerField(null=True, blank=True)
     source_url = models.URLField(max_length=300, blank=True)
     source_posted_at = models.DateTimeField(null=True, blank=True)
-    start_date = models.DateField(null=True, blank=True, verbose_name="Start date")
+    start_date = models.DateField(null=True, blank=True, verbose_name="Production start")
+    end_date = models.DateField(null=True, blank=True, verbose_name="Production end")
+    budget = models.CharField(max_length=80, blank=True, verbose_name="Budget")
+    permit = models.CharField(max_length=20, choices=PermitStatus.choices, blank=True, verbose_name="Permit")
+    contract = models.CharField(max_length=20, choices=ContractStatus.choices, blank=True, verbose_name="Contract")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Publication date")
     featured = models.BooleanField(default=False, verbose_name="Featured")
     status = models.CharField(
         max_length=20,

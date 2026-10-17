@@ -10,7 +10,7 @@ import time
 from datetime import date
 
 _CACHE_SECONDS = 20
-_SNAPSHOT_KEY = "honaryaar:home:v4"
+_SNAPSHOT_KEY = "honaryaar:home:v5"
 _SNAPSHOT_TTL = 60 * 60 * 24
 _DAILY_LOADERS = {}
 _building = False
@@ -1108,7 +1108,7 @@ def _artist_dict(profile):
 
 def _testimonial_dict(item):
     if item.profile_id:
-        name = item.profile.public_name()
+        name = _profile_name(item.profile) or item.name
     else:
         name = item.name
     role = item.role.title if item.role_id else item.role_label
@@ -1128,9 +1128,11 @@ def _testimonial_dict(item):
 
 
 def _profile_name(profile):
-    if profile is None:
+    """Given name and family name. Art name stays on the profile page only."""
+    if profile is None or not getattr(profile, "user_id", None):
         return ""
-    return profile.public_name()
+    user = profile.user
+    return " ".join(part for part in (user.first_name, user.last_name) if part).strip()
 
 
 def is_urgent(start, today=None):
@@ -1162,6 +1164,7 @@ def _project_dict(project):
         "title": project.title,
         "city": project.city.title if project.city_id else "",
         "lead": _profile_name(project.owner) or (project.lead_name or ""),
+        "lead_slug": project.owner.slug if project.owner_id else "",
         "lead_role": project.lead_role.slug if project.lead_role_id else "",
         "art": art,
         "art_title": project.art_category.get_art_display() if project.art_category_id else "",
@@ -1169,6 +1172,13 @@ def _project_dict(project):
         "summary": summary,
         "open_calls": getattr(project, "open_calls", 0),
         "start_date": project.start_date,
+        "end_date": project.end_date,
+        "budget": project.budget,
+        "permit": project.permit,
+        "permit_label": project.get_permit_display() if project.permit else "",
+        "contract": project.contract,
+        "contract_label": project.get_contract_display() if project.contract else "",
+        "created_at": project.created_at,
         "urgent": is_urgent(project.start_date),
         "featured": project.featured,
         "status": project.get_status_display(),
@@ -1275,19 +1285,34 @@ def listing_stats():
         "projects": [
             {"value": _approx(sum(item["status_code"] == "casting" for item in projects)), "label": "پروژه‌های در حال جذب"},
             {"value": _approx(len({item["city"] for item in projects if item["city"]})), "label": "تعداد شهر"},
-            {"value": _approx(len(open_calls)), "label": "تعداد فراخوان همکاری"},
+            {"value": _approx(len(open_calls)), "label": "فراخوان باز"},
         ],
         "artists": [
             {"value": _approx(len(artists)), "label": "هنرمند فعال"},
-            {"value": _approx(len({slug for item in artists for slug in item["role_slugs"]})), "label": "نقش تخصصی"},
-            {"value": _approx(len({skill["label"] for item in artists for skill in item["skills"]})), "label": "مهارت"},
+            {"value": _approx(len({slug for item in artists for slug in item["role_slugs"]})), "label": "نقش متفاوت"},
+            {"value": _approx(len({skill["label"] for item in artists for skill in item["skills"]})), "label": "مهارت تخصصی"},
         ],
         "opportunities": [
-            {"value": _approx(len(open_calls)), "label": "فراخوان فعال"},
+            {"value": _approx(len(open_calls)), "label": "فراخوان باز"},
             {"value": _approx(len({item["role"] for item in open_calls if item["role"]})), "label": "نقش فعال"},
             {"value": _approx(len(opportunities)), "label": "کل فراخوان‌ها"},
         ],
     }
+
+
+def project_timeline(project, opportunities, today=None):
+    today = today or date.today()
+    events = []
+    if project.get("start_date"):
+        events.append((project["start_date"], "شروع تولید"))
+    if project.get("end_date"):
+        events.append((project["end_date"], "پایان تولید"))
+    for item in opportunities:
+        when = item.get("deadline_on")
+        if when:
+            events.append((when, f"مهلت {item['title']}"))
+    events.sort(key=lambda item: (item[0], item[1]))
+    return [{"date": when, "label": label, "past": when < today} for when, label in events]
 
 
 def project_by_slug(slug):

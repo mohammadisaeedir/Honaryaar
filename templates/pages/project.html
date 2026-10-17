@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static honaryaar_ui %}
 
 {% block title %}{{ project.title }} · هنریار{% endblock %}
 {% block meta_description %}{{ project.title }} در {{ project.city }}. پروژهٔ هنریار.{% endblock %}
@@ -13,14 +13,56 @@
 {% block content %}
     {% include "components/skeleton/project_page.html" %}
     <div class="live-pane">
-    <div>
-        {% include "components/project/project_header.html" %}
-        {% include "components/page_views.html" with views=project.views %}
+    {% media_src project.image_key project.image_public project.image_public_acl project.image_thumb_key "photo" as hero %}
+    <div class="project-sheet">
+        <div class="project-sheet__poster">
+            {% if hero %}
+                <img src="{{ hero }}" alt="{{ project.title }}">
+            {% else %}
+                <img src="{% static 'brand/project-placeholder.svg' %}" alt="">
+            {% endif %}
+        </div>
+        <div class="project-sheet__main">
+            {% include "components/project/project_header.html" %}
+        </div>
+        <aside class="project-sheet__side">
+            <div class="project-sheet__card">
+                <aside class="intro-stats pdp-stats" aria-label="آمار پروژه">
+                    <div>
+                        <strong>{{ open_calls }}</strong>
+                        <span>فراخوان باز</span>
+                    </div>
+                    <div>
+                        <strong>{{ closed_calls }}</strong>
+                        <span>فراخوان بسته</span>
+                    </div>
+                    <div>
+                        <strong dir="ltr">+{{ applications }}</strong>
+                        <span>درخواست</span>
+                    </div>
+                </aside>
+                {% include "components/page_views.html" with views=project.views %}
+            </div>
+            {% if timeline %}
+                <section class="project-sheet__card project-pdp__when">
+                    <h2>زمان‌بندی</h2>
+                    <ol class="pdp-timeline">
+                        {% for item in timeline %}
+                            <li class="{% if item.past %}is-past{% endif %}">
+                                <span class="pdp-timeline__mark" aria-hidden="true"></span>
+                                <span class="pdp-timeline__label">{{ item.label }}</span>
+                                <time dir="ltr">{{ item.date|jalali_num }}</time>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                </section>
+            {% endif %}
+        </aside>
     </div>
-    <section class="mt-10">
-        <h2 class="text-[22px] font-semibold leading-[30px]">نقش‌های باز</h2>
+    <section class="project-sheet__roles">
+        <h2>نقش‌های باز</h2>
         {% if opportunities %}
-            <div class="catalog-grid mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="catalog-grid catalog-grid--3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {% for opportunity in opportunities %}
                     {% include "components/casting/opportunity_card.html" %}
                 {% endfor %}

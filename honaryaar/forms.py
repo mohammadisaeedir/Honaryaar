@@ -16,7 +16,9 @@ from honaryaar.models import (
     Bookmark,
     City,
     Opportunity,
+    ContractStatus,
     PayType,
+    PermitStatus,
     Profile,
     ProjectStatus,
     Role,
@@ -246,6 +248,14 @@ class ProjectCreateForm(forms.Form):
         input_formats=["%Y-%m-%d"],
         widget=JalaliDateWidget(attrs={"class": "field jalali-date__text"}),
     )
+    end_date = forms.DateField(
+        required=False,
+        input_formats=["%Y-%m-%d"],
+        widget=JalaliDateWidget(attrs={"class": "field jalali-date__text"}),
+    )
+    budget = forms.CharField(required=False, max_length=80)
+    permit = forms.ChoiceField(required=False, choices=[("", "انتخاب نشده"), *PermitStatus.choices])
+    contract = forms.ChoiceField(required=False, choices=[("", "انتخاب نشده"), *ContractStatus.choices])
     status = forms.ChoiceField(
         choices=[(value, CHIP_LABELS[value]) for value, _label in ProjectStatus.choices],
         initial=ProjectStatus.DRAFT,
@@ -261,6 +271,9 @@ class ProjectCreateForm(forms.Form):
 
     def clean_summary(self):
         return self.cleaned_data["summary"].strip()
+
+    def clean_budget(self):
+        return (self.cleaned_data.get("budget") or "").strip()
 
 
 AGE_FLOOR = 16

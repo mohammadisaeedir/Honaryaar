@@ -156,6 +156,10 @@ def project_new(request):
                     art_category=form.cleaned_data["art_category"],
                     summary=form.cleaned_data["summary"],
                     start_date=form.cleaned_data["start_date"],
+                    end_date=form.cleaned_data["end_date"],
+                    budget=form.cleaned_data["budget"],
+                    permit=form.cleaned_data["permit"],
+                    contract=form.cleaned_data["contract"],
                     status=form.cleaned_data["status"],
                 )
                 attach_project_image(request.user, project, upload_id, required=True)
@@ -190,6 +194,10 @@ def project_manage(request, slug):
             "art_category": project.art_category_id,
             "summary": project.summary,
             "start_date": project.start_date,
+            "end_date": project.end_date,
+            "budget": project.budget,
+            "permit": project.permit,
+            "contract": project.contract,
             "status": project.status,
         },
     )
@@ -210,8 +218,12 @@ def project_manage(request, slug):
                     project.art_category = project_form.cleaned_data["art_category"]
                     project.summary = project_form.cleaned_data["summary"]
                     project.start_date = project_form.cleaned_data["start_date"]
+                    project.end_date = project_form.cleaned_data["end_date"]
+                    project.budget = project_form.cleaned_data["budget"]
+                    project.permit = project_form.cleaned_data["permit"]
+                    project.contract = project_form.cleaned_data["contract"]
                     project.status = project_form.cleaned_data["status"]
-                    project.save(update_fields=["title", "city", "art_category", "summary", "start_date", "status"])
+                    project.save(update_fields=["title", "city", "art_category", "summary", "start_date", "end_date", "budget", "permit", "contract", "status"])
                     attach_project_image(
                         request.user,
                         project,

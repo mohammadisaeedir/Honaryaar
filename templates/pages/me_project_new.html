@@ -48,8 +48,32 @@
             <textarea class="field" style="min-height: 7rem" name="summary" rows="4">{{ form.summary.value|default:'' }}</textarea>
         </label>
         <label class="mb-4 block">
-            <span class="field-label">زمان آغاز</span>
+            <span class="field-label">شروع تولید</span>
             {{ form.start_date }}
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">پایان تولید</span>
+            {{ form.end_date }}
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">بودجه</span>
+            <input class="field" type="text" name="budget" value="{{ form.budget.value|default:'' }}" maxlength="80">
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">مجوز</span>
+            <select class="field field-select" name="permit">
+                {% for value, label in form.fields.permit.choices %}
+                    <option value="{{ value }}" {% if form.permit.value == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="mb-4 block">
+            <span class="field-label">قرارداد</span>
+            <select class="field field-select" name="contract">
+                {% for value, label in form.fields.contract.choices %}
+                    <option value="{{ value }}" {% if form.contract.value == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </label>
         <div class="mb-4">
             <span class="field-label">تصویر</span>
