@@ -5,6 +5,7 @@
         {% if opportunity.art %}<span>{{ opportunity.art|art_title }}</span>{% endif %}
         {% if opportunity.production %}<span class="role-card__sub">{{ opportunity.production }}</span>{% endif %}
     </span>
+    {% if opportunity.featured %}<span class="project-tag project-tag--featured">ویژه</span>{% endif %}
 </div>
 <div class="role-card__identity">
     {% media_src project.image_thumb_key project.image_public project.image_public_acl project.image_key "photo" as project_image %}

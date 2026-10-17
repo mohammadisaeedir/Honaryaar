@@ -62,6 +62,7 @@
 
             <div class="me-grid">
                 <div class="me-stack">
+                    {% include "components/page_views.html" with views=artist.views %}
                     <section class="me-card" id="about">
                         <div class="me-card__head"><h2>اطلاعات</h2></div>
                         {% if artist.about %}

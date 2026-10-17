@@ -1144,6 +1144,7 @@ def _project_dict(project):
         "art_title": project.art_category.get_art_display() if project.art_category_id else "",
         "production": project.art_category.title if project.art_category_id else "",
         "summary": project.summary,
+        "open_calls": getattr(project, "open_calls", 0),
         "start_date": project.start_date,
         "urgent": is_urgent(project.start_date),
         "featured": project.featured,
@@ -1205,20 +1206,25 @@ def _artists():
 
 @_cached(daily=True)
 def _projects():
-    from django.db.models import Prefetch
+    from django.db.models import Count, Prefetch, Q
 
     from honaryaar.models import PUBLIC_PROJECT_STATUSES, Project, Testimonial
 
     quotes = Testimonial.objects.select_related("profile", "profile__user", "role", "project")
-    projects = Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES).select_related("owner", "owner__user", "art_category", "lead_role", "city").prefetch_related(
-        Prefetch("testimonials", queryset=quotes),
-        "contacts",
+    projects = (
+        Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
+        .select_related("owner", "owner__user", "art_category", "lead_role", "city")
+        .annotate(open_calls=Count("opportunities", filter=Q(opportunities__status="open"), distinct=True))
+        .prefetch_related(Prefetch("testimonials", queryset=quotes), "contacts")
     )
     return [_project_dict(item) for item in projects]
 
 
 def latest_projects(limit=5):
-    return sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:limit]
+    from honaryaar.models import Project
+
+    items = sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:limit]
+    return _with_views(items, Project)
 
 
 @_cached(daily=True)
@@ -1260,15 +1266,20 @@ def listing_stats():
 
 
 def project_by_slug(slug):
-    return next((item for item in _projects() if item["slug"] == slug), None)
+    from honaryaar.models import Project
+
+    found = next((item for item in _projects() if item["slug"] == slug), None)
+    if found is None:
+        return None
+    return _with_views([found], Project)[0]
 
 
 def artist_by_slug(slug):
-    found = next((item for item in _artists() if item["slug"] == slug), None)
-    if found is not None:
-        return found
     from honaryaar.models import Profile
 
+    found = next((item for item in _artists() if item["slug"] == slug), None)
+    if found is not None:
+        return _with_views([found], Profile)[0]
     profile = (
         Profile.objects.filter(slug=slug)
         .select_related("city", "user")
@@ -1277,15 +1288,22 @@ def artist_by_slug(slug):
     )
     if profile is None:
         return None
-    return _artist_dict(profile)
+    return _with_views([_artist_dict(profile)], Profile)[0]
 
 
 def opportunity_by_slug(slug):
-    return next((item for item in _opportunities() if item["slug"] == slug), None)
+    from honaryaar.models import Opportunity
+
+    found = next((item for item in _opportunities() if item["slug"] == slug), None)
+    if found is None:
+        return None
+    return _with_views([found], Opportunity)[0]
 
 
 def opportunities_for_project(slug):
-    return [item for item in _opportunities() if item["project"] == slug]
+    from honaryaar.models import Opportunity
+
+    return _with_views([item for item in _opportunities() if item["project"] == slug], Opportunity)
 
 
 def related_opportunities(opportunity, limit=5):
@@ -1315,7 +1333,9 @@ def related_opportunities(opportunity, limit=5):
             picked.append(item)
             if len(picked) == limit:
                 break
-    return picked
+    from honaryaar.models import Opportunity
+
+    return _with_views(picked, Opportunity)
 
 
 def _artist_text(artist):
@@ -1444,7 +1464,9 @@ def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gen
         ]
     if q:
         items = [item for item in items if _contains(_artist_text(item), q)]
-    return _apply_sort(items, "artists", sort)
+    from honaryaar.models import Profile
+
+    return _with_views(_apply_sort(items, "artists", sort), Profile)
 
 
 def _age_overlaps(item, start, end):
@@ -1515,7 +1537,9 @@ def list_opportunities(q="", city="", paid="", gender="", production="", role=""
         for item in _opportunities()
         if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status)
     ]
-    return _apply_sort(items, "opportunities", sort)
+    from honaryaar.models import Opportunity
+
+    return _with_views(_apply_sort(items, "opportunities", sort), Opportunity)
 
 
 def opportunity_facets():
@@ -1585,20 +1609,34 @@ def _project_text(project):
     )
 
 
-def list_projects(q="", city="", art="", status="", sort=""):
+def project_categories():
+    order = {item["title"]: item["priority"] for item in PRODUCTIONS}
+    titles = {item["production"] for item in _projects() if item["production"]}
+    return sorted(titles, key=lambda title: (order.get(title, 10_000), title))
+
+
+def list_projects(q="", city="", art="", production="", status="", start="", sort=""):
     cities = _picked(city)
     arts = _picked(art)
+    productions = _picked(production)
     statuses = _picked(status)
+    start_on = parse_user_date(start)
     items = _projects()
     if cities:
         items = [item for item in items if item["city"] in cities]
     if arts:
         items = [item for item in items if item["art"] in arts]
+    if productions:
+        items = [item for item in items if item["production"] in productions]
     if statuses:
         items = [item for item in items if item["status_code"] in statuses]
+    if start_on:
+        items = [item for item in items if item["start_date"] and item["start_date"] >= start_on]
     if q:
         items = [item for item in items if _contains(_project_text(item), q)]
-    return _apply_sort(items, "projects", sort)
+    from honaryaar.models import Project
+
+    return _with_views(_apply_sort(items, "projects", sort), Project)
 
 
 OPPORTUNITY_QUICK = [
@@ -1681,6 +1719,26 @@ def choice_group(name, label, pairs, selected):
     }
 
 
+def date_group(name, label, value):
+    parsed = parse_user_date(value)
+    return {
+        "name": name,
+        "label": label,
+        "kind": "date",
+        "value": parsed.isoformat() if parsed else "",
+        "display": format_jalali_numeric(parsed) if parsed else "",
+        "chip": f"از {format_jalali_numeric(parsed)}" if parsed else "",
+        "hint": "از این تاریخ به بعد",
+        "placeholder": "۱۴۰۵/۰۸/۰۱",
+        "open": True,
+        "plain": False,
+        "find": False,
+        "more": False,
+        "options": [],
+        "selected": 1 if parsed else 0,
+    }
+
+
 def text_group(name, label, value, placeholder):
     value = "" if value is None else str(value)
     return {
@@ -1741,6 +1799,32 @@ def round_up_five(value):
     if value <= 0:
         return 0
     return ((value + 4) // 5) * 5
+
+
+def _with_views(items, model):
+    pks = [item.get("pk") for item in items if item.get("pk")]
+    counts = {}
+    if pks:
+        counts = {
+            pk: round_up_five(count)
+            for pk, count in model.objects.filter(pk__in=pks).values_list("pk", "views")
+        }
+    for item in items:
+        item["views"] = counts.get(item.get("pk"), 0)
+    return items
+
+
+def note_view(request, model, pk):
+    from django.db.models import F
+
+    token = f"{model._meta.label}:{pk}"
+    seen = list(request.session.get("page_views") or [])
+    if token not in seen:
+        model.objects.filter(pk=pk).update(views=F("views") + 1)
+        request.session["page_views"] = [*seen, token][-300:]
+        request.session.modified = True
+    count = model.objects.filter(pk=pk).values_list("views", flat=True).first() or 0
+    return round_up_five(count)
 
 
 @_cached(daily=True)
@@ -1810,7 +1894,9 @@ def talent_stats():
 
 
 def featured_opportunities():
-    return [item for item in _opportunities() if item["featured"]]
+    from honaryaar.models import Opportunity
+
+    return _with_views([item for item in _opportunities() if item["featured"]], Opportunity)
 
 
 def featured_testimonials():

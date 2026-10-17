@@ -100,12 +100,31 @@
     {% endif %}
 
     <section class="home-block">
-        <h2>تازه‌های مجله</h2>
+        <div class="home-head">
+            <h2>تازه‌های مجله</h2>
+            <a class="home-more" href="{% url 'magazine' %}">مشاهده همه{% include "components/icon.html" with name="chevron-right" size="16" %}</a>
+        </div>
         <div class="news-row">
             {% for post in posts %}
                 <a class="news-card" href="{% url 'magazine' %}">
-                    <span class="news-card__thumb">{{ post.kicker }}</span>
-                    <span class="news-card__title">{{ post.title }}</span>
+                    <span class="news-card__media">
+                        {% if post.image %}
+                            <img src="{{ post.image }}" alt="" loading="lazy" decoding="async">
+                        {% else %}
+                            <svg class="news-cover news-cover--{{ forloop.counter }}" viewBox="0 0 640 400" aria-hidden="true">
+                                <rect class="news-cover__field" width="640" height="400"></rect>
+                                <rect class="news-cover__panel" x="36" y="36" width="568" height="328" rx="24"></rect>
+                                <circle class="news-cover__mark" cx="320" cy="168" r="36"></circle>
+                                <path class="news-cover__line" d="M292 222h56"></path>
+                                <rect class="news-cover__rule" x="188" y="268" width="264" height="10" rx="5"></rect>
+                                <rect class="news-cover__rule" x="228" y="292" width="184" height="10" rx="5"></rect>
+                            </svg>
+                        {% endif %}
+                    </span>
+                    <span class="news-card__body">
+                        <span class="news-card__kicker">{{ post.kicker }}</span>
+                        <span class="news-card__title">{{ post.title }}</span>
+                    </span>
                 </a>
             {% endfor %}
         </div>

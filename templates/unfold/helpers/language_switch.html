@@ -1,0 +1,10 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="border-b border-base-200 flex flex-row gap-1 mb-1 pb-1 px-2 dark:border-base-700">
+    <form method="post" action="{% url 'admin-language' %}" class="flex flex-row gap-1 grow">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" name="language" value="en" class="cursor-pointer flex grow items-center justify-center px-2 py-1.5 rounded-default hover:bg-base-100 hover:text-base-700 dark:hover:bg-base-700 dark:hover:text-base-200 {% if LANGUAGE_CODE != 'fa' %}text-primary-600 dark:text-primary-500{% endif %}">English</button>
+        <button type="submit" name="language" value="fa" class="cursor-pointer flex grow items-center justify-center px-2 py-1.5 rounded-default hover:bg-base-100 hover:text-base-700 dark:hover:bg-base-700 dark:hover:text-base-200 {% if LANGUAGE_CODE == 'fa' %}text-primary-600 dark:text-primary-500{% endif %}">فارسی</button>
+    </form>
+</div>

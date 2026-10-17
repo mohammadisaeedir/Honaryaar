@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("honaryaar", "0053_align_index_names"),
+        ("honaryaar", "0054_page_views"),
     ]
 
     operations = [
