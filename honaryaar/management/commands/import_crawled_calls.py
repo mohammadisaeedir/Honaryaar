@@ -18,6 +18,7 @@ from django.db import connections, transaction
 from django.utils import timezone
 
 from honaryaar.contacts import normalize_contact
+from honaryaar.pay import pay_problems
 from honaryaar.models import (
     City,
     Opportunity,
@@ -232,7 +233,9 @@ def _parse_opportunity(item, cities, roles):
     if deadline is not None and deadline < timezone.localdate():
         return None, "deadline passed", slug
     city, _note = _match_city(item.get("city"), cities)
-    pay_note = str(item.get("pay_note") or "")
+    pay, pay_error = _parse_pay(item)
+    if pay is None:
+        return False, f"{pay_error}\t{slug}", ""
     return {
         "slug": slug,
         "title": title,
@@ -243,12 +246,31 @@ def _parse_opportunity(item, cities, roles):
         "age_max": _small(item.get("age_max")),
         "gender": gender,
         "count": _small(item.get("count")) or 1,
-        "paid": bool(item.get("paid")),
-        "pay_note": pay_note[:240],
-        "pay_note_trimmed": len(pay_note) > 240,
+        "paid": pay["paid"],
+        "pay_type": pay["pay_type"],
+        "pay_amount": pay["pay_amount"],
         "deadline": deadline,
         "description": str(item.get("description") or ""),
     }, "", ""
+
+
+def _parse_pay(item):
+    paid = item.get("paid")
+    if not isinstance(paid, bool):
+        return None, "invalid pay"
+    pay_type = item.get("pay_type")
+    if pay_type is None:
+        pay_type = ""
+    if not isinstance(pay_type, str):
+        return None, "invalid pay"
+    problems = pay_problems(paid, pay_type, item.get("pay_amount"))
+    if problems:
+        return None, "invalid pay"
+    if not paid:
+        return {"paid": False, "pay_type": "", "pay_amount": None}, ""
+    if pay_type != "fixed":
+        return {"paid": True, "pay_type": pay_type, "pay_amount": None}, ""
+    return {"paid": True, "pay_type": "fixed", "pay_amount": int(item["pay_amount"])}, ""
 
 
 def _source_identity(row):
@@ -546,7 +568,8 @@ def _create(call, categories):
                 gender=item["gender"],
                 count=item["count"],
                 paid=item["paid"],
-                pay_note=item["pay_note"],
+                pay_type=item["pay_type"],
+                pay_amount=item["pay_amount"],
                 deadline=item["deadline"],
                 description=item["description"],
                 status=OpportunityStatus.OPEN,
@@ -560,7 +583,7 @@ def _create(call, categories):
                 project=project,
                 kind=item["kind"],
                 value=item["value"],
-                is_public=True,
+                is_public=False,
                 position=item["position"],
                 source="telegram",
             )
