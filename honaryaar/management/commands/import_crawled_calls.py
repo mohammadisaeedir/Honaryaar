@@ -1,7 +1,9 @@
-"""Import crawled casting calls into the local database.
+"""Import crawled casting calls.
 
-Dry run unless --apply. Refuses every host except localhost. Never updates
-an existing project.
+Dry run unless --apply. Without --production the database host must be local.
+With --production the command repoints the default connection at PROD_DATABASE_URL
+and never opens a second database alias. Never updates an existing project and
+never creates catalog rows.
 """
 
 import json
@@ -10,16 +12,20 @@ import re
 from collections import Counter
 from datetime import date, datetime, time
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import URLValidator
 from django.db import connections, transaction
+from django.db.migrations.loader import MigrationLoader
+from django.db.migrations.recorder import MigrationRecorder
 from django.utils import timezone
 
 from honaryaar.contacts import normalize_contact
 from honaryaar.pay import pay_problems
 from honaryaar.models import (
+    ArtCategory,
     City,
     Opportunity,
     OpportunityStatus,
@@ -28,6 +34,8 @@ from honaryaar.models import (
     ProjectStatus,
     Role,
 )
+
+_MIN_LEAF = "0060_opportunity_pay_constraint"
 
 _SOURCE = re.compile(r"^([a-z]+):([^/]+)/(\d+)$")
 _PRODUCTION = {
@@ -38,6 +46,8 @@ _PRODUCTION = {
     "سریال": "series",
     "تبلیغات": "commercial",
     "تولید محتوا": "content",
+    "نمایشنامهخوانی": "reading",
+    "خوانش": "reading",
 }
 _GENDERS = {"male", "female", "any"}
 _CONTACT_KINDS = ("phone", "whatsapp", "telegram", "instagram", "email", "website")
@@ -53,10 +63,12 @@ class Command(BaseCommand):
         parser.add_argument("--select-pilot", type=int, default=0)
         parser.add_argument("--apply", action="store_true")
         parser.add_argument("--rollback", default="")
+        parser.add_argument("--production", action="store_true")
+        parser.add_argument("--expect-host", default="")
 
     def handle(self, *args, **options):
-        host, name = _refuse_remote()
-        self.stdout.write(f"target\t{host}\t{name}")
+        _prepare_database(options)
+        host, name = _announce(self.stdout)
         if options["rollback"]:
             _rollback(self.stdout, Path(options["rollback"]).expanduser().resolve(), host, name, options["apply"])
             return
@@ -67,6 +79,7 @@ class Command(BaseCommand):
         _print_structure(self.stdout, payload)
         if not isinstance(payload, list):
             raise CommandError("casting file must be a list")
+        _require_catalog(self.stdout, payload)
         calls, blocked, skipped_opportunities = _prepare(payload)
         _print_file_stats(self.stdout, calls, blocked, skipped_opportunities)
         chosen = _select(calls, options["only_slug"] or [], options["limit"], options["select_pilot"])
@@ -75,14 +88,153 @@ class Command(BaseCommand):
         _import(self.stdout, path, chosen, options["apply"], host, name)
 
 
-def _refuse_remote():
+def _prepare_database(options):
+    if options["production"]:
+        _repoint(_production_params(options["expect_host"]))
+        return
     if os.environ.get("VERCEL") == "1":
         raise CommandError("refusing to run when VERCEL=1")
-    db = connections["default"].settings_dict
-    host = (db.get("HOST") or "").strip()
+    host = (connections["default"].settings_dict.get("HOST") or "").strip()
     if host not in {"localhost", "127.0.0.1"}:
         raise CommandError("database host must be localhost or 127.0.0.1")
-    return host, db.get("NAME") or ""
+
+
+def _production_params(expect_host):
+    raw = os.environ.get("PROD_DATABASE_URL", "").strip()
+    if not raw:
+        raise CommandError("PROD_DATABASE_URL is not set")
+    parsed = urlparse(raw)
+    database = unquote((parsed.path or "").lstrip("/"))
+    if parsed.scheme not in {"postgres", "postgresql"} or not parsed.hostname or not database:
+        raise CommandError("PROD_DATABASE_URL could not be parsed")
+    expect = (expect_host or "").strip()
+    if not expect:
+        raise CommandError("--expect-host is required with --production")
+    if expect != parsed.hostname:
+        raise CommandError("--expect-host does not match the database host")
+    if os.environ.get("ALLOW_PROD_IMPORT") != "yes":
+        raise CommandError("ALLOW_PROD_IMPORT must be yes")
+    sslmode = (parse_qs(parsed.query).get("sslmode") or ["require"])[0]
+    return {
+        "NAME": database,
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname,
+        "PORT": str(parsed.port or 5432),
+        "OPTIONS": {"sslmode": sslmode},
+    }
+
+
+def _repoint(params):
+    wrapper = connections["default"]
+    wrapper.close()
+    wrapper.settings_dict["ENGINE"] = "django.db.backends.postgresql"
+    wrapper.settings_dict["NAME"] = params["NAME"]
+    wrapper.settings_dict["USER"] = params["USER"]
+    wrapper.settings_dict["PASSWORD"] = params["PASSWORD"]
+    wrapper.settings_dict["HOST"] = params["HOST"]
+    wrapper.settings_dict["PORT"] = params["PORT"]
+    wrapper.settings_dict["OPTIONS"] = params["OPTIONS"]
+    wrapper.close()
+
+
+def _announce(stdout):
+    db = connections["default"].settings_dict
+    host = (db.get("HOST") or "").strip()
+    name = db.get("NAME") or ""
+    stdout.write(f"target\t{host}\t{name}")
+    leaf, missing = _migration_leaf()
+    stdout.write(f"leaf\t{leaf}")
+    if missing:
+        raise CommandError("honaryaar migrations are not fully applied")
+    stdout.write(f"projects\t{Project.objects.count()}")
+    _require_leaf(leaf)
+    return host, name
+
+
+def _migration_leaf():
+    connection = connections["default"]
+    loader = MigrationLoader(connection, ignore_no_migrations=False)
+    leaves = [node for node in loader.graph.leaf_nodes() if node[0] == "honaryaar"]
+    if len(leaves) != 1:
+        raise CommandError("honaryaar migrations do not have one leaf")
+    leaf = leaves[0]
+    applied = MigrationRecorder(connection).applied_migrations()
+    missing = [node for node in loader.graph.forwards_plan(leaf) if node[0] == "honaryaar" and node not in applied]
+    return leaf[1], missing
+
+
+def _require_leaf(leaf):
+    if leaf < _MIN_LEAF:
+        raise CommandError("migration leaf must be 0060_opportunity_pay_constraint or later")
+
+
+def _fold(value):
+    return (
+        str(value or "")
+        .strip()
+        .replace("\u200c", "")
+        .replace("\u200d", "")
+        .replace("ي", "ی")
+        .replace("ك", "ک")
+    )
+
+
+def _production_slug(value):
+    return _PRODUCTION.get(_fold(value))
+
+
+def _role_slug(item):
+    if not isinstance(item, dict):
+        return ""
+    if "role_slug" in item:
+        return str(item.get("role_slug") or "").strip()
+    return str(item.get("role") or "").strip()
+
+
+def _require_catalog(stdout, payload):
+    role_slugs = set()
+    city_values = set()
+    categories = set()
+    unmapped = set()
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        project = row.get("project") if isinstance(row.get("project"), dict) else {}
+        category = str(project.get("category") or "").strip()
+        if category:
+            categories.add(category)
+        city = project.get("city")
+        if str(city or "").strip():
+            city_values.add(str(city).strip())
+        for item in row.get("opportunities") or []:
+            if not isinstance(item, dict):
+                continue
+            role_slug = _role_slug(item)
+            if role_slug:
+                role_slugs.add(role_slug)
+            city = item.get("city")
+            if str(city or "").strip():
+                city_values.add(str(city).strip())
+            mapped = _production_slug(item.get("production"))
+            if mapped:
+                categories.add(mapped)
+            elif str(item.get("production") or "").strip():
+                unmapped.add(str(item.get("production")).strip())
+    known_roles = set(Role.objects.filter(slug__in=role_slugs).values_list("slug", flat=True))
+    known_categories = set(ArtCategory.objects.filter(slug__in=categories).values_list("slug", flat=True))
+    cities = _city_index()
+    missing_roles = sorted(role_slugs - known_roles)
+    missing_categories = sorted((categories - known_categories) | unmapped)
+    missing_cities = sorted(value for value in city_values if _city_key(value) not in cities)
+    for slug in missing_roles:
+        stdout.write(f"missing role\t{slug}")
+    for value in missing_cities:
+        stdout.write(f"missing city\t{value}")
+    for slug in missing_categories:
+        stdout.write(f"missing art category\t{slug}")
+    if missing_roles or missing_cities or missing_categories:
+        raise CommandError("catalog is missing rows the file needs")
 
 
 def _print_structure(stdout, payload):
@@ -114,8 +266,16 @@ def _print_structure(stdout, payload):
             stdout.write("role_field\trole_slug")
 
 
+def _city_index():
+    cities = {}
+    for city in City.objects.all():
+        cities[_city_key(city.title)] = city
+        cities[_city_key(city.slug)] = city
+    return cities
+
+
 def _prepare(payload):
-    cities = {_city_key(city.title): city for city in City.objects.all()}
+    cities = _city_index()
     roles = {role.slug: role for role in Role.objects.all()}
     calls = []
     blocked = []
@@ -167,21 +327,22 @@ def _parse_call(row, cities, roles, skipped_opportunities):
         categories.append(opp["art_category"])
     if not parsed_opps:
         return None, "no opportunities", slug
-    category = Counter(categories).most_common(1)[0][0]
     city, city_note = _match_city(project.get("city"), cities)
     contacts, contact_notes = _contacts(project.get("contact"))
     lead_role = str(project.get("lead_role") or "").strip()
-    role = None
-    if lead_role:
-        role = roles.get(lead_role)
-        if role is None:
-            return None, "missing role", lead_role
+    role = roles.get(lead_role) if lead_role else None
+    category_slug = str(project.get("category") or "").strip()
+    if category_slug:
+        category = category_slug
+    else:
+        category = Counter(categories).most_common(1)[0][0]
     return {
         "slug": slug,
         "title": title,
         "summary": str(project.get("summary") or ""),
         "lead_name": lead_name,
         "lead_role": role,
+        "lead_note": lead_role if lead_role and role is None else "",
         "city": city,
         "city_title": city.title if city is not None else "",
         "city_note": city_note,
@@ -212,18 +373,15 @@ def _parse_opportunity(item, cities, roles):
     if not title or len(title) > 160:
         return None, "bad opportunity title", slug
     production = str(item.get("production") or "").strip()
-    if "role_slug" in item and item.get("role_slug") in (None, ""):
+    role_slug = _role_slug(item)
+    if not role_slug:
         return False, "role_slug empty", ""
-    category = _PRODUCTION.get(production)
+    category = _production_slug(production)
     if category is None:
         return None, "unmapped category", production or "(empty)"
-    if "role_slug" in item:
-        role_slug = str(item.get("role_slug") or "").strip()
-    else:
-        role_slug = str(item.get("role") or "").strip()
     role = roles.get(role_slug)
     if role is None:
-        return None, "missing role", role_slug or "(empty)"
+        return False, "missing role", role_slug
     gender = str(item.get("gender") or "").strip() or "any"
     if gender not in _GENDERS:
         return None, "bad gender", gender
@@ -419,6 +577,9 @@ def _print_file_stats(stdout, calls, blocked, skipped_opportunities):
     stdout.write(f"source_url_dropped\t{sum(1 for call in calls if call['source_url_dropped'])}")
     for slug, reason in skipped_opportunities:
         stdout.write(f"opportunity_skipped\t{slug}\t{reason}")
+    for call in calls:
+        if call["lead_note"]:
+            stdout.write(f"lead_role unmatched\t{call['slug']}\t{call['lead_note']}")
 
 
 def _select(calls, only_slug, limit, pilot):
@@ -496,8 +657,6 @@ def _print_pilot(stdout, calls):
 
 
 def _import(stdout, path, calls, apply, host, name):
-    from honaryaar.models import ArtCategory
-
     categories = {row.slug: row for row in ArtCategory.objects.all()}
     created = skipped = 0
     records = []
