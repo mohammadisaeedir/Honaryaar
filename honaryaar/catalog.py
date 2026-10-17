@@ -1195,6 +1195,13 @@ def _opportunity_dict(item):
         "title": item.title,
         "project": item.project.slug,
         "project_title": item.project.title,
+        "card_project": {
+            "title": item.project.title,
+            "image_key": item.project.image.name if item.project.image else "",
+            "image_thumb_key": item.project.image_thumb.name if item.project.image_thumb else "",
+            "image_public": True,
+            "image_public_acl": bool(item.project.image_public_acl),
+        },
         "role": item.role.slug,
         "art": item.art_category.art if item.art_category_id else "",
         "art_title": item.art_category.get_art_display() if item.art_category_id else "",
