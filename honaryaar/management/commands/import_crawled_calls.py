@@ -66,8 +66,8 @@ class Command(BaseCommand):
         _print_structure(self.stdout, payload)
         if not isinstance(payload, list):
             raise CommandError("casting file must be a list")
-        calls, blocked = _prepare(payload)
-        _print_file_stats(self.stdout, calls, blocked)
+        calls, blocked, skipped_opportunities = _prepare(payload)
+        _print_file_stats(self.stdout, calls, blocked, skipped_opportunities)
         chosen = _select(calls, options["only_slug"] or [], options["limit"], options["select_pilot"])
         if options["select_pilot"]:
             _print_pilot(self.stdout, chosen)
@@ -98,11 +98,19 @@ def _print_structure(stdout, payload):
         contact = project.get("contact")
         if isinstance(contact, dict):
             stdout.write("contact_keys\t" + ",".join(contact))
+            if any(isinstance(value, list) for value in contact.values()):
+                stdout.write("contact_values\tlist")
     opportunities = sample.get("opportunities")
     if isinstance(opportunities, list) and opportunities and isinstance(opportunities[0], dict):
         stdout.write("opportunity_keys\t" + ",".join(opportunities[0]))
     source = sample.get("source") or ""
-    stdout.write("source_pattern\t" + ("channel/id" if _SOURCE.match(str(source).strip()) else "other"))
+    if sample.get("source_channel") and sample.get("source_post_id") not in (None, ""):
+        stdout.write("source_fields\texplicit")
+    else:
+        stdout.write("source_pattern\t" + ("channel/id" if _SOURCE.match(str(source).strip()) else "other"))
+    if isinstance(opportunities, list) and opportunities and isinstance(opportunities[0], dict):
+        if "role_slug" in opportunities[0]:
+            stdout.write("role_field\trole_slug")
 
 
 def _prepare(payload):
@@ -110,26 +118,24 @@ def _prepare(payload):
     roles = {role.slug: role for role in Role.objects.all()}
     calls = []
     blocked = []
+    skipped_opportunities = []
     for index, row in enumerate(payload):
         if not isinstance(row, dict):
             blocked.append(("not an object", str(index)))
             continue
-        parsed, reason, detail = _parse_call(row, cities, roles)
+        parsed, reason, detail = _parse_call(row, cities, roles, skipped_opportunities)
         if parsed is None:
             blocked.append((reason, detail))
             continue
         calls.append(parsed)
-    return calls, blocked
+    return calls, blocked, skipped_opportunities
 
 
-def _parse_call(row, cities, roles):
-    source = str(row.get("source") or "").strip()
-    match = _SOURCE.match(source)
-    if match is None:
+def _parse_call(row, cities, roles, skipped_opportunities):
+    located = _source_identity(row)
+    if located is None:
         return None, "source not channel/id", ""
-    channel = f"{match.group(1)}:{match.group(2)}"
-    if len(channel) > 60:
-        return None, "source channel too long", ""
+    channel, post_id = located
     project = row.get("project") if isinstance(row.get("project"), dict) else {}
     slug = str(project.get("slug") or "").strip()
     if not slug:
@@ -151,10 +157,15 @@ def _parse_call(row, cities, roles):
         if not isinstance(item, dict):
             return None, "bad opportunity", slug
         opp, reason, detail = _parse_opportunity(item, cities, roles)
+        if opp is False:
+            skipped_opportunities.append((slug, reason))
+            continue
         if opp is None:
             return None, reason, detail or slug
         parsed_opps.append(opp)
         categories.append(opp["art_category"])
+    if not parsed_opps:
+        return None, "no opportunities", slug
     category = Counter(categories).most_common(1)[0][0]
     city, city_note = _match_city(project.get("city"), cities)
     contacts, contact_notes = _contacts(project.get("contact"))
@@ -175,10 +186,11 @@ def _parse_call(row, cities, roles):
         "city_note": city_note,
         "art_category": category,
         "source_channel": channel,
-        "source_post_id": int(match.group(3)),
-        "source_url": _url(row.get("sourceUrl")),
-        "source_url_dropped": bool(str(row.get("sourceUrl") or "").strip()) and not _url(row.get("sourceUrl")),
-        "source_posted_at": _posted_at(row.get("postDate")),
+        "source_post_id": post_id,
+        "source_url": _url(row.get("source_url") or row.get("sourceUrl")),
+        "source_url_dropped": bool(str(row.get("source_url") or row.get("sourceUrl") or "").strip())
+        and not _url(row.get("source_url") or row.get("sourceUrl")),
+        "source_posted_at": _posted_at(row.get("source_posted_at") or row.get("postDate")),
         "opportunities": parsed_opps,
         "contacts": contacts,
         "contact_notes": contact_notes,
@@ -199,10 +211,15 @@ def _parse_opportunity(item, cities, roles):
     if not title or len(title) > 160:
         return None, "bad opportunity title", slug
     production = str(item.get("production") or "").strip()
+    if "role_slug" in item and item.get("role_slug") in (None, ""):
+        return False, "role_slug empty", ""
     category = _PRODUCTION.get(production)
     if category is None:
         return None, "unmapped category", production or "(empty)"
-    role_slug = str(item.get("role") or "").strip()
+    if "role_slug" in item:
+        role_slug = str(item.get("role_slug") or "").strip()
+    else:
+        role_slug = str(item.get("role") or "").strip()
     role = roles.get(role_slug)
     if role is None:
         return None, "missing role", role_slug or "(empty)"
@@ -232,6 +249,26 @@ def _parse_opportunity(item, cities, roles):
         "deadline": deadline,
         "description": str(item.get("description") or ""),
     }, "", ""
+
+
+def _source_identity(row):
+    channel = str(row.get("source_channel") or "").strip()
+    post_id = row.get("source_post_id")
+    if channel and post_id not in (None, ""):
+        try:
+            post_id = int(post_id)
+        except (TypeError, ValueError):
+            return None
+        if post_id < 1 or len(channel) > 60:
+            return None
+        return channel, post_id
+    match = _SOURCE.match(str(row.get("source") or "").strip())
+    if match is None:
+        return None
+    channel = f"{match.group(1)}:{match.group(2)}"
+    if len(channel) > 60:
+        return None
+    return channel, int(match.group(3))
 
 
 def _deadline(value):
@@ -298,6 +335,14 @@ def _match_city(value, cities):
     return city, key
 
 
+def _contact_values(value):
+    if isinstance(value, list):
+        return [item for item in value if item not in (None, "")]
+    if value in (None, ""):
+        return []
+    return [value]
+
+
 def _contacts(raw):
     if not isinstance(raw, dict):
         return [], []
@@ -306,19 +351,20 @@ def _contacts(raw):
     seen = set()
     position = 0
     for kind in _CONTACT_KINDS:
-        value = raw.get(kind)
-        if value in (None, ""):
-            continue
-        try:
-            normalized = normalize_contact(kind, str(value))
-        except ValidationError as exc:
-            notes.append(f"{kind}\t{exc.messages[0]}")
-            continue
-        if (kind, normalized) in seen:
-            continue
-        seen.add((kind, normalized))
-        rows.append({"kind": kind, "value": normalized, "position": position})
-        position += 1
+        for value in _contact_values(raw.get(kind)):
+            try:
+                normalized = normalize_contact(kind, str(value))
+            except ValidationError as exc:
+                notes.append(f"{kind}\t{exc.messages[0]}")
+                continue
+            except ValueError:
+                notes.append(f"{kind}\tEnter a valid URL.")
+                continue
+            if (kind, normalized) in seen:
+                continue
+            seen.add((kind, normalized))
+            rows.append({"kind": kind, "value": normalized, "position": position})
+            position += 1
     return rows, notes
 
 
@@ -329,7 +375,7 @@ def _soonest(opportunities):
     return min(dates).isoformat()
 
 
-def _print_file_stats(stdout, calls, blocked):
+def _print_file_stats(stdout, calls, blocked, skipped_opportunities):
     stdout.write(f"eligible\t{len(calls)}")
     stdout.write(f"skipped\t{len(blocked)}")
     counts = Counter(reason for reason, _detail in blocked)
@@ -349,6 +395,8 @@ def _print_file_stats(stdout, calls, blocked):
     for note, count in sorted(invalid.items()):
         stdout.write(f"contact_invalid\t{note}\t{count}")
     stdout.write(f"source_url_dropped\t{sum(1 for call in calls if call['source_url_dropped'])}")
+    for slug, reason in skipped_opportunities:
+        stdout.write(f"opportunity_skipped\t{slug}\t{reason}")
 
 
 def _select(calls, only_slug, limit, pilot):
