@@ -4,6 +4,7 @@ The lists below are the first records loaded into the database.
 Pages read Profile, Project, and Opportunity from there.
 """
 
+import json
 import os
 import time
 from contextvars import ContextVar
@@ -12,6 +13,12 @@ from datetime import date
 _redis_client = None
 _redis_down_until = 0.0
 _request_lists = ContextVar("honaryaar_request_lists", default=None)
+_STATS_TTL = 10 * 60
+STAT_KEYS = {
+    "listing": "honaryaar:stats:listing:v1",
+    "hire": "honaryaar:stats:hire:v1",
+    "talent": "honaryaar:stats:talent:v1",
+}
 
 
 def _upstash():
@@ -54,6 +61,44 @@ def _redis_pause():
 
     _redis_client = None
     _redis_down_until = time.monotonic() + 60
+
+
+def _remember_stats(name, compute):
+    key = STAT_KEYS[name]
+    client = _upstash()
+    raw = None
+    if client is not None:
+        try:
+            raw = client.get(key)
+        except Exception:
+            _redis_pause()
+            raw = None
+    if raw:
+        try:
+            if isinstance(raw, bytes):
+                raw = raw.decode()
+            return json.loads(raw)
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+            pass
+    value = compute()
+    client = _upstash()
+    if client is not None:
+        try:
+            client.setex(key, _STATS_TTL, json.dumps(value, ensure_ascii=False))
+        except Exception:
+            _redis_pause()
+    return value
+
+
+def forget_stat_counters():
+    """Drop the three counter keys. Nothing happens when Redis is missing."""
+    client = _upstash()
+    if client is None:
+        return
+    try:
+        client.delete(*STAT_KEYS.values())
+    except Exception:
+        _redis_pause()
 
 
 def _once(key, build):
@@ -1231,26 +1276,47 @@ def _approx(value):
 
 
 def listing_stats():
-    """Rounded counts for the three public lists."""
-    projects = _projects()
-    opportunities = _opportunities()
-    artists = _artists()
-    open_calls = [item for item in opportunities if item["status"] == "open"]
+    """Rounded counts for the three public lists. Cached for ten minutes."""
+    return _remember_stats("listing", _listing_counts)
+
+
+def _listing_counts():
+    from honaryaar.models import (
+        PUBLIC_PROJECT_STATUSES,
+        Opportunity,
+        OpportunityStatus,
+        Profile,
+        ProfileRole,
+        ProfileSkill,
+        Project,
+        ProjectStatus,
+    )
+
+    public = Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
+    calls = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES)
+    open_calls = calls.filter(status=OpportunityStatus.OPEN)
+    artists = Profile.objects.filter(profile_roles__isnull=False)
+    open_count = open_calls.count()
     return {
         "projects": [
-            {"value": _approx(sum(item["status_code"] == "casting" for item in projects)), "label": "پروژه‌های در حال جذب"},
-            {"value": _approx(len({item["city"] for item in projects if item["city"]})), "label": "تعداد شهر"},
-            {"value": _approx(len(open_calls)), "label": "تعداد فراخوان همکاری"},
+            {"value": _approx(public.filter(status=ProjectStatus.CASTING).count()), "label": "پروژه‌های در حال جذب"},
+            {"value": _approx(public.exclude(city=None).values("city_id").distinct().count()), "label": "تعداد شهر"},
+            {"value": _approx(open_count), "label": "تعداد فراخوان همکاری"},
         ],
         "artists": [
-            {"value": _approx(len(artists)), "label": "هنرمند فعال"},
-            {"value": _approx(len({slug for item in artists for slug in item["role_slugs"]})), "label": "نقش تخصصی"},
-            {"value": _approx(len({skill["label"] for item in artists for skill in item["skills"]})), "label": "مهارت"},
+            {"value": _approx(artists.distinct().count()), "label": "هنرمند فعال"},
+            {"value": _approx(ProfileRole.objects.values("role_id").distinct().count()), "label": "نقش تخصصی"},
+            {
+                "value": _approx(
+                    ProfileSkill.objects.filter(profile__profile_roles__isnull=False).values("skill_id").distinct().count()
+                ),
+                "label": "مهارت",
+            },
         ],
         "opportunities": [
-            {"value": _approx(len(open_calls)), "label": "فراخوان فعال"},
-            {"value": _approx(len({item["role"] for item in open_calls if item["role"]})), "label": "نقش فعال"},
-            {"value": _approx(len(opportunities)), "label": "کل فراخوان‌ها"},
+            {"value": _approx(open_count), "label": "فراخوان فعال"},
+            {"value": _approx(open_calls.values("role_id").distinct().count()), "label": "نقش فعال"},
+            {"value": _approx(calls.count()), "label": "کل فراخوان‌ها"},
         ],
     }
 
@@ -1825,6 +1891,10 @@ def hero_roles():
 
 
 def hire_stats():
+    return _remember_stats("hire", _hire_counts)
+
+
+def _hire_counts():
     from honaryaar.models import Profile, ProfileRole, ProfileSkill
 
     artists = Profile.objects.count()
@@ -1844,6 +1914,10 @@ def hero_fields():
 
 
 def talent_stats():
+    return _remember_stats("talent", _talent_counts)
+
+
+def _talent_counts():
     from django.db.models import Q
 
     from honaryaar.models import PUBLIC_PROJECT_STATUSES, City, Opportunity, OpportunityStatus, Project, ProjectStatus, Role
