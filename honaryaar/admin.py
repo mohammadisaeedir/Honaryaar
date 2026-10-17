@@ -1,5 +1,4 @@
 import json
-import secrets
 from urllib.parse import urlencode
 
 from django import forms
@@ -340,6 +339,8 @@ class ProjectAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if "slug" in self.fields:
+            self.fields["slug"].required = False
         self.fields["image_upload"].widget = DirectUploadWidget(
             purpose="project",
             kind="photo",
@@ -776,12 +777,16 @@ class CreditAdmin(ModelAdmin):
     autocomplete_fields = ("profile", "role")
 
 
-def _opportunity_slug():
-    for _ in range(5):
-        slug = f"o-{secrets.token_hex(4)}"
-        if not Opportunity.objects.filter(slug=slug).exists():
-            return slug
-    return f"o-{secrets.token_hex(8)}"
+def _opportunity_slug(obj):
+    from honaryaar.slugs import opportunity_slug
+
+    return opportunity_slug(
+        obj.project.slug if obj.project_id else "",
+        role_slug=obj.role.slug if obj.role_id else "",
+        role_title=obj.role.title if obj.role_id else obj.title,
+        model=Opportunity,
+        exclude_pk=obj.pk,
+    )
 
 
 class OpportunityAdminForm(forms.ModelForm):
@@ -801,6 +806,8 @@ class OpportunityAdminForm(forms.ModelForm):
         current = self.instance.special_conditions or []
         if isinstance(current, list):
             self.initial.setdefault("special_conditions", current)
+        if "slug" in self.fields:
+            self.fields["slug"].required = False
 
 
 class OpportunityInline(HonarInline):
@@ -897,7 +904,7 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
             obj.delete()
         for obj in instances:
             if not obj.slug:
-                obj.slug = _opportunity_slug()
+                obj.slug = _opportunity_slug(obj)
             if not obj.art_category_id:
                 obj.art_category_id = form.instance.art_category_id
             if not obj.pk and not obj.city_id:

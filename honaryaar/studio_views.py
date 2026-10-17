@@ -1,4 +1,3 @@
-import secrets
 from collections import defaultdict
 from urllib.parse import urlencode
 
@@ -17,6 +16,7 @@ from honaryaar.forms import ApplyForm, InviteForm, OpportunityForm, ProjectCreat
 from honaryaar.labels import APPLICATION_LABELS
 from honaryaar.media_files import MediaError
 from honaryaar.media_service import attach_project_image, parse_upload_id, project_image_url
+from honaryaar.slugs import opportunity_slug, unique_slug
 from honaryaar.models import (
     Application,
     ApplicationStatus,
@@ -36,14 +36,6 @@ def _profile_or_redirect(request):
     if profile is None:
         return None, redirect("me-profile")
     return profile, None
-
-
-def _slug(model, prefix):
-    for _ in range(5):
-        slug = f"{prefix}-{secrets.token_hex(4)}"
-        if not model.objects.filter(slug=slug).exists():
-            return slug
-    return f"{prefix}-{secrets.token_hex(8)}"
 
 
 def _manager_name(profile):
@@ -154,7 +146,7 @@ def project_new(request):
         try:
             with transaction.atomic():
                 project = Project.objects.create(
-                    slug=_slug(Project, "p"),
+                    slug=unique_slug(Project, form.cleaned_data["title"], fallback="project"),
                     title=form.cleaned_data["title"],
                     owner=profile,
                     city=form.cleaned_data["city"],
@@ -251,7 +243,12 @@ def project_manage(request, slug):
                 messages.success(request, f"فرصت «{cleaned['title']}» ذخیره شد.")
             else:
                 opportunity = Opportunity(
-                    slug=_slug(Opportunity, "o"),
+                    slug=opportunity_slug(
+                        project.slug,
+                        role_slug=cleaned["role"].slug,
+                        role_title=cleaned["role"].title,
+                        model=Opportunity,
+                    ),
                     project=project,
                     status=OpportunityStatus.OPEN,
                 )

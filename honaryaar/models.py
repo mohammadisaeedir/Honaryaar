@@ -448,6 +448,19 @@ class Project(models.Model):
             ),
         ]
 
+    def save(self, *args, **kwargs):
+        if not (self.slug or "").strip():
+            from honaryaar.slugs import unique_slug
+
+            self.slug = unique_slug(Project, self.title, fallback="project", exclude_pk=self.pk)
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                fields = list(update_fields)
+                if "slug" not in fields:
+                    fields.append("slug")
+                kwargs["update_fields"] = fields
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.title
 
@@ -718,6 +731,28 @@ class Opportunity(models.Model):
     class Meta:
         ordering = ["title"]
         verbose_name_plural = "opportunities"
+
+    def save(self, *args, **kwargs):
+        if not (self.slug or "").strip():
+            from honaryaar.slugs import opportunity_slug
+
+            project_slug = self.project.slug if self.project_id else ""
+            role_slug = self.role.slug if self.role_id else ""
+            role_title = self.role.title if self.role_id else self.title
+            self.slug = opportunity_slug(
+                project_slug,
+                role_slug=role_slug,
+                role_title=role_title,
+                model=Opportunity,
+                exclude_pk=self.pk,
+            )
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                fields = list(update_fields)
+                if "slug" not in fields:
+                    fields.append("slug")
+                kwargs["update_fields"] = fields
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.project} · {self.title}"
