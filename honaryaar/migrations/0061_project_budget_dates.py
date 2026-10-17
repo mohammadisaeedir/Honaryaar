@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("honaryaar", "0059_backfill_opportunity_pay"),
+        ("honaryaar", "0060_opportunity_pay_constraint"),
     ]
 
     operations = [
