@@ -949,6 +949,9 @@ class ProjectContactAdmin(ModelAdmin):
 @admin.register(Opportunity)
 class OpportunityAdmin(StatusChipMixin, ModelAdmin):
     form = OpportunityAdminForm
+    class Media:
+        js = ("js/admin-pay.js",)
+
     list_display = (
         "title",
         "project",
@@ -959,12 +962,13 @@ class OpportunityAdmin(StatusChipMixin, ModelAdmin):
         "deadline",
         "gender",
         "paid",
+        "pay_type",
         "featured",
         "status_chip",
         "application_link",
         "invite_link",
     )
-    list_filter = ("status", "paid", "featured", "gender", "collaboration_type", "experience_level", "city", "role", "art_category__art", "art_category")
+    list_filter = ("status", "paid", "pay_type", "featured", "gender", "collaboration_type", "experience_level", "city", "role", "art_category__art", "art_category")
     list_editable = ("featured",)
     date_hierarchy = "deadline"
     search_fields = ("title", "project__title", "city__title", "art_category__title", "slug")

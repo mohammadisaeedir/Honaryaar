@@ -239,6 +239,25 @@
                             {% endfor %}
                         </div>
                     </fieldset>
+                    <label class="mb-4 flex min-h-11 items-center gap-2">
+                        <input type="checkbox" name="paid" {% if opportunity_form.paid.value %}checked{% endif %}>
+                        <span class="field-label">دستمزد دارد</span>
+                    </label>
+                    {% if opportunity_form.paid.errors %}<p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.paid.errors.0 }}</p>{% endif %}
+                    <label class="mb-4 block" data-pay-type>
+                        <span class="field-label">نوع دستمزد</span>
+                        <select class="field field-select" name="pay_type">
+                            {% for value, label in opportunity_form.fields.pay_type.choices %}
+                                <option value="{{ value }}" {% if opportunity_form.pay_type.value|default:"" == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if opportunity_form.pay_type.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.pay_type.errors.0 }}</p>{% endif %}
+                    </label>
+                    <label class="mb-4 block" data-pay-amount>
+                        <span class="field-label">مبلغ (تومان)</span>
+                        <input class="field" type="number" name="pay_amount" min="1" inputmode="numeric" value="{{ opportunity_form.pay_amount.value|default:'' }}">
+                        {% if opportunity_form.pay_amount.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ opportunity_form.pay_amount.errors.0 }}</p>{% endif %}
+                    </label>
                     <label class="mb-4 block">
                         <span class="field-label">درباره نقش</span>
                         <textarea class="field" style="min-height: 7rem" name="description" rows="4">{{ opportunity_form.description.value|default:'' }}</textarea>
@@ -383,6 +402,9 @@
                     special_conditions: [],
                     age_min: from.min,
                     age_max: to.max,
+                    paid: false,
+                    pay_type: "",
+                    pay_amount: "",
                 };
                 var data = record || blank;
                 form.querySelector("[name=title]").value = data.title;
@@ -400,7 +422,21 @@
                 from.value = data.age_min;
                 to.value = data.age_max;
                 paint(from);
+                form.querySelector("[name=paid]").checked = !!data.paid;
+                form.querySelector("[name=pay_type]").value = data.pay_type || "";
+                form.querySelector("[name=pay_amount]").value = data.pay_amount || "";
+                paintPay(form);
             };
+            function paintPay(form) {
+                var paid = form.querySelector("[name=paid]").checked;
+                var kind = form.querySelector("[name=pay_type]").value;
+                form.querySelector("[data-pay-type]").hidden = !paid;
+                form.querySelector("[data-pay-amount]").hidden = !(paid && kind === "fixed");
+            }
+            var payForm = document.querySelector("[data-opp-form]");
+            payForm.querySelector("[name=paid]").addEventListener("change", function () { paintPay(payForm); });
+            payForm.querySelector("[name=pay_type]").addEventListener("change", function () { paintPay(payForm); });
+            paintPay(payForm);
         })();
     </script>
 {% endblock %}

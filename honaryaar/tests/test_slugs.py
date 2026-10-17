@@ -106,9 +106,10 @@ class SlugHelperTests(TestCase):
                 "status": "open",
                 "views": "0",
                 "paid": "",
+                "pay_type": "",
+                "pay_amount": "",
                 "featured": "",
                 "description": "",
-                "pay_note": "",
                 "requirements": "[]",
                 "special_conditions": [],
             }

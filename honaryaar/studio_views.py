@@ -55,6 +55,9 @@ def _apply_opportunity(opportunity, cleaned, project):
     opportunity.special_conditions = cleaned["special_conditions"]
     opportunity.age_min = cleaned["age_min"]
     opportunity.age_max = cleaned["age_max"]
+    opportunity.paid = cleaned["paid"]
+    opportunity.pay_type = cleaned["pay_type"]
+    opportunity.pay_amount = cleaned["pay_amount"] if cleaned["pay_type"] == "fixed" else None
 
 
 def _project_step(slug, invite=""):
@@ -328,6 +331,9 @@ def project_manage(request, slug):
                     "special_conditions": item.special_conditions or [],
                     "age_min": item.age_min or 16,
                     "age_max": item.age_max or 80,
+                    "paid": item.paid,
+                    "pay_type": item.pay_type,
+                    "pay_amount": item.pay_amount or "",
                 }
                 for item in opportunities
             ],

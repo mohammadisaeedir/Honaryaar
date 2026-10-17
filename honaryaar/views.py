@@ -533,6 +533,7 @@ def opportunity_list(request):
         "q": request.GET.get("q", "").strip(),
         "city": _picked(request, "city"),
         "paid": _picked(request, "paid"),
+        "pay_type": _picked(request, "pay_type"),
         "gender": _picked(request, "gender"),
         "production": _picked(request, "production"),
         "role": _picked(request, "role"),
@@ -557,7 +558,8 @@ def opportunity_list(request):
         catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role.get("group", "")) for role in facets["roles"]], filters["role"]),
         catalog.choice_group("production", "نوع", [(item, item) for item in facets["productions"]], filters["production"]),
         catalog.choice_group("gender", "جنسیت", [(item["value"], item["label"]) for item in facets["genders"]], filters["gender"]),
-        catalog.choice_group("paid", "پرداخت", facets["paid"], filters["paid"]),
+        catalog.choice_group("paid", "دستمزد", facets["paid"], filters["paid"]),
+        catalog.choice_group("pay_type", "نوع دستمزد", facets["pay_type"], filters["pay_type"]),
     ]
     if bounds:
         groups.append(catalog.age_group(floor, ceiling, start, end, age_active))
