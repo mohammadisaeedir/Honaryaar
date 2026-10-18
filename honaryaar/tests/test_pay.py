@@ -10,19 +10,8 @@ from honaryaar.pay import classify_legacy_pay, format_tomans, pay_label
 
 
 def _flush_catalog():
-    import honaryaar.catalog as catalog
-
-    catalog._daily_mem["value"] = None
-    catalog._daily_mem["at"] = 0
-    for fn in (catalog._opportunities, catalog._projects, catalog._artists):
-        for cell in fn.__closure__ or ():
-            try:
-                box = cell.cell_contents
-            except ValueError:
-                continue
-            if isinstance(box, dict) and "at" in box and "value" in box:
-                box["value"] = None
-                box["at"] = 0
+    """Lists are read from the database on each request."""
+    return None
 
 
 class PayRuleTests(TestCase):

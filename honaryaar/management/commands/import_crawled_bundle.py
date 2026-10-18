@@ -42,6 +42,12 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--bundle-dir", required=True)
         parser.add_argument("--only-slug", action="append", dest="only_slug")
+        parser.add_argument(
+            "--blank-about",
+            action="append",
+            dest="blank_about",
+            help="Import this slug with an empty about. Repeatable.",
+        )
         parser.add_argument("--apply", action="store_true")
         parser.add_argument("--rollback", default="")
         parser.add_argument("--skip-photos", action="store_true")
@@ -64,6 +70,7 @@ class Command(BaseCommand):
             )
             return
         rows = _load_bundle(bundle_dir, options["only_slug"] or [])
+        blank_about = _blank_about(self.stdout, rows, options["blank_about"] or [])
         roles, cities = _preconditions(self.stdout, rows)
         _import_rows(
             self.stdout,
@@ -75,6 +82,7 @@ class Command(BaseCommand):
             name,
             options["apply"],
             options["skip_photos"],
+            blank_about,
         )
 
 
@@ -230,7 +238,25 @@ def _preconditions(stdout, rows):
     return known_roles, known_cities
 
 
-def _import_rows(stdout, bundle_dir, rows, roles, cities, host, name, apply, skip_photos):
+def _blank_about(stdout, rows, requested):
+    blank = []
+    seen = set()
+    for slug in requested:
+        slug = (slug or "").strip()
+        if not slug or slug in seen:
+            continue
+        seen.add(slug)
+        blank.append(slug)
+    present = {row["slug"].strip() for row in rows}
+    unknown = [slug for slug in blank if slug not in present]
+    if unknown:
+        raise CommandError(f"blank-about slug is not in the bundle: {unknown[0]}")
+    for slug in blank:
+        stdout.write(f"blank-about\t{slug}")
+    return set(blank)
+
+
+def _import_rows(stdout, bundle_dir, rows, roles, cities, host, name, apply, skip_photos, blank_about):
     records = []
     created = would = skipped = conflicts = failed = 0
     for row in rows:
@@ -260,7 +286,7 @@ def _import_rows(stdout, bundle_dir, rows, roles, cities, host, name, apply, ski
             stdout.write(_status_line("would create", slug, counts))
             continue
         try:
-            record, line = _create_one(bundle_dir, row, roles, cities, skip_photos)
+            record, line = _create_one(bundle_dir, row, roles, cities, skip_photos, blank_about)
         except Exception as exc:
             failed += 1
             detail = str(exc) if isinstance(exc, CommandError) else exc.__class__.__name__
@@ -280,12 +306,13 @@ def _import_rows(stdout, bundle_dir, rows, roles, cities, host, name, apply, ski
     )
 
 
-def _create_one(bundle_dir, row, roles, cities, skip_photos):
+def _create_one(bundle_dir, row, roles, cities, skip_photos, blank_about):
     slug = row["slug"].strip()
     username = f"idx-{slug}"
     counts = _row_counts(row, skip_photos)
     city_slug = row.get("city_slug") or ""
     born = _birth(row.get("birth_date"))
+    about = "" if slug in blank_about else (row.get("about") or "")
     User = get_user_model()
     with transaction.atomic():
         user = User(username=username, email="", is_staff=False, is_superuser=False)
@@ -295,7 +322,7 @@ def _create_one(bundle_dir, row, roles, cities, skip_photos):
             user=user,
             slug=slug,
             name=row.get("name") or "",
-            about=row.get("about") or "",
+            about=about,
             arts=list(row.get("arts") or []),
             status=ProfileStatus.INDEXED,
             birth_date=born,
