@@ -4,8 +4,11 @@
 prints the plan. --apply uploads to ParsPack under the dev prefix.
 """
 
+import gzip
 import json
 import os
+import shutil
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -44,6 +47,39 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 class _PhotoFailure(Exception):
     pass
+
+
+def _decode_body(data, encoding):
+    encoding = (encoding or "").strip().lower()
+    if encoding in {"", "identity"}:
+        return data
+    if encoding == "gzip":
+        try:
+            return gzip.decompress(data)
+        except OSError as exc:
+            raise _PhotoFailure("gzip") from exc
+    if encoding == "br":
+        return _brotli_decompress(data)
+    raise _PhotoFailure(f"content encoding {encoding}")
+
+
+def _brotli_decompress(data):
+    try:
+        import brotli
+    except ImportError:
+        brotli = None
+    if brotli is not None:
+        try:
+            return brotli.decompress(data)
+        except Exception as exc:
+            raise _PhotoFailure("brotli") from exc
+    binary = shutil.which("brotli")
+    if not binary:
+        raise _PhotoFailure("brotli")
+    result = subprocess.run([binary, "-d", "-c"], input=data, capture_output=True, check=False)
+    if result.returncode != 0 or not result.stdout:
+        raise _PhotoFailure("brotli")
+    return result.stdout
 
 
 class Command(BaseCommand):
@@ -201,6 +237,7 @@ class Command(BaseCommand):
                 status = getattr(response, "status", None) or response.getcode()
                 if status is not None and 300 <= int(status) < 400:
                     raise _PhotoFailure("redirect")
+                encoding = response.headers.get("Content-Encoding", "")
                 chunks = []
                 size = 0
                 while True:
@@ -224,7 +261,7 @@ class Command(BaseCommand):
             if isinstance(reason, TimeoutError) or "timed out" in str(reason).lower():
                 raise _PhotoFailure("timeout") from exc
             raise _PhotoFailure("fetch failed") from exc
-        return b"".join(chunks)
+        return _decode_body(b"".join(chunks), encoding)
 
     def _result(self, label, slug, detail):
         if detail:
