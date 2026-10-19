@@ -1,21 +1,21 @@
-<div class="search-modal" x-show="searchOpen" x-cloak x-effect="searchOpen && window.matchMedia('(max-width: 767.98px)').matches && $nextTick(() => $refs.searchQ && $refs.searchQ.focus())">
+<div class="search-modal" x-show="searchOpen" x-cloak x-effect="if (searchOpen) { $nextTick(() => { if (window.syncSearchModal) window.syncSearchModal(); $refs.searchQ && $refs.searchQ.focus(); }) }">
     <div class="search-modal__backdrop" @click="searchOpen = false"></div>
-    <div class="search-modal__panel" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
+    {% with page=request.resolver_match.url_name %}
+    <form class="search-modal__form" method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search data-search-scope="{% if page == 'artists' or page == 'artist' %}artists{% elif page == 'projects' or page == 'project' %}projects{% elif page == 'opportunities' or page == 'opportunity' %}opportunities{% else %}search{% endif %}" @submit="searchOpen = false">
+        <label class="sr-only" for="modal-q">جستجو</label>
+        <div class="search-modal__field">
+            {% include "components/icon.html" with name="search" size="18" %}
+            <input class="field" id="modal-q" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% if page == 'artists' or page == 'artist' %}نام یا نقش{% elif page == 'projects' or page == 'project' %}نام پروژه یا شهر{% elif page == 'opportunities' or page == 'opportunity' %}نقش، شهر یا پروژه{% else %}مثلاً: بازیگر{% endif %}" data-search-typewriter enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
+        </div>
+    </form>
+    {% endwith %}
+    <div class="search-modal__panel" role="dialog" aria-modal="true" aria-labelledby="search-modal-title" @click="if ($event.target.closest('a[href]')) searchOpen = false">
         <div class="search-modal__top">
             <h2 id="search-modal-title">جستجو</h2>
             <button class="search-modal__close" type="button" @click="searchOpen = false" aria-label="بستن">
                 {% include "components/icon.html" with name="x" size="20" %}
             </button>
         </div>
-        {% with page=request.resolver_match.url_name %}
-        <form method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search data-search-scope="{% if page == 'artists' or page == 'artist' %}artists{% elif page == 'projects' or page == 'project' %}projects{% elif page == 'opportunities' or page == 'opportunity' %}opportunities{% else %}search{% endif %}">
-            <label class="sr-only" for="modal-q">جستجو</label>
-            <div class="search-modal__field">
-                {% include "components/icon.html" with name="search" size="18" %}
-                <input class="field" id="modal-q" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% if page == 'artists' or page == 'artist' %}نام یا نقش{% elif page == 'projects' or page == 'project' %}نام پروژه یا شهر{% elif page == 'opportunities' or page == 'opportunity' %}نقش، شهر یا پروژه{% else %}مثلاً: بازیگر{% endif %}" {% if page != 'artists' and page != 'artist' and page != 'projects' and page != 'project' and page != 'opportunities' and page != 'opportunity' %}data-search-typewriter{% endif %} enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
-            </div>
-        </form>
-        {% endwith %}
 
         {% include "components/filters/recent.html" with scope="all" %}
 

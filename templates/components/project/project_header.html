@@ -13,13 +13,11 @@
         {% if project.urgent %}<span class="project-tag project-tag--urgent">فوری</span>{% endif %}
         {% if project.featured %}<span class="project-tag project-tag--featured">ویژه</span>{% endif %}
     </p>
-    <div class="pdp-title">
-        <div class="project-pdp__title">
-            <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
-            {% status_chip project.status_code %}
-        </div>
-        {% include "components/pdp_actions.html" with kind="project" slug=project.slug title=project.title %}
+    <div class="project-pdp__title">
+        <h1 class="min-w-0 text-[28px] font-semibold leading-9">{{ project.title }}</h1>
+        {% status_chip project.status_code %}
     </div>
+    {% include "components/pdp_actions.html" with kind="project" slug=project.slug title=project.title %}
     {% if project.lead or project.lead_role %}
         <p class="project-pdp__lead">
             {% if project.lead_slug %}

@@ -1185,7 +1185,7 @@ body.pf-logout-open { overflow: hidden; }
     background: var(--color-card);
 }
 
-.me-hero { overflow: hidden; }
+.me-hero { overflow: clip; }
 
 .me-card { padding: 16px; }
 
@@ -1291,6 +1291,15 @@ body.pf-logout-open { overflow: hidden; }
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
+}
+
+.me-hero__text > .pdp-actions {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.me-hero__text > .pdp-actions .share-slot {
+    display: inline-flex;
 }
 
 .me-hero__identity {
@@ -1735,7 +1744,7 @@ body.pf-logout-open { overflow: hidden; }
 @media (max-width: 800px) {
     .me-grid { grid-template-columns: 1fr; }
     .me-hero__person { flex-direction: column; }
-    .me-hero__title-row { flex-direction: column; gap: 0; }
+    .me-hero__title-row { flex-direction: column; gap: 8px; }
     .me-hero__photo-slot { width: 84px; height: 84px; margin-top: -42px; }
     .me-hero__photo { width: 84px; height: 84px; }
     .me-hero__text { padding-top: 8px; }

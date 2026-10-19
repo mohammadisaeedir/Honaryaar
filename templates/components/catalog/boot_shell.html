@@ -1,0 +1,49 @@
+{% load static %}
+<template id="catalog-shell-{{ kind }}">
+<nav class="crumbs" aria-label="مسیر">
+    <a href="/">خانه</a>
+    <span class="crumbs__sep" aria-hidden="true">/</span>
+    <span aria-current="page">{{ title }}</span>
+</nav>
+<div class="catalog-layout" data-catalog-shell x-data="{ open: false, suggest: false }" x-effect="document.body.classList.toggle('is-filter-open', open)" @keydown.escape.window="open = false">
+    <div class="catalog-intro">
+        <div class="catalog-intro__copy">
+            <h1 class="text-[28px] font-semibold leading-9">{{ title }}</h1>
+            <p class="mt-2 max-w-xl text-sm leading-[22px] text-muted-foreground">{{ description }}</p>
+        </div>
+        <aside class="intro-stats" aria-label="آمار">
+            {% for stat in intro_stats %}
+                <div>
+                    <strong dir="ltr">+{{ stat.value }}</strong>
+                    <span>{{ stat.label }}</span>
+                </div>
+            {% endfor %}
+        </aside>
+    </div>
+    <div class="catalog-body">
+    <div class="catalog-main">
+    <div class="list-tools">
+        {% include "components/filters/art_quick.html" %}
+        <form class="page-search" method="get" action="{{ action }}" role="search" autocomplete="off" data-remember-search data-search-scope="{{ kind }}">
+            <label class="sr-only" for="{{ kind }}-q-shell">{{ search_label }}</label>
+            <input class="field" id="{{ kind }}-q-shell" type="search" name="q" value="" placeholder="{{ placeholder }}" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </form>
+        <div class="tool-row">
+            <div class="sort-menu">
+                <button class="sort-menu__btn" type="button" disabled aria-disabled="true">
+                    <span>جدیدترین</span>
+                    {% include "components/icon.html" with name="sort" size="16" %}
+                </button>
+            </div>
+            <button class="filter-open" type="button" disabled aria-disabled="true">
+                {% include "components/icon.html" with name="sliders" size="18" %}
+                فیلتر
+            </button>
+        </div>
+    </div>
+    {% include "components/skeleton/list.html" with kind=kind %}
+    <div class="live-pane"></div>
+    </div>
+    </div>
+</div>
+</template>

@@ -497,6 +497,8 @@ def _age(raw):
 
 
 _PAGE_SIZE = 12
+_OPPORTUNITY_PAGE = 8
+_PROJECT_PAGE = 6
 _ROW_CAP = 4
 
 
@@ -505,14 +507,14 @@ def _safe_int(raw, default):
     return int(normalized) if normalized.isdigit() else default
 
 
-def _catalog_window(request, items):
-    """First paint is 12 cards. A scroll asks for one more row."""
+def _catalog_window(request, items, page_size=_PAGE_SIZE):
+    """First paint is two full rows. A scroll asks for one more row."""
     total = len(items)
     if request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET:
         offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), total)
         limit = min(max(_safe_int(request.GET.get("limit"), 1), 1), _ROW_CAP)
         return items[offset:offset + limit], total, offset + limit, True
-    shown = items[:_PAGE_SIZE]
+    shown = items[:page_size]
     return shown, total, len(shown), False
 
 
@@ -544,7 +546,9 @@ def opportunity_list(request):
     }
     sort, sort_label, sort_options = catalog.sort_state(request, "opportunities")
     filters["sort"] = sort
-    opportunities, total, shown, partial = _catalog_window(request, catalog.list_opportunities(**filters))
+    opportunities, total, shown, partial = _catalog_window(
+        request, catalog.list_opportunities(**filters), page_size=_OPPORTUNITY_PAGE
+    )
     if partial:
         return render(
             request,
@@ -631,7 +635,9 @@ def project_list(request):
     filters["start"] = filters["start"].isoformat() if filters["start"] else ""
     sort, sort_label, sort_options = catalog.sort_state(request, "projects")
     filters["sort"] = sort
-    projects, total, shown, partial = _catalog_window(request, catalog.list_projects(**filters))
+    projects, total, shown, partial = _catalog_window(
+        request, catalog.list_projects(**filters), page_size=_PROJECT_PAGE
+    )
     if partial:
         return render(
             request,
