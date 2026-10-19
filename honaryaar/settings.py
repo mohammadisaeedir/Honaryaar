@@ -322,7 +322,7 @@ WSGI_APPLICATION = 'honaryaar.wsgi.application'
 def _local_database():
     return {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "honaryaar",
+        "NAME": os.environ.get("LOCAL_DB_NAME", "honaryaar"),
         "USER": os.environ.get("USER", ""),
         "PASSWORD": "",
         "HOST": "localhost",
