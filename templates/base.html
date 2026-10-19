@@ -67,6 +67,9 @@
     <template id="skel-src-opportunity">{% include "components/skeleton/opportunity_page.html" %}</template>
     <template id="skel-src-artist">{% include "components/skeleton/artist_page.html" %}</template>
     <template id="skel-src-project">{% include "components/skeleton/project_page.html" %}</template>
+    {% with shell=catalog_boot.projects %}{% include "components/catalog/boot_shell.html" with kind=shell.kind title=shell.title description=shell.description action=shell.action search_label=shell.search_label placeholder=shell.placeholder intro_stats=shell.intro_stats art_quick=shell.art_quick %}{% endwith %}
+    {% with shell=catalog_boot.artists %}{% include "components/catalog/boot_shell.html" with kind=shell.kind title=shell.title description=shell.description action=shell.action search_label=shell.search_label placeholder=shell.placeholder intro_stats=shell.intro_stats art_quick=shell.art_quick %}{% endwith %}
+    {% with shell=catalog_boot.opportunities %}{% include "components/catalog/boot_shell.html" with kind=shell.kind title=shell.title description=shell.description action=shell.action search_label=shell.search_label placeholder=shell.placeholder intro_stats=shell.intro_stats art_quick=shell.art_quick %}{% endwith %}
     <script>
         (function () {
             var limit = 3;
@@ -120,6 +123,32 @@
                 server.remove();
             }
         })();
+        document.addEventListener("click", function (event) {
+            var button = event.target.closest && event.target.closest("[data-share-url]");
+            if (!button) return;
+            var url = button.getAttribute("data-share-url");
+            var shareTitle = button.getAttribute("data-share-title") || document.title;
+            var note = button.parentElement && button.parentElement.querySelector(".share-note");
+            function showNote() {
+                if (!note) return;
+                note.hidden = false;
+                clearTimeout(button._shareTimer);
+                button._shareTimer = setTimeout(function () { note.hidden = true; }, 2000);
+            }
+            if (navigator.share) {
+                navigator.share({ title: shareTitle, url: url }).catch(function () {});
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(showNote).catch(function () {});
+            }
+        });
+        var catalogFetch = null;
+        function catalogListKind(pathname) {
+            var parts = String(pathname || "").split("/").filter(Boolean);
+            if (parts.length !== 1) return "";
+            return /^(opportunities|artists|projects)$/.test(parts[0]) ? parts[0] : "";
+        }
         function revealPage() {
             document.documentElement.classList.remove("is-booting");
             var main = document.querySelector("main");
@@ -127,11 +156,159 @@
             main.classList.remove("is-skel-cover");
             main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
         }
+        function settleCardPhotos(root) {
+            (root || document).querySelectorAll("[data-card-photo]").forEach(function (img) {
+                if (!img.complete) return;
+                var box = img.closest && img.closest(".card-photo");
+                if (!box) return;
+                if (img.naturalWidth) box.classList.remove("is-loading");
+                else {
+                    img.classList.add("card-photo__fallback");
+                    img.removeAttribute("data-card-photo");
+                    img.setAttribute("src", "{% static 'brand/mark-fallback.svg' %}");
+                    box.classList.remove("is-loading");
+                }
+            });
+        }
+        function activateScripts(root) {
+            if (!root) return;
+            root.querySelectorAll("script").forEach(function (old) {
+                var next = document.createElement("script");
+                Array.from(old.attributes).forEach(function (attr) {
+                    if (attr.name === "src") return;
+                    next.setAttribute(attr.name, attr.value);
+                });
+                if (old.src) {
+                    var url = new URL(old.src, location.href);
+                    url.searchParams.set("_nav", String(Date.now()));
+                    next.src = url.pathname + url.search;
+                } else {
+                    next.textContent = old.textContent;
+                }
+                old.replaceWith(next);
+            });
+        }
+        function markCatalogNav(pathname) {
+            var kind = catalogListKind(pathname);
+            document.querySelectorAll(".tabbar__pill a").forEach(function (link) {
+                var href = "";
+                try { href = new URL(link.href).pathname; } catch (error) { return; }
+                var active = href === pathname || (kind && catalogListKind(href) === kind) || (pathname === "/" && href === "/");
+                link.classList.toggle("is-active", active);
+            });
+            document.querySelectorAll("header nav a[href]").forEach(function (link) {
+                var href = "";
+                try { href = new URL(link.href).pathname; } catch (error) { return; }
+                var on = href === pathname || (kind && href.indexOf("/" + kind + "/") === 0);
+                if (href === "/" ) on = pathname === "/";
+                link.classList.toggle("text-foreground", on);
+                link.classList.toggle("text-muted-foreground", !on);
+            });
+        }
+        function paintCatalogShell(kind) {
+            var main = document.querySelector("main");
+            var source = document.getElementById("catalog-shell-" + kind);
+            if (!main || !source) return false;
+            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker");
+            if (window.Alpine && typeof Alpine.destroyTree === "function") Alpine.destroyTree(main);
+            main.classList.remove("is-skel-cover");
+            main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
+            main.replaceChildren();
+            main.appendChild(source.content.cloneNode(true));
+            if (window.Alpine && typeof Alpine.initTree === "function") Alpine.initTree(main);
+            return true;
+        }
+        function closeSearchModal() {
+            document.body.classList.remove("is-search-open");
+            try {
+                if (window.Alpine && typeof Alpine.$data === "function") {
+                    var data = Alpine.$data(document.body);
+                    if (data) data.searchOpen = false;
+                }
+            } catch (error) {}
+        }
+        function syncSearchModal() {
+            var form = document.querySelector(".search-modal form");
+            var input = document.getElementById("modal-q");
+            if (!form || !input) return;
+            var kind = catalogListKind(location.pathname);
+            var action = kind ? "/" + kind + "/" : "/search/";
+            var placeholders = {
+                artists: "نام یا نقش",
+                projects: "نام پروژه یا شهر",
+                opportunities: "نقش، شهر یا پروژه",
+                search: "مثلاً: بازیگر",
+            };
+            form.setAttribute("action", action);
+            form.setAttribute("data-search-scope", kind || "search");
+            input.setAttribute("placeholder", placeholders[kind || "search"]);
+            var params = new URLSearchParams(location.search);
+            if (!document.activeElement || document.activeElement !== input) {
+                input.value = params.get("q") || "";
+            }
+        }
+        window.syncSearchModal = syncSearchModal;
+        function loadCatalogPage(url, options) {
+            options = options || {};
+            var kind = catalogListKind(url.pathname);
+            if (!kind) return false;
+            var main = document.querySelector("main");
+            if (!main) return false;
+            if (catalogFetch && typeof catalogFetch.abort === "function") catalogFetch.abort();
+            catalogFetch = typeof AbortController === "function" ? new AbortController() : null;
+            closeSearchModal();
+            document.documentElement.classList.add("is-booting");
+            var same = catalogListKind(location.pathname) === kind && main.querySelector(".catalog-layout");
+            if (!same) paintCatalogShell(kind);
+            markCatalogNav(url.pathname);
+            if (!options.replace) window.scrollTo(0, 0);
+            var href = url.pathname + url.search;
+            if (options.replace) history.replaceState({ catalog: kind }, "", href);
+            else history.pushState({ catalog: kind }, "", href);
+            fetch(href, {
+                signal: catalogFetch ? catalogFetch.signal : undefined,
+                headers: { "X-Requested-With": "fetch", "Accept": "text/html" },
+                credentials: "same-origin",
+            }).then(function (response) {
+                if (!response.ok) throw new Error("catalog");
+                return response.text();
+            }).then(function (html) {
+                var doc = new DOMParser().parseFromString(html, "text/html");
+                var nextMain = doc.querySelector("main");
+                if (!nextMain) throw new Error("main");
+                document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker");
+                if (window.Alpine && typeof Alpine.destroyTree === "function") Alpine.destroyTree(main);
+                main.classList.remove("is-skel-cover");
+                main.replaceChildren();
+                while (nextMain.firstChild) main.appendChild(nextMain.firstChild);
+                var title = doc.querySelector("title");
+                if (title) document.title = title.textContent;
+                markCatalogNav(url.pathname);
+                syncSearchModal();
+                if (window.Alpine && typeof Alpine.initTree === "function") Alpine.initTree(main);
+                activateScripts(main);
+                settleCardPhotos(main);
+                revealPage();
+                if (typeof window.refreshRecentSearches === "function") window.refreshRecentSearches();
+            }).catch(function (error) {
+                if (error && error.name === "AbortError") return;
+                location.assign(href);
+            });
+            return true;
+        }
         if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", revealPage);
         else revealPage();
         window.addEventListener("pagehide", revealPage);
         window.addEventListener("pageshow", function (event) {
             if (event.persisted) revealPage();
+        });
+        window.addEventListener("popstate", function () {
+            var kind = catalogListKind(location.pathname);
+            if (!kind) {
+                location.reload();
+                return;
+            }
+            loadCatalogPage(new URL(location.href), { replace: true });
         });
         (function () {
             var fallback = "{% static 'brand/mark-fallback.svg' %}";
@@ -195,13 +372,15 @@
             var parts = url.pathname.split("/").filter(Boolean);
             if (!parts.length || !/^(opportunities|artists|projects)$/.test(parts[0])) return;
             if (url.pathname === location.pathname && url.search === location.search) return;
+            if (parts.length === 1) {
+                event.preventDefault();
+                loadCatalogPage(url);
+                return;
+            }
             document.documentElement.classList.add("is-booting");
-            if (parts.length === 1) return;
             var main = document.querySelector("main");
             if (!main || url.pathname === location.pathname) return;
-            var id = parts.length > 1
-                ? "skel-src-" + (parts[0] === "opportunities" ? "opportunity" : parts[0] === "artists" ? "artist" : "project")
-                : "skel-src-" + parts[0];
+            var id = "skel-src-" + (parts[0] === "opportunities" ? "opportunity" : parts[0] === "artists" ? "artist" : "project");
             var source = document.getElementById(id);
             if (!source) return;
             main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
@@ -213,12 +392,20 @@
         }, true);
         document.addEventListener("submit", function (event) {
             var form = event.target;
-            if (!form || !form.getAttribute) return;
+            if (!form || form.method && form.method.toLowerCase() !== "get") return;
+            if (!form.getAttribute) return;
             var action = form.getAttribute("action") || location.pathname;
-            var path = "";
-            try { path = new URL(action, location.href).pathname; } catch (error) { return; }
-            if (/\/(report|bookmark)\/$/.test(path) || /\/me\/bookmarks\/\d+\/$/.test(path)) return;
-            if (/^\/(opportunities|artists|projects)(\/|$)/.test(path)) document.documentElement.classList.add("is-booting");
+            var url;
+            try { url = new URL(action, location.href); } catch (error) { return; }
+            if (!catalogListKind(url.pathname)) return;
+            if (/\/(report|bookmark)\/$/.test(url.pathname) || /\/me\/bookmarks\/\d+\/$/.test(url.pathname)) return;
+            event.preventDefault();
+            var data = new FormData(form);
+            var next = new URL(url.pathname, location.origin);
+            data.forEach(function (value, key) {
+                if (value !== "" && value != null) next.searchParams.append(key, value);
+            });
+            loadCatalogPage(next);
         }, true);
         document.addEventListener("submit", function (event) {
             var form = event.target;
@@ -317,6 +504,7 @@
                     var scope = block.getAttribute("data-recent-scope") || "all";
                     var shown = scope === "all" ? items.slice(0, 8) : items.filter(function (item) { return item.scope === scope; }).slice(0, 8);
                     var list = block.querySelector("[data-recent-list]");
+                    if (!list) return;
                     list.replaceChildren();
                     block.hidden = !shown.length;
                     shown.forEach(function (item) {
@@ -353,6 +541,7 @@
                     });
                 });
             }
+            window.refreshRecentSearches = paint;
             document.addEventListener("submit", function (event) {
                 var form = event.target;
                 if (!form || !form.hasAttribute || !form.hasAttribute("data-remember-search")) return;
@@ -364,6 +553,7 @@
                 var items = read().filter(function (item) { return item.q !== value || item.scope !== scope; });
                 items.unshift({ q: value, scope: scope });
                 write(items);
+                paint();
             });
             document.addEventListener("click", function (event) {
                 var button = event.target.closest && event.target.closest("[data-recent-clear]");

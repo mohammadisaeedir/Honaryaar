@@ -296,6 +296,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'honaryaar.context_processors.footer',
                 'honaryaar.context_processors.assets',
+                'honaryaar.context_processors.catalog_boot',
             ],
         },
     },

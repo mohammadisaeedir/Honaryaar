@@ -1901,12 +1901,16 @@ def _with_views(items, model):
 def note_view(request, model, pk):
     from django.db.models import F
 
-    token = f"{model._meta.label}:{pk}"
-    seen = list(request.session.get("page_views") or [])
-    if token not in seen:
-        model.objects.filter(pk=pk).update(views=F("views") + 1)
-        request.session["page_views"] = [*seen, token][-300:]
-        request.session.modified = True
+    from honaryaar.data_source import preview_active
+
+    # Production preview is read-only; never write view counts there.
+    if not preview_active():
+        token = f"{model._meta.label}:{pk}"
+        seen = list(request.session.get("page_views") or [])
+        if token not in seen:
+            model.objects.filter(pk=pk).update(views=F("views") + 1)
+            request.session["page_views"] = [*seen, token][-300:]
+            request.session.modified = True
     count = model.objects.filter(pk=pk).values_list("views", flat=True).first() or 0
     return round_up_five(count)
 

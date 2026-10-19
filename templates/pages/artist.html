@@ -44,8 +44,8 @@
                                     <h1>{{ artist.name }}</h1>
                                 {% endif %}
                             </div>
-                            {% include "components/pdp_actions.html" with kind="profile" slug=artist.slug title=artist.name %}
                         </div>
+                        {% include "components/pdp_actions.html" with kind="profile" slug=artist.slug title=artist.name %}
                         {% if artist.arts %}
                             <ul class="me-arts">
                                 {% for slug in artist.arts %}
