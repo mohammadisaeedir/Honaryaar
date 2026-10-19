@@ -1,0 +1,68 @@
+{% extends "pages/account/shell.html" %}
+{% load static %}
+
+{% block title %}ساخت بورد پروژه · هنریار{% endblock %}
+{% block account_title %}ساخت بورد پروژه{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
+
+{% block account_main %}
+    <div class="lb" dir="rtl">
+        <div class="pf-board__head">
+            <h1 class="text-[28px] font-semibold leading-9">ساخت بورد پروژه</h1>
+            <a class="pf-board__quiet" href="{% url 'me-profile' %}">بازگشت</a>
+        </div>
+        <p class="lb__meta">پروژه جدید با بورد تسک و تیم ساخته می‌شود.</p>
+
+        <form class="mt-6 max-w-lg" method="post" action="{% url 'board_project_new' %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <p class="mb-4 text-xs leading-[18px]" style="color:#B42318">{{ form.non_field_errors.0 }}</p>
+            {% endif %}
+            <label class="mb-4 block">
+                <span class="field-label">عنوان پروژه</span>
+                <input class="field" type="text" name="title" value="{{ form.title.value|default:'' }}" maxlength="160" required>
+                {% if form.title.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.title.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">مدیر پروژه</span>
+                <input class="field" type="text" value="{{ owner_name }}" readonly>
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">نوع</span>
+                <select class="field field-select" name="art_category" required>
+                    <option value="">انتخاب نوع</option>
+                    {% for category in form.fields.art_category.queryset %}
+                        <option value="{{ category.pk }}" {% if form.art_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.get_art_display }} · {{ category.title }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.art_category.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.art_category.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">شهر</span>
+                <select class="field field-select" name="city" required>
+                    <option value="">انتخاب شهر</option>
+                    {% for city in form.fields.city.queryset %}
+                        <option value="{{ city.pk }}" {% if form.city.value|stringformat:"s" == city.pk|stringformat:"s" %}selected{% endif %}>{{ city.title }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.city.errors %}<p class="mt-2 text-xs leading-[18px]" style="color:#B42318">{{ form.city.errors.0 }}</p>{% endif %}
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">توضیحات</span>
+                <textarea class="field" style="min-height: 7rem" name="description" rows="4">{{ form.description.value|default:'' }}</textarea>
+            </label>
+            <label class="mb-4 block">
+                <span class="field-label">تعداد پرسوناژ</span>
+                <input class="field" type="number" name="personnage_count" min="0" value="{{ form.personnage_count.value|default:'' }}">
+            </label>
+            <div class="mt-6 lb-actions">
+                {% include "components/button.html" with label="ساخت و رفتن به بورد" button_type="submit" %}
+                <a class="pf-board__quiet" href="{% url 'me-projects' %}">پروژه‌های کستینگ</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

@@ -426,6 +426,38 @@ def _requested_section(value):
     return ""
 
 
+def _board_home_context(profile):
+    from django.urls import reverse
+
+    from honaryaar.models import ProjectMember
+
+    if profile is None:
+        return {"board_projects": [], "board_invite_count": 0}
+    memberships = (
+        ProjectMember.objects.filter(
+            profile=profile,
+            invite_status=ProjectMember.InviteStatus.ACCEPTED,
+        )
+        .select_related("project", "role")
+        .order_by("-updated_at")
+    )
+    board_projects = [
+        {
+            "title": row.project.title,
+            "url": reverse("board_view", args=[row.project.slug]),
+            "permission": row.permission,
+            "permission_label": row.get_permission_display(),
+            "role": row.role.title if row.role_id else "",
+        }
+        for row in memberships
+    ]
+    board_invite_count = ProjectMember.objects.filter(
+        profile=profile,
+        invite_status=ProjectMember.InviteStatus.INVITED,
+    ).count()
+    return {"board_projects": board_projects, "board_invite_count": board_invite_count}
+
+
 @login_required
 def me_profile(request):
     profile = ensure_profile(request.user)
@@ -433,7 +465,7 @@ def me_profile(request):
         return render(
             request,
             "pages/me_profile.html",
-            {"profile": None, "editing": False, "edit_section": ""},
+            {"profile": None, "editing": False, "edit_section": "", **_board_home_context(None)},
         )
     role_links = list(profile.profile_roles.select_related("role"))
     skill_links = list(profile.skill_links.select_related("skill"))
@@ -671,5 +703,6 @@ def me_profile(request):
             "media_max_photo": settings.MEDIA_MAX_IMAGE_BYTES,
             "media_max_video": settings.MEDIA_MAX_VIDEO_BYTES,
             "media_max_audio": settings.MEDIA_MAX_AUDIO_BYTES,
+            **_board_home_context(profile),
         },
     )

@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from honaryaar.admin_language import switch_admin_language
 from honaryaar.data_source import switch_data_source
@@ -101,6 +101,8 @@ urlpatterns = [
     path("me/tickets/", my_tickets, name="me-tickets"),
     path("me/tickets/<int:pk>/", my_ticket, name="me-ticket"),
     path("me/projects/new/", project_new, name="me-project-new"),
+    # Lifecycle board (must stay above me/projects/<slug>/ so new-board is not captured)
+    path("", include("honaryaar.board_urls")),
     path("me/projects/<slug:slug>/", project_manage, name="me-project"),
     path("me/projects/", my_projects, name="me-projects"),
     path("me/applications/", my_applications, name="me-applications"),

@@ -1,0 +1,47 @@
+{% extends "pages/account/shell.html" %}
+{% load static %}
+
+{% block title %}دعوت‌های پروژه · هنریار{% endblock %}
+{% block account_title %}دعوت‌های پروژه{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
+
+{% block account_main %}
+    <div class="lb" dir="rtl">
+        <div class="pf-board__head">
+            <h1 class="text-[28px] font-semibold leading-9">دعوت‌های پروژه</h1>
+            <a class="pf-board__quiet" href="{% url 'me-profile' %}">حساب من</a>
+        </div>
+        <p class="lb__meta">دعوت به تیم پروژه — جدا از دعوت‌های کستینگ.</p>
+
+        <div class="mt-6">
+            {% for invite in invites %}
+                <div class="lb-member">
+                    <div>
+                        <p class="lb-member__name">{{ invite.project.title }}</p>
+                        <p class="lb-member__meta">
+                            {% if invite.invited_by %}از طرف {{ invite.invited_by }}{% endif %}
+                            {% if invite.role %} · {{ invite.role }}{% endif %}
+                            · {{ invite.created_at|date:"Y/m/d" }}
+                        </p>
+                    </div>
+                    <div class="lb-actions">
+                        <form method="post" action="{% url 'project_invite_accept' invite.pk %}">
+                            {% csrf_token %}
+                            <button class="pf-board__add" type="submit">پذیرش</button>
+                        </form>
+                        <form method="post" action="{% url 'project_invite_reject' invite.pk %}">
+                            {% csrf_token %}
+                            <button class="pf-board__quiet" type="submit">رد</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="lb-empty">دعوت پروژه‌ای ندارید.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

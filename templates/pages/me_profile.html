@@ -1,8 +1,13 @@
 {% extends "pages/account/shell.html" %}
-{% load honaryaar_ui %}
+{% load static honaryaar_ui %}
 
 {% block title %}پروفایل من · هنریار{% endblock %}
 {% block account_title %}پروفایل{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
 
 {% block account_hub %}
     {% if not editing %}
@@ -114,6 +119,38 @@
 
             <div class="me-grid">
                 <div class="me-stack">
+                    <section class="me-card lb-home-projects" id="board-projects">
+                        <div class="me-card__head">
+                            <h2>پروژه‌های من{% if board_invite_count %} <span class="me-badge">{{ board_invite_count }} دعوت</span>{% endif %}</h2>
+                            <a class="me-edit" href="{% url 'board_project_new' %}" aria-label="ساخت پروژه جدید">+</a>
+                        </div>
+                        {% if board_projects %}
+                            <ul class="lb-home-list">
+                                {% for item in board_projects %}
+                                    <li>
+                                        <a class="lb-home-link" href="{{ item.url }}">
+                                            <span class="lb-home-link__title">{{ item.title }}</span>
+                                            <span class="lb-home-link__meta">
+                                                <span class="lb-badge lb-badge--{{ item.permission }}">{{ item.permission_label }}</span>
+                                                {% if item.role %}<span>{{ item.role }}</span>{% endif %}
+                                                <span class="lb-home-link__go">باز کردن بورد ←</span>
+                                            </span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="me-note">هنوز در بورد پروژه‌ای عضو نیستید. اولین پروژه‌تان را بسازید.</p>
+                        {% endif %}
+                        <div class="me-form__actions" style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+                            <a class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" href="{% url 'board_project_new' %}">+ ساخت پروژه جدید</a>
+                            <a class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 text-sm font-semibold" href="{% url 'my_tasks_dashboard' %}">تسک‌ها و رویدادها</a>
+                            {% if board_invite_count %}
+                                <a class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 text-sm font-semibold" href="{% url 'project_invites_list' %}">دعوت‌ها ({{ board_invite_count }})</a>
+                            {% endif %}
+                        </div>
+                    </section>
+
                     <section class="me-card" id="about">
                         <div class="me-card__head">
                             <h2>اطلاعات</h2>

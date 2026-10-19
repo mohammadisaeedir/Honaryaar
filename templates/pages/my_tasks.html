@@ -1,0 +1,145 @@
+{% extends "pages/account/shell.html" %}
+{% load static %}
+
+{% block title %}تسک‌ها و رویدادهای من · هنریار{% endblock %}
+{% block account_title %}تسک‌ها و رویدادها{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
+
+{% block account_main %}
+<form hidden>{% csrf_token %}</form>
+<div class="lb" dir="rtl" x-data="myTasksDash()">
+    <div class="pf-board__head">
+        <h1 class="text-[28px] font-semibold leading-9">تسک‌ها و رویدادهای من</h1>
+        <a class="pf-board__add" href="{% url 'board_project_new' %}">+ ساخت پروژه</a>
+    </div>
+    <p class="lb__meta">رویدادها و تسک‌هایی که در پروژه‌ها به شما مربوط است.</p>
+
+    <section class="mt-8">
+        <h2 class="text-lg font-semibold">رویدادهای من</h2>
+        <div class="profile-tabs" role="tablist" aria-label="رویدادها">
+            <button class="profile-tabs__tab" type="button" :class="{ 'is-on': eventTab === 'upcoming' }" @click="eventTab = 'upcoming'">پیش‌رو ({{ upcoming_events|length }})</button>
+            <button class="profile-tabs__tab" type="button" :class="{ 'is-on': eventTab === 'past' }" @click="eventTab = 'past'">گذشته ({{ past_events|length }})</button>
+        </div>
+
+        <div x-show="eventTab === 'upcoming'">
+            {% for row in upcoming_events %}
+                <div class="lb-event-row">
+                    <div>
+                        <p class="lb-event-row__title">{{ row.event.title }}</p>
+                        <p class="lb-event-row__meta">
+                            <a href="{% url 'board_view' row.event.project.slug %}">{{ row.event.project.title }}</a>
+                            · {{ row.event.starts_at|date:"Y/m/d H:i" }}
+                            {% if row.event.location %} · {{ row.event.location }}{% endif %}
+                        </p>
+                        <span class="lb-badge lb-badge--{{ row.attendance }}">{{ row.get_attendance_display }}</span>
+                    </div>
+                    <div class="lb-actions">
+                        <button class="pf-board__add" type="button" @click="setAttendance('{{ row.event.project.slug }}', {{ row.event_id }}, 'confirmed')">تأیید</button>
+                        <button class="pf-board__quiet" type="button" @click="setAttendance('{{ row.event.project.slug }}', {{ row.event_id }}, 'rejected')">رد</button>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="lb-empty">رویداد پیش‌رویی ندارید.</p>
+            {% endfor %}
+        </div>
+        <div x-show="eventTab === 'past'" x-cloak>
+            {% for row in past_events %}
+                <div class="lb-event-row">
+                    <div>
+                        <p class="lb-event-row__title">{{ row.event.title }}</p>
+                        <p class="lb-event-row__meta">
+                            <a href="{% url 'board_view' row.event.project.slug %}">{{ row.event.project.title }}</a>
+                            · {{ row.event.starts_at|date:"Y/m/d H:i" }}
+                        </p>
+                        <span class="lb-badge lb-badge--{{ row.attendance }}">{{ row.get_attendance_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="lb-empty">رویداد گذشته‌ای نیست.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mt-10">
+        <h2 class="text-lg font-semibold">تسک‌های من</h2>
+        <div class="profile-tabs" role="tablist" aria-label="تسک‌ها">
+            <button class="profile-tabs__tab" type="button" :class="{ 'is-on': taskTab === 'active' }" @click="taskTab = 'active'">فعال ({{ active_tasks|length }})</button>
+            <button class="profile-tabs__tab" type="button" :class="{ 'is-on': taskTab === 'done' }" @click="taskTab = 'done'">انجام‌شده ({{ done_tasks|length }})</button>
+        </div>
+
+        <div x-show="taskTab === 'active'">
+            {% for row in active_tasks %}
+                <div class="lb-member">
+                    <div>
+                        <p class="lb-member__name">{{ row.task.title }}</p>
+                        <p class="lb-member__meta">
+                            <a href="{% url 'board_view' row.task.project.slug %}">{{ row.task.project.title }}</a>
+                            · {{ row.task.get_phase_display }}
+                            {% if row.task.due_date %} · ددلاین {{ row.task.due_date|date:"Y/m/d" }}{% endif %}
+                        </p>
+                    </div>
+                    <button class="pf-board__add" type="button" @click="toggleTask('{{ row.task.project.slug }}', {{ row.task_id }}, 'done')">انجام شد</button>
+                </div>
+            {% empty %}
+                <p class="lb-empty">تسک فعالی ندارید.</p>
+            {% endfor %}
+        </div>
+        <div x-show="taskTab === 'done'" x-cloak>
+            {% for row in done_tasks %}
+                <div class="lb-member">
+                    <div>
+                        <p class="lb-member__name">{{ row.task.title }}</p>
+                        <p class="lb-member__meta">
+                            <a href="{% url 'board_view' row.task.project.slug %}">{{ row.task.project.title }}</a>
+                            · {{ row.task.get_phase_display }}
+                        </p>
+                    </div>
+                    <button class="pf-board__quiet" type="button" @click="toggleTask('{{ row.task.project.slug }}', {{ row.task_id }}, 'todo')">بازگشت به فعال</button>
+                </div>
+            {% empty %}
+                <p class="lb-empty">تسک انجام‌شده‌ای نیست.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+<script>
+document.addEventListener("alpine:init", function () {
+    Alpine.data("myTasksDash", function () {
+        function csrf() {
+            var input = document.querySelector("[name=csrfmiddlewaretoken]");
+            if (input) return input.value;
+            var match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : "";
+        }
+        return {
+            eventTab: "upcoming",
+            taskTab: "active",
+            async setAttendance(slug, eventId, status) {
+                var response = await fetch("/me/projects/" + slug + "/board/events/" + eventId + "/attendance/", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": csrf() },
+                    body: JSON.stringify({ status: status }),
+                });
+                if (response.ok) window.location.reload();
+                else if (window.showToast) window.showToast("ثبت حضور نشد.");
+            },
+            async toggleTask(slug, taskId, status) {
+                var response = await fetch("/me/projects/" + slug + "/board/tasks/" + taskId + "/", {
+                    method: "PATCH",
+                    credentials: "same-origin",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": csrf() },
+                    body: JSON.stringify({ status: status }),
+                });
+                if (response.ok) window.location.reload();
+                else if (window.showToast) window.showToast("وضعیت تسک تغییر نکرد.");
+            },
+        };
+    });
+});
+</script>
+{% endblock %}

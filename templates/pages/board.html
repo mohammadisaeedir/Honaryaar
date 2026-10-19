@@ -1,0 +1,682 @@
+{% extends "pages/account/shell.html" %}
+{% load static %}
+
+{% block title %}{{ project.title }} · بورد · هنریار{% endblock %}
+{% block account_title %}مدیریت پروژه{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
+
+{% block account_main %}
+{{ board_bootstrap|json_script:"board-bootstrap" }}
+<form hidden>{% csrf_token %}</form>
+
+<div
+    class="lb"
+    dir="rtl"
+    x-data="projectBoard()"
+    :class="{ 'lb__busy': busy }"
+    @keydown.escape.window="taskOpen = false; showCreateTask = false; eventOpen = false; eventDetailId = null; confirmModal.show = false; dayPanelOpen = false"
+>
+    <div class="pf-board__head">
+        <div>
+            <a class="pf-board__quiet" href="{% url 'board_overview' %}">← بورد پروژه‌ها</a>
+            <h1 class="text-[28px] font-semibold leading-9" style="margin-top:8px">{{ project.title }}</h1>
+            <p class="lb__meta">
+                {% if project.art_category %}<span>{{ project.art_category.title }}</span>{% endif %}
+                {% if project.city %}<span>{{ project.city.title }}</span>{% endif %}
+                <span class="lb-status-pill lb-status-pill--project" x-text="project.status_label"></span>
+            </p>
+        </div>
+        <button class="pf-board__add" type="button" x-show="isManager() && isLifecycle" @click="openCreateTask()">+ تسک جدید</button>
+    </div>
+
+    {# Fix 1: migrate old-status projects onto the lifecycle board #}
+    <div class="lb-adopt" x-show="!isLifecycle" x-cloak>
+        <p class="lb-adopt__text">این پروژه هنوز به بورد اضافه نشده. فاز را انتخاب کنید:</p>
+        <div class="lb-adopt__actions">
+            <template x-for="phase in lifecycleStatuses" :key="'adopt-' + phase.value">
+                <button
+                    class="lb-adopt__btn"
+                    type="button"
+                    x-show="isManager()"
+                    @click="adoptLifecycle(phase.value)"
+                    x-text="phase.label"
+                ></button>
+            </template>
+        </div>
+        <p class="lb-error" x-show="actionError" x-text="actionError"></p>
+        <p class="lb-error" x-show="!isManager()">فقط مالک یا مدیر می‌تواند فاز را تنظیم کند.</p>
+    </div>
+
+    <template x-if="isLifecycle">
+        <div>
+            <div class="profile-tabs" role="tablist" aria-label="مدیریت پروژه">
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'tasks' }" :aria-selected="tab === 'tasks'" @click="tab = 'tasks'">لیست تسک‌ها</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'calendar' }" :aria-selected="tab === 'calendar'" @click="tab = 'calendar'">تقویم</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'events' }" :aria-selected="tab === 'events'" @click="tab = 'events'">رویدادها</button>
+                <button class="profile-tabs__tab" type="button" role="tab" :class="{ 'is-on': tab === 'members' }" :aria-selected="tab === 'members'" @click="tab = 'members'">اعضا</button>
+            </div>
+
+            <p class="lb-error" style="margin-top:12px" x-show="actionError && tab !== 'events'" x-text="actionError"></p>
+
+            {# --- Tasks tab --- #}
+            <div class="profile-pane" :class="{ 'is-on': tab === 'tasks' }">
+                <div class="lb-filters">
+                    <label class="lb-filters__item">
+                        <span class="field-label">وضعیت</span>
+                        <select class="field field-select" x-model="filterStatus">
+                            <option value="">همه</option>
+                            <template x-for="row in taskStatuses" :key="'fs-' + row.value">
+                                <option :value="row.value" x-text="row.label"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <label class="lb-filters__item">
+                        <span class="field-label">مسئول</span>
+                        <select class="field field-select" x-model="filterAssignee">
+                            <option value="">همه</option>
+                            <option value="none">بدون مسئول</option>
+                            <template x-for="member in acceptedMembers()" :key="'fa-' + member.profile_id">
+                                <option :value="String(member.profile_id)" x-text="member.name"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <label class="lb-filters__item lb-filters__item--grow">
+                        <span class="field-label">جستجو</span>
+                        <input class="field" type="search" x-model="filterQuery" placeholder="عنوان تسک…">
+                    </label>
+                </div>
+
+                <template x-if="!filteredTasks().length">
+                    <p class="lb-empty" style="margin-top:16px">تسکی پیدا نشد</p>
+                </template>
+
+                <ul class="lb-task-list">
+                    <template x-for="task in filteredTasks()" :key="task.id">
+                        <li
+                            class="lb-task-row"
+                            :class="{ 'just-updated': task.justUpdated, 'lb-row--removing': task.removing }"
+                            @click="openTask(task)"
+                        >
+                            <div class="lb-task-row__main">
+                                <h3 class="lb-task-row__title" x-text="task.title"></h3>
+                                <p class="lb-task-row__people" x-text="assigneeLabel(task)"></p>
+                            </div>
+                            <div class="lb-task-row__side">
+                                <button
+                                    class="lb-status-pill"
+                                    type="button"
+                                    :class="'lb-status-pill--' + task.status"
+                                    @click.stop="cycleStatus(task)"
+                                    x-text="statusLabel(task.status)"
+                                ></button>
+                                <span
+                                    class="lb-task-row__due"
+                                    :class="dueClass(task.due_date)"
+                                    x-show="task.due_date"
+                                    x-text="formatShamsiDate(task.due_date)"
+                                ></span>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
+            {# --- Calendar tab --- #}
+            <div class="profile-pane" :class="{ 'is-on': tab === 'calendar' }">
+                <div class="lb-cal__toolbar">
+                    <div class="lb-cal__nav">
+                        <button class="pf-board__quiet" type="button" @click="prevPeriod()" aria-label="قبلی">›</button>
+                        <h2 class="lb-cal__title" x-text="calendarView === 'month' ? monthTitle() : weekTitle()"></h2>
+                        <button class="pf-board__quiet" type="button" @click="nextPeriod()" aria-label="بعدی">‹</button>
+                    </div>
+                    <div class="lb-cal__actions">
+                        <button class="pf-board__quiet" type="button" @click="goToday()">امروز</button>
+                        <div class="lb-cal__toggle" role="group" aria-label="نمای تقویم">
+                            <button type="button" :class="{ 'is-on': calendarView === 'week' }" @click="calendarView = 'week'">هفتگی</button>
+                            <button type="button" :class="{ 'is-on': calendarView === 'month' }" @click="calendarView = 'month'">ماهانه</button>
+                        </div>
+                    </div>
+                </div>
+
+                {# Monthly #}
+                <div class="lb-cal lb-cal--month" x-show="calendarView === 'month'">
+                    <div class="lb-cal__head">
+                        <template x-for="day in weekdays" :key="'mh-' + day">
+                            <div class="lb-cal__weekday" x-text="day"></div>
+                        </template>
+                    </div>
+                    <div class="lb-cal__grid">
+                        <template x-for="(cell, idx) in monthCells()" :key="'mc-' + idx">
+                            <div
+                                class="lb-cal__cell"
+                                :class="{ 'is-empty': cell.empty, 'is-today': cell.isToday, 'is-selected': cell.isSelected }"
+                                @click="cell.empty ? null : selectDay(cell.iso)"
+                            >
+                                <template x-if="!cell.empty">
+                                    <div>
+                                        <div class="lb-cal__cell-top">
+                                            <span class="lb-cal__daynum" x-text="faNum(cell.day)"></span>
+                                            <button
+                                                class="lb-cal__add"
+                                                type="button"
+                                                x-show="isManager()"
+                                                @click.stop="openCreateTask(cell.iso)"
+                                                title="افزودن تسک"
+                                            >+</button>
+                                        </div>
+                                        <div class="lb-cal__pills">
+                                            <template x-for="item in cell.items.slice(0, 3)" :key="item.key">
+                                                <button
+                                                    class="lb-cal__pill"
+                                                    type="button"
+                                                    :class="item.kind === 'task' ? ('lb-cal__pill--' + item.status) : 'lb-cal__pill--event'"
+                                                    @click.stop="openAgendaItem(item)"
+                                                    x-text="item.title"
+                                                ></button>
+                                            </template>
+                                            <span class="lb-cal__more" x-show="cell.items.length > 3" x-text="'+' + faNum(cell.items.length - 3)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                {# Weekly #}
+                <div class="lb-cal lb-cal--week" x-show="calendarView === 'week'">
+                    <div class="lb-cal__week-scroll">
+                        <template x-for="day in weekDays()" :key="'wd-' + day.iso">
+                            <section class="lb-cal__col" :class="{ 'is-today': day.isToday }">
+                                <header class="lb-cal__col-head">
+                                    <span class="lb-cal__col-name" x-text="day.weekday"></span>
+                                    <span class="lb-cal__col-date" x-text="faNum(day.day) + ' ' + day.monthLabel"></span>
+                                    <button
+                                        class="lb-cal__add"
+                                        type="button"
+                                        x-show="isManager()"
+                                        @click="openCreateTask(day.iso)"
+                                    >+ تسک</button>
+                                </header>
+                                <div class="lb-cal__col-body">
+                                    <template x-for="item in day.items" :key="item.key">
+                                        <article
+                                            class="lb-cal__card"
+                                            :class="[item.kind === 'task' ? ('lb-cal__card--' + item.status) : 'lb-cal__card--event', { 'just-updated': item.justUpdated }]"
+                                            @click="openAgendaItem(item)"
+                                        >
+                                            <p class="lb-cal__card-time" x-show="item.time" x-text="item.time"></p>
+                                            <p class="lb-cal__card-title" x-text="item.title"></p>
+                                            <p class="lb-cal__card-kind" x-text="item.kind === 'event' ? 'رویداد' : statusLabel(item.status)"></p>
+                                        </article>
+                                    </template>
+                                    <p class="lb-cal__empty" x-show="!day.items.length">خالی</p>
+                                </div>
+                            </section>
+                        </template>
+                    </div>
+                </div>
+
+                {# Day side panel (month click) #}
+                <div class="lb-day-panel" x-show="dayPanelOpen && calendarView === 'month'" x-cloak>
+                    <div class="lb-day-panel__head">
+                        <h3 x-text="formatShamsiLong(selectedDayIso)"></h3>
+                        <button class="lb-panel__close" type="button" @click="dayPanelOpen = false" aria-label="بستن">×</button>
+                    </div>
+                    <button class="pf-board__add" type="button" x-show="isManager()" @click="openCreateTask(selectedDayIso)">+ افزودن تسک</button>
+                    <ul class="lb-agenda__list" style="margin-top:12px">
+                        <template x-for="item in itemsForDay(selectedDayIso)" :key="'dp-' + item.key">
+                            <li
+                                class="lb-agenda__item"
+                                :class="'lb-agenda__item--' + item.kind"
+                                @click="openAgendaItem(item)"
+                            >
+                                <span class="lb-agenda__time" x-text="item.time || '—'"></span>
+                                <span class="lb-agenda__title" x-text="item.title"></span>
+                            </li>
+                        </template>
+                    </ul>
+                    <p class="lb-empty" x-show="!itemsForDay(selectedDayIso).length">آیتمی نیست</p>
+                </div>
+            </div>
+
+            {# --- Events tab --- #}
+            <div class="profile-pane" :class="{ 'is-on': tab === 'events' }">
+                <div class="pf-board__head">
+                    <h2>رویدادها</h2>
+                    <button class="pf-board__add" type="button" x-show="isManager()" @click="openEventForm()">+ رویداد جدید</button>
+                </div>
+                <p class="lb-error" x-show="actionError" x-text="actionError"></p>
+
+                <template x-if="!events.filter(e => !e.removing).length">
+                    <p class="lb-empty">رویدادی ثبت نشده</p>
+                </template>
+
+                <template x-for="event in events" :key="event.id">
+                    <div
+                        class="lb-event-row"
+                        :class="{ 'just-updated': event.justUpdated, 'lb-row--removing': event.removing }"
+                        x-show="!event.removing"
+                    >
+                        <div>
+                            <p class="lb-event-row__title" x-text="event.title"></p>
+                            <p class="lb-event-row__meta">
+                                <span x-text="formatWhen(event.starts_at)"></span>
+                                <span x-show="event.location" x-text="' · ' + event.location"></span>
+                                <span x-text="' · ' + attendanceSummary(event)"></span>
+                            </p>
+                            <div class="lb-attendance" x-show="myInvite(event)" style="margin-top:8px">
+                                <template x-if="myInvite(event).attendance === 'pending' || event.changeAttendance">
+                                    <div class="lb-actions">
+                                        <button class="pf-board__add" type="button" @click="setAttendance(event, 'confirmed')">تأیید حضور</button>
+                                        <button class="pf-board__quiet" type="button" @click="setAttendance(event, 'rejected')">عدم حضور</button>
+                                    </div>
+                                </template>
+                                <template x-if="myInvite(event).attendance === 'confirmed' && !event.changeAttendance">
+                                    <div class="lb-attendance__result">
+                                        <span class="lb-badge lb-badge--confirmed">تأیید شد ✓</span>
+                                        <button class="lb-link" type="button" @click="event.changeAttendance = true">تغییر</button>
+                                    </div>
+                                </template>
+                                <template x-if="myInvite(event).attendance === 'rejected' && !event.changeAttendance">
+                                    <div class="lb-attendance__result">
+                                        <span class="lb-badge lb-badge--rejected">رد شد ✗</span>
+                                        <button class="lb-link" type="button" @click="event.changeAttendance = true">تغییر</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="lb-actions">
+                            <button class="pf-board__quiet" type="button" @click="eventDetailId = event.id">جزئیات</button>
+                            <button class="pf-board__quiet" type="button" style="color:#B42318" x-show="isManager()" @click="deleteEvent(event)">حذف</button>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="lb-inline-form" x-show="eventDetailId && activeEvent()" x-cloak>
+                    <h3 x-text="activeEvent() && activeEvent().title"></h3>
+                    <p class="lb-event-row__meta" x-text="activeEvent() && attendanceSummary(activeEvent())"></p>
+                    <template x-for="invitee in (activeEvent() && activeEvent().invitees) || []" :key="invitee.profile_id">
+                        <div class="lb-member">
+                            <p class="lb-member__name" x-text="invitee.name"></p>
+                            <span class="lb-badge" :class="'lb-badge--' + invitee.attendance" x-text="attendanceLabel(invitee.attendance)"></span>
+                        </div>
+                    </template>
+                    <button class="pf-board__quiet" type="button" @click="eventDetailId = null">بستن</button>
+                </div>
+            </div>
+
+            {# --- Members tab --- #}
+            <div class="profile-pane" :class="{ 'is-on': tab === 'members' }">
+                <div class="pf-board__head">
+                    <h2>اعضای پروژه</h2>
+                    <button class="pf-board__add" type="button" x-show="isManager()" @click="inviteOpen = !inviteOpen">دعوت عضو جدید</button>
+                </div>
+
+                <div class="lb-inline-form" x-show="inviteOpen && isManager()" x-cloak>
+                    <label class="lb-field block">
+                        <span class="field-label">شماره موبایل</span>
+                        <input class="field" type="tel" dir="ltr" x-model="invitePhone" placeholder="09123456789">
+                    </label>
+                    <label class="lb-field block">
+                        <span class="field-label">نقش</span>
+                        <select class="field field-select" x-model="inviteRoleId">
+                            <option value="">بدون نقش</option>
+                            <template x-for="role in roles" :key="role.id">
+                                <option :value="role.id" x-text="(role.group ? role.group + ' · ' : '') + role.title"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <button class="pf-board__add" type="button" @click="inviteMember()">ارسال دعوت</button>
+                    <p class="lb-error" x-show="inviteError" x-text="inviteError"></p>
+                    <p class="lb-ok" x-show="inviteOk" x-text="inviteOk"></p>
+                </div>
+
+                <template x-if="!members.length">
+                    <p class="lb-empty">هنوز عضوی اضافه نشده</p>
+                </template>
+
+                <template x-for="member in members" :key="member.id">
+                    <div class="lb-member">
+                        <div>
+                            <p class="lb-member__name" x-text="member.name"></p>
+                            <p class="lb-member__meta">
+                                <span class="lb-badge" :class="'lb-badge--' + member.permission" x-text="permissionLabel(member.permission)"></span>
+                                <span class="lb-badge" :class="'lb-badge--' + member.invite_status" x-text="inviteLabel(member.invite_status)"></span>
+                                <span x-show="member.role" x-text="member.role"></span>
+                            </p>
+                        </div>
+                        <div class="lb-actions" x-show="isManager()">
+                            <button class="pf-board__quiet" type="button" x-show="member.permission !== 'owner'" @click="setPermission(member, 'admin')">مدیر</button>
+                            <button class="pf-board__quiet" type="button" x-show="member.permission !== 'member'" @click="setPermission(member, 'member')">عضو</button>
+                            <button class="pf-board__quiet" type="button" style="color:#B42318" @click="removeMember(member)">حذف</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    {# --- Create task modal --- #}
+    <div class="lb-panel" x-show="showCreateTask" x-cloak>
+        <div class="lb-panel__backdrop" @click="closeCreateTask()"></div>
+        <div class="lb-panel__sheet" role="dialog" aria-modal="true" aria-labelledby="create-task-title">
+            <div class="lb-panel__top">
+                <h2 id="create-task-title">تسک جدید</h2>
+                <button class="lb-panel__close" type="button" @click="closeCreateTask()" aria-label="بستن">×</button>
+            </div>
+            <label class="lb-field block">
+                <span class="field-label">عنوان</span>
+                <input class="field" type="text" x-model="newTask.title" maxlength="255" placeholder="مثلاً نوشتن متن نمایش" autofocus>
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">توضیحات</span>
+                <textarea class="field" style="min-height:5rem" x-model="newTask.description"></textarea>
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">وضعیت</span>
+                <select class="field field-select" x-model="newTask.status">
+                    <template x-for="row in taskStatuses" :key="'ns-' + row.value">
+                        <option :value="row.value" x-text="row.label"></option>
+                    </template>
+                </select>
+            </label>
+            <div class="lb-field">
+                <span class="field-label">ددلاین</span>
+                <template x-if="showCreateTask">
+                    <div
+                        class="lb-shamsi"
+                        x-data="shamsiPicker()"
+                        x-init="gregorianValue = $root.newTask.due_date || ''; $watch('gregorianValue', v => { $root.newTask.due_date = v || ''; })"
+                    >
+                        <button class="field lb-shamsi__display" type="button" @click="open = !open" x-text="displayValue || 'تاریخ را انتخاب کنید'"></button>
+                        <div class="lb-shamsi__popup" x-show="open" @click.outside="open = false" x-cloak>
+                            <div class="lb-shamsi__bar">
+                                <button type="button" @click="prevMonth()">›</button>
+                                <strong x-text="monthTitle()"></strong>
+                                <button type="button" @click="nextMonth()">‹</button>
+                            </div>
+                            <div class="lb-shamsi__week">
+                                <template x-for="d in weekdays" :key="'spw-' + d"><span x-text="d.slice(0,1)"></span></template>
+                            </div>
+                            <template x-for="(week, wi) in cells()" :key="'sp-' + wi">
+                                <div class="lb-shamsi__days">
+                                    <template x-for="(cell, ci) in week" :key="'spd-' + wi + '-' + ci">
+                                        <button
+                                            type="button"
+                                            :disabled="!cell"
+                                            :class="{ 'is-on': cell && isSelected(cell.iso), 'is-today': cell && isToday(cell.iso) }"
+                                            @click="cell && pick(cell.iso)"
+                                            x-text="cell ? faNum(cell.day) : ''"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </template>
+                            <div class="lb-shamsi__foot">
+                                <button type="button" @click="goToday()">امروز</button>
+                                <button type="button" @click="clear()">پاک کردن</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <div class="lb-field">
+                <span class="field-label">مسئول</span>
+                <div class="lb-check-list">
+                    <template x-for="member in acceptedMembers()" :key="'new-as-' + member.profile_id">
+                        <label class="lb-check">
+                            <input
+                                type="checkbox"
+                                :value="member.profile_id"
+                                :checked="newTask.assignee_ids.includes(member.profile_id)"
+                                @change="toggleNewAssignee(member.profile_id)"
+                            >
+                            <span x-text="member.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+            <p class="lb-error" x-show="createTaskError" x-text="createTaskError"></p>
+            <div class="lb-actions">
+                <button class="pf-board__add" type="button" @click="submitCreateTask()">ساخت تسک</button>
+                <button class="pf-board__quiet" type="button" @click="closeCreateTask()">انصراف</button>
+            </div>
+        </div>
+    </div>
+
+    {# --- Event create modal --- #}
+    <div class="lb-panel" x-show="eventOpen" x-cloak>
+        <div class="lb-panel__backdrop" @click="closeEventForm()"></div>
+        <div class="lb-panel__sheet" role="dialog" aria-modal="true">
+            <div class="lb-panel__top">
+                <h2>رویداد جدید</h2>
+                <button class="lb-panel__close" type="button" @click="closeEventForm()" aria-label="بستن">×</button>
+            </div>
+            <label class="lb-field block">
+                <span class="field-label">عنوان</span>
+                <input class="field" type="text" x-model="eventDraft.title">
+            </label>
+            <div class="lb-field">
+                <span class="field-label">تاریخ شروع</span>
+                <template x-if="eventOpen">
+                    <div
+                        class="lb-shamsi"
+                        x-data="shamsiPicker()"
+                        x-init="gregorianValue = $root.eventDraft.date || ''; $watch('gregorianValue', v => { $root.eventDraft.date = v || ''; })"
+                    >
+                        <button class="field lb-shamsi__display" type="button" @click="open = !open" x-text="displayValue || 'تاریخ را انتخاب کنید'"></button>
+                        <div class="lb-shamsi__popup" x-show="open" @click.outside="open = false" x-cloak>
+                            <div class="lb-shamsi__bar">
+                                <button type="button" @click="prevMonth()">›</button>
+                                <strong x-text="monthTitle()"></strong>
+                                <button type="button" @click="nextMonth()">‹</button>
+                            </div>
+                            <div class="lb-shamsi__week">
+                                <template x-for="d in weekdays" :key="'epw-' + d"><span x-text="d.slice(0,1)"></span></template>
+                            </div>
+                            <template x-for="(week, wi) in cells()" :key="'ep-' + wi">
+                                <div class="lb-shamsi__days">
+                                    <template x-for="(cell, ci) in week" :key="'epd-' + wi + '-' + ci">
+                                        <button
+                                            type="button"
+                                            :disabled="!cell"
+                                            :class="{ 'is-on': cell && isSelected(cell.iso), 'is-today': cell && isToday(cell.iso) }"
+                                            @click="cell && pick(cell.iso)"
+                                            x-text="cell ? faNum(cell.day) : ''"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </template>
+                            <div class="lb-shamsi__foot">
+                                <button type="button" @click="goToday()">امروز</button>
+                                <button type="button" @click="clear()">پاک کردن</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <label class="lb-field block">
+                <span class="field-label">ساعت شروع</span>
+                <input class="field" type="time" x-model="eventDraft.time">
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">مکان</span>
+                <input class="field" type="text" x-model="eventDraft.location">
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">مخاطب</span>
+                <select class="field field-select" x-model="eventDraft.audience_type">
+                    <option value="all_team">کل تیم</option>
+                    <option value="specific">افراد خاص</option>
+                </select>
+            </label>
+            <div class="lb-field" x-show="eventDraft.audience_type === 'specific'">
+                <span class="field-label">دعوت‌شوندگان</span>
+                <template x-for="member in acceptedMembers()" :key="'inv-' + member.profile_id">
+                    <label class="block text-sm" style="margin-top:6px">
+                        <input type="checkbox" :value="member.profile_id" @change="
+                            const id = Number($event.target.value);
+                            if ($event.target.checked) eventDraft.invitee_ids.push(id);
+                            else eventDraft.invitee_ids = eventDraft.invitee_ids.filter(x => x !== id);
+                        ">
+                        <span x-text="member.name"></span>
+                    </label>
+                </template>
+            </div>
+            <p class="lb-error" x-show="eventError" x-text="eventError"></p>
+            <div class="lb-actions">
+                <button class="pf-board__add" type="button" @click="createEvent()">ثبت رویداد</button>
+                <button class="pf-board__quiet" type="button" @click="closeEventForm()">انصراف</button>
+            </div>
+        </div>
+    </div>
+
+    {# --- Task detail panel --- #}
+    <div class="lb-panel" x-show="taskOpen && activeTask()" x-cloak>
+        <div class="lb-panel__backdrop" @click="closeTask()"></div>
+        <div class="lb-panel__sheet" role="dialog" aria-modal="true">
+            <div class="lb-panel__top">
+                <h2>جزئیات تسک</h2>
+                <button class="lb-panel__close" type="button" @click="closeTask()" aria-label="بستن">×</button>
+            </div>
+
+            <label class="lb-field block">
+                <span class="field-label">عنوان</span>
+                <input class="field" type="text" x-model="taskDraft.title" :readonly="!isManager()">
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">توضیحات</span>
+                <textarea class="field" style="min-height:6rem" x-model="taskDraft.description" :readonly="!isManager()"></textarea>
+            </label>
+            <label class="lb-field block">
+                <span class="field-label">وضعیت</span>
+                <select class="field field-select" x-model="taskDraft.status" :disabled="!isManager() && !canEditStatus(activeTask() || {})">
+                    <template x-for="row in taskStatuses" :key="'ts-' + row.value">
+                        <option :value="row.value" x-text="row.label"></option>
+                    </template>
+                </select>
+            </label>
+            <div class="lb-field" x-show="isManager()">
+                <span class="field-label">ددلاین</span>
+                <template x-if="taskOpen && isManager()">
+                    <div
+                        class="lb-shamsi"
+                        x-data="shamsiPicker()"
+                        x-init="gregorianValue = $root.taskDraft.due_date || ''; $watch('gregorianValue', v => { $root.taskDraft.due_date = v || ''; })"
+                    >
+                        <button class="field lb-shamsi__display" type="button" @click="open = !open" x-text="displayValue || 'تاریخ را انتخاب کنید'"></button>
+                        <div class="lb-shamsi__popup" x-show="open" @click.outside="open = false" x-cloak>
+                            <div class="lb-shamsi__bar">
+                                <button type="button" @click="prevMonth()">›</button>
+                                <strong x-text="monthTitle()"></strong>
+                                <button type="button" @click="nextMonth()">‹</button>
+                            </div>
+                            <div class="lb-shamsi__week">
+                                <template x-for="d in weekdays" :key="'tpw-' + d"><span x-text="d.slice(0,1)"></span></template>
+                            </div>
+                            <template x-for="(week, wi) in cells()" :key="'tp-' + wi">
+                                <div class="lb-shamsi__days">
+                                    <template x-for="(cell, ci) in week" :key="'tpd-' + wi + '-' + ci">
+                                        <button
+                                            type="button"
+                                            :disabled="!cell"
+                                            :class="{ 'is-on': cell && isSelected(cell.iso), 'is-today': cell && isToday(cell.iso) }"
+                                            @click="cell && pick(cell.iso)"
+                                            x-text="cell ? faNum(cell.day) : ''"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </template>
+                            <div class="lb-shamsi__foot">
+                                <button type="button" @click="goToday()">امروز</button>
+                                <button type="button" @click="clear()">پاک کردن</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <p class="lb-field" x-show="!isManager() && taskDraft.due_date">
+                <span class="field-label">ددلاین</span>
+                <span x-text="formatShamsiDate(taskDraft.due_date)"></span>
+            </p>
+
+            <div class="lb-field" x-show="isManager()">
+                <span class="field-label">مسئولان</span>
+                <div class="lb-assignees" style="margin-top:8px">
+                    <template x-for="row in (activeTask() && activeTask().assignees) || []" :key="row.profile_id">
+                        <span class="lb-chip">
+                            <span x-text="row.name"></span>
+                            <button type="button" @click="removeAssignee(row.profile_id)" aria-label="حذف">×</button>
+                        </span>
+                    </template>
+                </div>
+                <div class="lb-actions">
+                    <select class="field field-select" x-model="assigneePick">
+                        <option value="">افزودن مسئول</option>
+                        <template x-for="member in acceptedMembers()" :key="'as-' + member.profile_id">
+                            <option :value="member.profile_id" x-text="member.name"></option>
+                        </template>
+                    </select>
+                    <button class="pf-board__quiet" type="button" @click="addAssignee()">افزودن</button>
+                </div>
+            </div>
+
+            <div class="lb-field" x-show="isManager()">
+                <span class="field-label">پیوست‌ها</span>
+                <template x-for="file in attachments" :key="file.id">
+                    <div class="lb-attach">
+                        <a :href="file.file_url" target="_blank" rel="noopener" x-text="file.label || 'فایل'"></a>
+                        <button class="pf-board__quiet" type="button" @click="deleteAttachment(file.id)">حذف</button>
+                    </div>
+                </template>
+                <input class="field" type="file" @change="uploadAttachment($event)">
+            </div>
+
+            <div class="lb-actions">
+                <button class="pf-board__add" type="button" @click="saveTask()">ذخیره</button>
+                <button class="pf-board__quiet" type="button" style="color:#B42318" x-show="isManager()" @click="deleteTask()">حذف تسک</button>
+            </div>
+
+            <div class="lb-field" style="margin-top:24px">
+                <span class="field-label">نظرها</span>
+                <template x-for="comment in comments" :key="comment.id">
+                    <div class="lb-comment">
+                        <p class="lb-comment__meta">
+                            <span x-text="comment.author_name"></span>
+                            ·
+                            <span x-text="formatWhen(comment.created_at)"></span>
+                        </p>
+                        <p class="lb-comment__body" x-text="comment.body"></p>
+                    </div>
+                </template>
+                <textarea class="field" style="min-height:4.5rem;margin-top:8px" x-model="commentBody" placeholder="نظر بنویسید…"></textarea>
+                <button class="pf-board__quiet" type="button" style="margin-top:8px" @click="addComment()">ارسال نظر</button>
+            </div>
+        </div>
+    </div>
+
+    {# --- Confirm modal --- #}
+    <div class="lb-confirm" x-show="confirmModal.show" x-cloak>
+        <div class="lb-confirm__backdrop" @click="closeConfirm()"></div>
+        <div class="lb-confirm__card" role="dialog" aria-modal="true">
+            <h3 x-text="confirmModal.title"></h3>
+            <p x-text="confirmModal.message"></p>
+            <div class="lb-confirm__actions">
+                <button class="pf-board__quiet" type="button" @click="closeConfirm()">انصراف</button>
+                <button class="lb-btn-danger" type="button" @click="runConfirm()" x-text="confirmModal.confirmText"></button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+    <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.7/dist/jalaali.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js"></script>
+    <script src="{% static 'js/board.js' %}?v={{ asset_v }}"></script>
+{% endblock %}

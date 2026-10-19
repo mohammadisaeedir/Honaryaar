@@ -40,6 +40,8 @@ from honaryaar.models import (
     Bookmark,
     City,
     Credit,
+    Event,
+    EventInvitee,
     Invite,
     KIND_REASON_VALUES,
     KindReason,
@@ -54,8 +56,13 @@ from honaryaar.models import (
     ProfileRole,
     ProfileSkill,
     Project,
+    ProjectMember,
     Role,
     SupportTicket,
+    Task,
+    TaskAssignee,
+    TaskAttachment,
+    TaskComment,
     Testimonial,
     TicketKind,
     TicketStatus,
@@ -822,6 +829,15 @@ class OpportunityInline(HonarInline):
     verbose_name_plural = _("Opportunities")
 
 
+class ProjectMemberInline(HonarInline):
+    model = ProjectMember
+    extra = 0
+    fields = ("profile", "role", "permission", "invite_status", "invited_by")
+    autocomplete_fields = ("profile", "role", "invited_by")
+    verbose_name = _("Project member")
+    verbose_name_plural = _("Project members")
+
+
 class TestimonialInline(HonarInline):
     model = Testimonial
     form = TestimonialAdminForm
@@ -892,7 +908,7 @@ class ProjectAdmin(StatusChipMixin, ModelAdmin):
         except MediaError as exc:
             messages.error(request, exc.message)
 
-    inlines = [OpportunityInline, TestimonialInline]
+    inlines = [ProjectMemberInline, OpportunityInline, TestimonialInline]
 
     def save_formset(self, request, form, formset, change):
         if formset.model is Testimonial:
@@ -944,6 +960,70 @@ class ProjectContactAdmin(ModelAdmin):
     search_fields = ("value", "kind", "project__title", "project__slug")
     autocomplete_fields = ("project",)
     list_select_related = ("project",)
+
+
+@admin.register(ProjectMember)
+class ProjectMemberAdmin(ModelAdmin):
+    list_display = ("project", "profile", "role", "permission", "invite_status", "invited_by", "created_at")
+    list_filter = ("permission", "invite_status")
+    search_fields = ("project__title", "profile__name", "profile__slug", "profile__user__username")
+    autocomplete_fields = ("project", "profile", "role", "invited_by")
+    list_select_related = ("project", "profile", "role", "invited_by")
+
+
+class TaskAssigneeInline(HonarInline):
+    model = TaskAssignee
+    extra = 0
+    autocomplete_fields = ("profile",)
+
+
+class TaskCommentInline(HonarInline):
+    model = TaskComment
+    extra = 0
+    autocomplete_fields = ("author",)
+    readonly_fields = ("created_at",)
+
+
+class TaskAttachmentInline(HonarInline):
+    model = TaskAttachment
+    extra = 0
+    autocomplete_fields = ("uploaded_by",)
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Task)
+class TaskAdmin(ModelAdmin):
+    list_display = ("title", "project", "status", "due_date", "sort_order", "created_by")
+    list_filter = ("status", "project")
+    search_fields = ("title", "project__title", "description")
+    autocomplete_fields = ("project", "created_by")
+    list_select_related = ("project", "created_by")
+    inlines = (TaskAssigneeInline, TaskCommentInline, TaskAttachmentInline)
+
+
+class EventInviteeInline(HonarInline):
+    model = EventInvitee
+    extra = 0
+    autocomplete_fields = ("profile",)
+
+
+@admin.register(Event)
+class EventAdmin(ModelAdmin):
+    list_display = ("title", "project", "starts_at", "audience_type", "created_by")
+    list_filter = ("audience_type", "project")
+    search_fields = ("title", "project__title", "location")
+    autocomplete_fields = ("project", "created_by")
+    list_select_related = ("project", "created_by")
+    inlines = (EventInviteeInline,)
+
+
+@admin.register(EventInvitee)
+class EventInviteeAdmin(ModelAdmin):
+    list_display = ("event", "profile", "attendance")
+    list_filter = ("attendance",)
+    search_fields = ("event__title", "profile__name", "profile__slug")
+    autocomplete_fields = ("event", "profile")
+    list_select_related = ("event", "profile")
 
 
 @admin.register(Opportunity)

@@ -5,6 +5,18 @@
         {% include "components/icon.html" with name="clapperboard" %}
         <span class="pf-mobile-menu__label">پروژه‌ها</span>
     </a>
+    <a class="pf-mobile-menu__row {% if name == 'board_overview' or name == 'board_view' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_overview' %}">
+        {% include "components/icon.html" with name="clapperboard" %}
+        <span class="pf-mobile-menu__label">بورد پروژه‌ها</span>
+    </a>
+    <a class="pf-mobile-menu__row {% if name == 'my_tasks_dashboard' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'my_tasks_dashboard' %}">
+        {% include "components/icon.html" with name="file-text" %}
+        <span class="pf-mobile-menu__label">تسک‌ها و رویدادها</span>
+    </a>
+    <a class="pf-mobile-menu__row {% if name == 'board_project_new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_project_new' %}">
+        {% include "components/icon.html" with name="clapperboard" %}
+        <span class="pf-mobile-menu__label">ساخت بورد جدید</span>
+    </a>
     <a class="pf-mobile-menu__row {% if name == 'me-applications' or name == 'me-application' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-applications' %}">
         {% include "components/icon.html" with name="file-text" %}
         <span class="pf-mobile-menu__label">درخواست‌های من</span>
@@ -12,6 +24,10 @@
     <a class="pf-mobile-menu__row {% if name == 'me-invites' or name == 'me-invite' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-invites' %}">
         {% include "components/icon.html" with name="mail" %}
         <span class="pf-mobile-menu__label">دعوت‌ها</span>
+    </a>
+    <a class="pf-mobile-menu__row {% if name == 'project_invites_list' or name == 'project_invite_accept' or name == 'project_invite_reject' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'project_invites_list' %}">
+        {% include "components/icon.html" with name="mail" %}
+        <span class="pf-mobile-menu__label">دعوت‌های پروژه</span>
     </a>
     <a class="pf-mobile-menu__row {% if name == 'me-collaborations' or name == 'me-collaboration' or name == 'me-matches' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-collaborations' %}">
         {% include "components/icon.html" with name="handshake" %}

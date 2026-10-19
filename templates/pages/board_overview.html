@@ -1,0 +1,81 @@
+{% extends "pages/account/shell.html" %}
+{% load static %}
+
+{% block title %}بورد پروژه‌ها · هنریار{% endblock %}
+{% block account_title %}بورد پروژه‌ها{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/board.css' %}?v={{ asset_v }}">
+{% endblock %}
+
+{% block account_main %}
+{{ overview_bootstrap|json_script:"board-overview-bootstrap" }}
+<form hidden>{% csrf_token %}</form>
+
+<div
+    class="lb"
+    dir="rtl"
+    x-data="boardOverview()"
+    :class="{ 'lb__busy': busy }"
+>
+    <div class="pf-board__head">
+        <div>
+            <h1 class="text-[28px] font-semibold leading-9">بورد پروژه‌ها</h1>
+            <p class="lb__meta">پروژه‌های چرخهٔ عمر — بکشید تا فاز عوض شود</p>
+        </div>
+        <a class="pf-board__add" href="{% url 'board_project_new' %}">+ پروژه جدید</a>
+    </div>
+    <p class="lb-error" x-show="actionError" x-text="actionError" x-cloak></p>
+
+    <div class="lb-kanban lb-kanban--projects">
+        <template x-for="col in columns" :key="col.value">
+            <section class="lb-col">
+                <div class="lb-col__head">
+                    <h2 class="lb-col__title" x-text="col.label"></h2>
+                    <span class="lb-col__count" x-text="col.projects.length"></span>
+                </div>
+                <div
+                    class="lb-col__list"
+                    :data-status="col.value"
+                    x-sortable-projects="onProjectDrop"
+                >
+                    <template x-for="project in col.projects" :key="project.slug">
+                        <article
+                            class="lb-pcard"
+                            :class="{ 'lb-pcard--locked': !project.can_drag, 'just-updated': project.justUpdated }"
+                            :data-slug="project.slug"
+                            :data-can-drag="project.can_drag ? '1' : '0'"
+                        >
+                            <a class="lb-pcard__link" :href="project.board_url">
+                                <h3 class="lb-pcard__title" x-text="project.title"></h3>
+                                <p class="lb-pcard__meta">
+                                    <span x-show="project.art_category" x-text="project.art_category"></span>
+                                    <span x-show="project.city" x-text="project.city"></span>
+                                </p>
+                                <p class="lb-pcard__stats">
+                                    <span x-text="faNum(project.open_tasks) + ' باز'"></span>
+                                    <span aria-hidden="true"> · </span>
+                                    <span x-text="faNum(project.blocked_tasks) + ' بلاک'"></span>
+                                </p>
+                                <p class="lb-pcard__members" x-text="faNum(project.member_count) + ' عضو'"></p>
+                            </a>
+                        </article>
+                    </template>
+                </div>
+                <a
+                    class="lb-col__ghost"
+                    href="{% url 'board_project_new' %}"
+                    x-show="col.value === 'create'"
+                >+ پروژه جدید</a>
+            </section>
+        </template>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+    {{ block.super }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js"></script>
+    <script src="{% static 'js/board.js' %}?v={{ asset_v }}"></script>
+{% endblock %}

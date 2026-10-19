@@ -178,6 +178,15 @@ def _sidebar(request):
                     ],
                 },
                 {
+                    "title": "بورد پروژه",
+                    "items": [
+                        _nav(_("Project members"), "group", "admin:honaryaar_projectmember_changelist"),
+                        _nav(_("Tasks"), "task_alt", "admin:honaryaar_task_changelist"),
+                        _nav(_("Events"), "event", "admin:honaryaar_event_changelist"),
+                        _nav(_("Event invitees"), "rsvp", "admin:honaryaar_eventinvitee_changelist"),
+                    ],
+                },
+                {
                     "title": _("Casting"),
                     "items": [
                         _nav(_("Applications"), "assignment", "admin:honaryaar_application_changelist"),

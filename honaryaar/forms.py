@@ -257,7 +257,11 @@ class ProjectCreateForm(forms.Form):
     permit = forms.ChoiceField(required=False, choices=[("", "انتخاب نشده"), *PermitStatus.choices])
     contract = forms.ChoiceField(required=False, choices=[("", "انتخاب نشده"), *ContractStatus.choices])
     status = forms.ChoiceField(
-        choices=[(value, CHIP_LABELS[value]) for value, _label in ProjectStatus.choices],
+        choices=[
+            (value, CHIP_LABELS[value])
+            for value, _label in ProjectStatus.choices
+            if value in {ProjectStatus.DRAFT, ProjectStatus.CASTING, ProjectStatus.COMPLETED}
+        ],
         initial=ProjectStatus.DRAFT,
     )
     image_upload = forms.CharField(required=False)
@@ -274,6 +278,32 @@ class ProjectCreateForm(forms.Form):
 
     def clean_budget(self):
         return (self.cleaned_data.get("budget") or "").strip()
+
+
+class BoardProjectForm(forms.Form):
+    title = forms.CharField(
+        max_length=160,
+        error_messages={"required": "نام پروژه را وارد کنید."},
+    )
+    art_category = forms.ModelChoiceField(
+        queryset=ArtCategory.objects.order_by("priority", "title"),
+        error_messages={"required": "نوع هنر را انتخاب کنید."},
+    )
+    city = forms.ModelChoiceField(
+        queryset=City.objects.all(),
+        error_messages={"required": "شهر را انتخاب کنید."},
+    )
+    description = forms.CharField(required=False)
+    personnage_count = forms.IntegerField(required=False, min_value=0)
+
+    def clean_title(self):
+        value = self.cleaned_data["title"].strip()
+        if not value:
+            raise forms.ValidationError("نام پروژه را وارد کنید.")
+        return value
+
+    def clean_description(self):
+        return (self.cleaned_data.get("description") or "").strip()
 
 
 AGE_FLOOR = 16

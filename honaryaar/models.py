@@ -386,9 +386,16 @@ class Credit(models.Model):
 
 
 class ProjectStatus(models.TextChoices):
+    # Casting / catalogue (existing)
     DRAFT = "draft", "پیش‌نویس"
     CASTING = "casting", "در حال جذب"
     COMPLETED = "completed", "اتمام"
+    # Lifecycle board (projects created via /me/projects/new-board/)
+    CREATE = "create", "خلق"
+    DEVELOP = "develop", "توسعه"
+    PRODUCE = "produce", "تولید"
+    PERFORM = "perform", "اجرا"
+    AFTER = "after", "پس‌اجرا"
 
 
 class PermitStatus(models.TextChoices):
@@ -405,6 +412,20 @@ class ContractStatus(models.TextChoices):
 
 
 PUBLIC_PROJECT_STATUSES = (ProjectStatus.CASTING, ProjectStatus.COMPLETED)
+LIFECYCLE_PROJECT_STATUS_VALUES = frozenset(
+    {
+        ProjectStatus.CREATE,
+        ProjectStatus.DEVELOP,
+        ProjectStatus.PRODUCE,
+        ProjectStatus.PERFORM,
+        ProjectStatus.AFTER,
+    }
+)
+LIFECYCLE_PROJECT_STATUSES = tuple(
+    (value, label)
+    for value, label in ProjectStatus.choices
+    if value in LIFECYCLE_PROJECT_STATUS_VALUES
+)
 
 
 class Project(models.Model):
@@ -455,6 +476,11 @@ class Project(models.Model):
         default=ProjectStatus.DRAFT,
     )
     views = models.PositiveIntegerField(default=0)
+    personnage_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="تعداد پرسوناژ",
+    )
     image = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_thumb = models.FileField(max_length=300, blank=True, upload_to="", storage=MediaStorage())
     image_public_acl = models.BooleanField(default=False)
@@ -924,6 +950,176 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.profile} × {self.opportunity}"
+
+
+class ProjectMember(models.Model):
+    class Permission(models.TextChoices):
+        OWNER = "owner", "مالک"
+        ADMIN = "admin", "مدیر"
+        MEMBER = "member", "عضو"
+
+    class InviteStatus(models.TextChoices):
+        INVITED = "invited", "دعوت‌شده"
+        ACCEPTED = "accepted", "پذیرفته‌شده"
+        REMOVED = "removed", "حذف‌شده"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="members")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="project_memberships")
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
+    permission = models.CharField(
+        max_length=10,
+        choices=Permission.choices,
+        default=Permission.MEMBER,
+    )
+    invite_status = models.CharField(
+        max_length=10,
+        choices=InviteStatus.choices,
+        default=InviteStatus.INVITED,
+    )
+    invited_by = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_project_invites",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "عضو پروژه"
+        verbose_name_plural = "اعضای پروژه"
+        constraints = [
+            models.UniqueConstraint(fields=["project", "profile"], name="unique_project_member"),
+        ]
+
+    def __str__(self):
+        return f"{self.profile} · {self.project}"
+
+
+class Task(models.Model):
+    class Status(models.TextChoices):
+        TODO = "todo", "انجام‌نشده"
+        IN_PROGRESS = "in_progress", "در حال انجام"
+        BLOCKED = "blocked", "بلاک‌شده"
+        DONE = "done", "انجام‌شده"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
+    title = models.CharField(max_length=255, verbose_name="عنوان")
+    description = models.TextField(blank=True, verbose_name="توضیحات")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.TODO)
+    sort_order = models.PositiveIntegerField(default=0)
+    due_date = models.DateField(null=True, blank=True, verbose_name="ددلاین")
+    created_by = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_tasks",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "-created_at"]
+        verbose_name = "تسک"
+        verbose_name_plural = "تسک‌ها"
+
+    def __str__(self):
+        return self.title
+
+
+class TaskAssignee(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="assignees")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="task_assignments")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["task", "profile"], name="unique_task_assignee"),
+        ]
+
+    def __str__(self):
+        return f"{self.task} · {self.profile}"
+
+
+class TaskComment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    body = models.TextField(verbose_name="متن")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.task} · {self.created_at:%Y-%m-%d}"
+
+
+class TaskAttachment(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="attachments")
+    uploaded_by = models.ForeignKey(Profile, on_delete=models.SET_NULL, null=True, blank=True)
+    file = models.FileField(max_length=300, upload_to="task-attachments/", storage=MediaStorage())
+    label = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.label or self.file.name
+
+
+class Event(models.Model):
+    class AudienceType(models.TextChoices):
+        ALL_TEAM = "all_team", "کل تیم"
+        SPECIFIC = "specific", "افراد خاص"
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="events")
+    title = models.CharField(max_length=255, verbose_name="عنوان")
+    starts_at = models.DateTimeField(verbose_name="شروع")
+    ends_at = models.DateTimeField(null=True, blank=True, verbose_name="پایان")
+    location = models.CharField(max_length=255, blank=True, verbose_name="مکان")
+    audience_type = models.CharField(
+        max_length=10,
+        choices=AudienceType.choices,
+        default=AudienceType.ALL_TEAM,
+    )
+    created_by = models.ForeignKey(
+        Profile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_events",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["starts_at"]
+        verbose_name = "رویداد"
+        verbose_name_plural = "رویدادها"
+
+    def __str__(self):
+        return self.title
+
+
+class EventInvitee(models.Model):
+    class Attendance(models.TextChoices):
+        PENDING = "pending", "در انتظار"
+        CONFIRMED = "confirmed", "تأیید"
+        REJECTED = "rejected", "رد"
+
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="invitees")
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="event_invitations")
+    attendance = models.CharField(
+        max_length=10,
+        choices=Attendance.choices,
+        default=Attendance.PENDING,
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["event", "profile"], name="unique_event_invitee"),
+        ]
+
+    def __str__(self):
+        return f"{self.event} · {self.profile}"
 
 
 class TicketKind(models.TextChoices):
