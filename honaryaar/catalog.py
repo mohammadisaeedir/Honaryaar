@@ -19,6 +19,11 @@ STAT_KEYS = {
     "hire": "honaryaar:stats:hire:v1",
     "talent": "honaryaar:stats:talent:v1",
 }
+CHROME_KEYS = {
+    "chrome": "honaryaar:chrome:v1",
+    "arts": "honaryaar:arts:v1",
+    "hero_roles": "honaryaar:hero_roles:v1",
+}
 
 
 def _upstash():
@@ -63,8 +68,7 @@ def _redis_pause():
     _redis_down_until = time.monotonic() + 60
 
 
-def _remember_stats(name, compute):
-    key = STAT_KEYS[name]
+def _remember(key, compute):
     client = _upstash()
     raw = None
     if client is not None:
@@ -90,13 +94,21 @@ def _remember_stats(name, compute):
     return value
 
 
+def _remember_stats(name, compute):
+    return _remember(STAT_KEYS[name], compute)
+
+
+def _remember_chrome(name, compute):
+    return _remember(CHROME_KEYS[name], compute)
+
+
 def forget_stat_counters():
-    """Drop the three counter keys. Nothing happens when Redis is missing."""
+    """Drop cached counters and page chrome. Nothing happens when Redis is missing."""
     client = _upstash()
     if client is None:
         return
     try:
-        client.delete(*STAT_KEYS.values())
+        client.delete(*STAT_KEYS.values(), *CHROME_KEYS.values())
     except Exception:
         _redis_pause()
 
@@ -913,7 +925,7 @@ def arts_in_use():
         present = set(ArtCategory.objects.values_list("art", flat=True).distinct())
         return [{"slug": value, "title": label} for value, label in Art.choices if value in present]
 
-    return _once("arts", load)
+    return _once("arts", lambda: _remember_chrome("arts", load))
 
 
 def roles():
@@ -1917,14 +1929,17 @@ def note_view(request, model, pk):
 
 
 def hero_roles():
-    from honaryaar.models import Role
+    def load():
+        from honaryaar.models import Role
 
-    titles = {
-        item.slug: item.title
-        for item in Role.objects.filter(profile_roles__isnull=False).distinct()
-    }
-    ordered = [titles[item["slug"]] for item in ROLES if item["slug"] in titles]
-    return ordered or list(titles.values())
+        titles = {
+            item.slug: item.title
+            for item in Role.objects.filter(profile_roles__isnull=False).distinct()
+        }
+        ordered = [titles[item["slug"]] for item in ROLES if item["slug"] in titles]
+        return ordered or list(titles.values())
+
+    return _remember_chrome("hero_roles", load)
 
 
 def hire_stats():
@@ -2034,11 +2049,19 @@ def search_shortcuts():
     }
 
 
-def footer_shortcuts():
-    def load():
-        return _footer_shortcuts()
+def page_chrome():
+    """Footer + search modal links. Shared on every page; cached in Redis."""
 
-    return _once("footer", load)
+    def load():
+        data = _footer_shortcuts()
+        data.update(search_shortcuts())
+        return data
+
+    return _once("chrome", lambda: _remember_chrome("chrome", load))
+
+
+def footer_shortcuts():
+    return page_chrome()
 
 
 def _footer_shortcuts():

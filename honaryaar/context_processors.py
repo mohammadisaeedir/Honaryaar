@@ -2,13 +2,11 @@ from pathlib import Path
 
 from django.conf import settings
 
-from honaryaar.catalog import arts, footer_shortcuts, listing_stats, search_shortcuts
+from honaryaar.catalog import arts, listing_stats, page_chrome
 
 
 def footer(_request):
-    data = footer_shortcuts()
-    data.update(search_shortcuts())
-    return data
+    return page_chrome()
 
 
 def assets(request):

@@ -76,7 +76,10 @@ class CounterCacheTests(TestCase):
                 status="casting",
             )
             self.assertEqual(fake.store, {})
-            self.assertEqual(set(fake.deleted), set(catalog.STAT_KEYS.values()))
+            self.assertEqual(
+                set(fake.deleted),
+                set(catalog.STAT_KEYS.values()) | set(catalog.CHROME_KEYS.values()),
+            )
             Opportunity.objects.create(
                 slug="counter-row-1",
                 title="نقش",
