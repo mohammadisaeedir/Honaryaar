@@ -23,6 +23,9 @@ CHROME_KEYS = {
     "chrome": "honaryaar:chrome:v1",
     "arts": "honaryaar:arts:v1",
     "hero_roles": "honaryaar:hero_roles:v1",
+    "artist_roles": "honaryaar:artist_roles:v1",
+    "artist_arts": "honaryaar:artist_arts:v1",
+    "artist_ages": "honaryaar:artist_ages:v1",
 }
 
 
@@ -965,10 +968,22 @@ def age_bounds():
 
 
 def artist_age_bounds():
-    ages = [item["age"] for item in _artists() if item["age"] is not None]
-    if len(set(ages)) < 2:
-        return None
-    return min(ages), max(ages)
+    def load():
+        from honaryaar.models import Profile
+
+        dates = (
+            Profile.objects.filter(profile_roles__isnull=False, birth_date__isnull=False)
+            .values_list("birth_date", flat=True)
+            .distinct()
+        )
+        ages = [years_old(day) for day in dates if day is not None]
+        ages = [age for age in ages if age is not None]
+        if len(set(ages)) < 2:
+            return None
+        return [min(ages), max(ages)]
+
+    bounds = _remember_chrome("artist_ages", load)
+    return tuple(bounds) if bounds else None
 
 
 def age_group(floor, ceiling, start, end, active):
@@ -1258,9 +1273,108 @@ def _artist_queryset():
     )
 
 
+def _artist_card_queryset():
+    """List/search cards: identity + roles only (no credits/media/skills/contacts)."""
+    from honaryaar.models import Profile
+
+    return Profile.objects.select_related("city", "user").prefetch_related("profile_roles__role")
+
+
+def _artist_card_dict(profile):
+    links = list(profile.profile_roles.all())
+    primary = next((link.role for link in links if link.is_primary), None)
+    if primary is None and links:
+        primary = links[0].role
+    ordered = sorted(links, key=lambda link: (not link.is_primary, link.role.title))
+    user = profile.user
+    legal_name = " ".join(part for part in (user.first_name, user.last_name) if part).strip()
+    return {
+        "slug": profile.slug,
+        "name": profile.public_name(),
+        "legal_name": legal_name or profile.public_name(),
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "role": primary.slug if primary else "",
+        "role_slugs": [link.role.slug for link in ordered],
+        "role_titles": [link.role.title for link in ordered],
+        "city": profile.city.title if profile.city_id else "",
+        "age": years_old(profile.birth_date),
+        "gender": profile.gender,
+        "arts": list(profile.arts or []),
+        "pk": profile.pk,
+        "list_image_key": profile.list_image.name if profile.list_image else "",
+        "list_thumb_key": profile.list_thumb.name if profile.list_thumb else "",
+        "list_public_acl": bool(profile.list_public_acl),
+        "credits": [],
+        "skills": [],
+        "art_titles": [],
+    }
+
+
 def _artists():
     rows = _artist_queryset().filter(profile_roles__isnull=False).distinct()
     return _once("artists", lambda: [_artist_dict(item) for item in rows])
+
+
+def _birth_cutoff(age, today):
+    """Latest birth date that still makes someone at least `age` years old."""
+    try:
+        return today.replace(year=today.year - age)
+    except ValueError:
+        return today.replace(year=today.year - age, day=28)
+
+
+def _artist_list_queryset(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark=""):
+    from django.db.models import Count, Q
+
+    cities = _picked(city)
+    role_slugs = _picked(role)
+    arts = _picked(art)
+    genders = _picked(gender)
+    saved = _picked(bookmark)
+    qs = _artist_card_queryset().filter(profile_roles__isnull=False)
+    if cities:
+        qs = qs.filter(city__title__in=cities)
+    if role_slugs:
+        qs = qs.filter(profile_roles__role__slug__in=role_slugs)
+    if arts:
+        qs = qs.filter(arts__overlap=list(arts))
+    if genders:
+        qs = qs.filter(gender__in=genders)
+    if saved:
+        qs = qs.filter(slug__in=saved)
+    if age_from is not None or age_to is not None:
+        today = date.today()
+        qs = qs.filter(birth_date__isnull=False)
+        if age_from is not None:
+            qs = qs.filter(birth_date__lte=_birth_cutoff(age_from, today))
+        if age_to is not None:
+            # age <= age_to ⇒ born after the day they would turn age_to+1
+            qs = qs.filter(birth_date__gt=_birth_cutoff(age_to + 1, today))
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q)
+            | Q(user__first_name__icontains=q)
+            | Q(user__last_name__icontains=q)
+            | Q(user__username__icontains=q)
+            | Q(city__title__icontains=q)
+            | Q(profile_roles__role__title__icontains=q)
+            | Q(credits__title__icontains=q)
+            | Q(skill_links__skill__title__icontains=q)
+        )
+    return qs.annotate(_credit_n=Count("credits", distinct=True)).distinct()
+
+
+def _order_artist_qs(qs, sort):
+    from django.db.models import F
+
+    if sort == "name":
+        return qs.order_by(F("user__first_name").asc(nulls_last=True), F("user__last_name").asc(nulls_last=True), "name", "-pk")
+    if sort == "young":
+        return qs.order_by(F("birth_date").desc(nulls_last=True), "-pk")
+    if sort == "experienced":
+        return qs.order_by(F("_credit_n").desc(), F("birth_date").asc(nulls_last=True), "-pk")
+    return qs.order_by("-pk")
 
 
 def _project_queryset():
@@ -1449,10 +1563,38 @@ def _artist_text(artist):
 
 
 def artist_arts():
-    present = set()
-    for artist in _artists():
-        present.update(artist["arts"])
-    return [{"slug": slug, "title": art_title(slug)} for slug in _art_order() if slug in present]
+    def load():
+        from honaryaar.models import Profile
+
+        present = set()
+        for row in (
+            Profile.objects.filter(profile_roles__isnull=False)
+            .exclude(arts=[])
+            .values_list("arts", flat=True)
+            .distinct()
+        ):
+            present.update(row or [])
+        return [{"slug": slug, "title": art_title(slug)} for slug in _art_order() if slug in present]
+
+    return _remember_chrome("artist_arts", load)
+
+
+def roles_on_artists():
+    """Roles that at least one listed artist has — for the artists filter drawer."""
+
+    def load():
+        from honaryaar.models import Role
+
+        titles = {
+            item.slug: {"slug": item.slug, "title": item.title, "group": item.group}
+            for item in Role.objects.filter(profile_roles__isnull=False).distinct()
+        }
+        ordered = [titles[item["slug"]] for item in ROLES if item["slug"] in titles]
+        extras = [titles[slug] for slug in titles if slug not in {item["slug"] for item in ordered}]
+        extras.sort(key=lambda item: item["title"])
+        return ordered + extras
+
+    return _remember_chrome("artist_roles", load)
 
 
 def _picked(value):
@@ -1533,34 +1675,61 @@ def _apply_sort(items, kind, sort):
     return sorted(items, key=lambda item: -item["pk"])
 
 
-def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark="", sort=""):
-    cities = _picked(city)
-    roles = _picked(role)
-    arts = _picked(art)
-    genders = _picked(gender)
-    saved = _picked(bookmark)
-    items = _artists()
-    if cities:
-        items = [item for item in items if item["city"] in cities]
-    if roles:
-        items = [item for item in items if roles.intersection(item["role_slugs"])]
-    if arts:
-        items = [item for item in items if arts.intersection(item["arts"])]
-    if genders:
-        items = [item for item in items if item["gender"] in genders]
-    if saved:
-        items = [item for item in items if item["slug"] in saved]
-    if age_from is not None and age_to is not None:
-        items = [
-            item
-            for item in items
-            if item["age"] is not None and age_from <= item["age"] <= age_to
-        ]
-    if q:
-        items = [item for item in items if _contains(_artist_text(item), q)]
+def page_artists(
+    q="",
+    city="",
+    role="",
+    art="",
+    age_from=None,
+    age_to=None,
+    gender="",
+    bookmark="",
+    sort="",
+    offset=0,
+    limit=12,
+):
+    """One page of artist cards + total count. Filters/sort run in SQL."""
     from honaryaar.models import Profile
 
-    return _with_views(_apply_sort(items, "artists", sort), Profile)
+    qs = _order_artist_qs(
+        _artist_list_queryset(
+            q=q,
+            city=city,
+            role=role,
+            art=art,
+            age_from=age_from,
+            age_to=age_to,
+            gender=gender,
+            bookmark=bookmark,
+        ),
+        sort,
+    )
+    total = qs.count()
+    start = max(int(offset or 0), 0)
+    size = max(int(limit or 1), 1)
+    rows = list(qs[start : start + size])
+    items = _with_views([_artist_card_dict(item) for item in rows], Profile)
+    return items, total
+
+
+def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark="", sort=""):
+    """All matching artist cards (search / sitemap). Lean card shape, SQL filters."""
+    from honaryaar.models import Profile
+
+    qs = _order_artist_qs(
+        _artist_list_queryset(
+            q=q,
+            city=city,
+            role=role,
+            art=art,
+            age_from=age_from,
+            age_to=age_to,
+            gender=gender,
+            bookmark=bookmark,
+        ),
+        sort,
+    )
+    return _with_views([_artist_card_dict(item) for item in qs], Profile)
 
 
 def _age_overlaps(item, start, end):

@@ -281,9 +281,18 @@ def artist_list(request):
     }
     sort, sort_label, sort_options = catalog.sort_state(request, "artists")
     filters["sort"] = sort
-    artists, total, shown, partial = _catalog_window(request, catalog.list_artists(**filters))
+    partial = request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET
     if partial:
-        return render(request, "components/catalog/artist_page.html", {"artists": artists, "bookmarked": _bookmarked_slugs(request.user)})
+        offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), 10_000)
+        limit = min(max(_safe_int(request.GET.get("limit"), 1), 1), _ROW_CAP)
+        artists, total = catalog.page_artists(**filters, offset=offset, limit=limit)
+        return render(
+            request,
+            "components/catalog/artist_page.html",
+            {"artists": artists, "bookmarked": _bookmarked_slugs(request.user)},
+        )
+    artists, total = catalog.page_artists(**filters, offset=0, limit=_PAGE_SIZE)
+    shown = len(artists)
     groups = []
     if saved:
         picked = set(filters["bookmark"])
@@ -311,7 +320,12 @@ def artist_list(request):
         [
         catalog.choice_group("city", "شهر", [(city, city) for city in catalog.cities()], filters["city"]),
         catalog.choice_group("gender", "جنسیت", [("male", "مرد"), ("female", "زن")], filters["gender"]),
-        catalog.choice_group("role", "نقش", [(role["slug"], role["title"], role.get("group", "")) for role in catalog.roles()], filters["role"]),
+        catalog.choice_group(
+            "role",
+            "نقش",
+            [(role["slug"], role["title"], role.get("group", "")) for role in catalog.roles_on_artists()],
+            filters["role"],
+        ),
         ]
     )
     if age:
