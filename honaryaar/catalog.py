@@ -1272,7 +1272,8 @@ def _projects():
 def latest_projects(limit=5):
     from honaryaar.models import Project
 
-    items = sorted(_projects(), key=lambda item: item["pk"], reverse=True)[:limit]
+    rows = _project_queryset().order_by("-pk")[:limit]
+    items = [_project_dict(item) for item in rows]
     return _with_views(items, Project)
 
 
@@ -1988,16 +1989,18 @@ def _talent_counts():
 def featured_opportunities():
     from honaryaar.models import Opportunity
 
-    return _with_views([item for item in _opportunities() if item["featured"]], Opportunity)
+    rows = _opportunity_queryset().filter(featured=True)
+    items = [_opportunity_dict(item) for item in rows]
+    return _with_views(items, Opportunity)
 
 
 def featured_testimonials():
-    return [
-        quote
-        for project in _projects()
-        for quote in project["testimonials"]
-        if quote.get("featured")
-    ]
+    from honaryaar.models import Testimonial
+
+    rows = Testimonial.objects.filter(featured=True).select_related(
+        "profile", "profile__user", "role", "project"
+    )
+    return [_testimonial_dict(item) for item in rows]
 
 
 def featured_cities():
