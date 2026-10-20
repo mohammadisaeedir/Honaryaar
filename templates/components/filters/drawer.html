@@ -113,7 +113,7 @@
                                                         </button>
                                                     {% endfor %}
                                                     {% for option in group.options %}
-                                                        <button class="role-pick__item{% if option.selected %} is-on{% endif %}" type="button" data-option data-label="{{ option.label }}" data-cat="{{ option.group }}" data-hay="{{ option.group }} {{ option.label }}" x-show="q ? $el.dataset.hay.includes(q) : (cat && cat === $el.dataset.cat)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">
+                                                        <button class="role-pick__item{% if option.selected %} is-on{% endif %}" type="button" data-option data-filter-key="{{ group.name }}" data-filter-value="{{ option.value }}" data-label="{{ option.label }}" data-cat="{{ option.group }}" data-hay="{{ option.group }} {{ option.label }}" x-show="q ? $el.dataset.hay.includes(q) : (cat && cat === $el.dataset.cat)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">
                                                             <span x-show="!q">{{ option.label }}</span>
                                                             <span x-show="q">{% if option.group %}{{ option.group }} | {% endif %}{{ option.label }}</span>
                                                         </button>
@@ -123,7 +123,7 @@
                                             {% else %}
                                                 <div class="filter-picker__list" x-ref="choices">
                                                     {% for option in group.options %}
-                                                        <button class="filter-box{% if option.selected %} is-on{% endif %}" type="button" data-option data-label="{{ option.label }}" data-hay="{{ option.label }}" x-show="!q || $el.dataset.label.includes(q)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">{{ option.label }}</button>
+                                                        <button class="filter-box{% if option.selected %} is-on{% endif %}" type="button" data-option data-filter-key="{{ group.name }}" data-filter-value="{{ option.value }}" data-label="{{ option.label }}" data-hay="{{ option.label }}" x-show="!q || $el.dataset.label.includes(q)" @click="document.getElementById('filter-{{ group.name }}-{{ forloop.counter }}').click()">{{ option.label }}</button>
                                                     {% endfor %}
                                                     <p class="filter-find__empty" x-cloak x-show="q && $refs.choices && Array.from($refs.choices.querySelectorAll('[data-option]')).every(function (el) { return !el.dataset.hay.includes(q); })">موردی پیدا نشد</p>
                                                 </div>

@@ -200,4 +200,11 @@
             {% include "components/invite_modal.html" %}
         </div>
     </div>
+    {% if can_invite %}
+        {% if request.user.is_authenticated %}
+            <button class="mobile-cta" type="button" data-invite-open data-invite-slug="{{ artist.slug }}" data-invite-name="{{ artist.legal_name }}" data-invite-roles="{{ artist.role_titles|join:'||' }}">دعوت</button>
+        {% else %}
+            <a class="mobile-cta" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">دعوت</a>
+        {% endif %}
+    {% endif %}
 {% endblock %}

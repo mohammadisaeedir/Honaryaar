@@ -1,7 +1,7 @@
 {% if quick %}
 <div class="quick-picks" aria-label="جستجوهای محبوب">
     {% for chip in quick %}
-        <a class="{% if chip.active %}is-on{% endif %}" href="{{ chip.href }}">{{ chip.label }}</a>
+        <a class="{% if chip.active %}is-on{% endif %}" href="{{ chip.href }}"{% if chip.params %} data-filter-params="{% for key, value in chip.params.items %}{{ key }}={{ value|urlencode }}{% if not forloop.last %}&amp;{% endif %}{% endfor %}"{% endif %}>{{ chip.label }}</a>
     {% endfor %}
 </div>
 {% endif %}

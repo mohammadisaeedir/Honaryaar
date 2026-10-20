@@ -150,4 +150,36 @@
             state.inviteOpen = true;
         });
     }
+
+    var mobileApply = document.querySelector("[data-mobile-apply]");
+    if (mobileApply && apply) {
+        function syncMobileApply() {
+            var picked = chosen().length;
+            if (!layout.classList.contains("is-picking")) {
+                mobileApply.textContent = "ارسال درخواست";
+                return;
+            }
+            mobileApply.textContent = picked
+                ? "ارسال درخواست (" + fa(picked) + ")"
+                : "ارسال درخواست";
+        }
+        mobileApply.addEventListener("click", function () {
+            if (!layout.classList.contains("is-picking")) {
+                toggle.click();
+                if (window.showToast) window.showToast("فراخوان‌ها را انتخاب کنید، بعد دوباره بزنید.");
+                syncMobileApply();
+                return;
+            }
+            if (!chosen().length) {
+                if (window.showToast) window.showToast("حداقل یک فراخوان را انتخاب کنید.");
+                return;
+            }
+            apply.click();
+        });
+        layout.addEventListener("change", syncMobileApply);
+        toggle.addEventListener("click", function () {
+            queueMicrotask(syncMobileApply);
+        });
+        syncMobileApply();
+    }
 })();

@@ -1585,13 +1585,18 @@ def project_timeline(project, opportunities, today=None):
     return [{"date": when, "label": label, "past": when < today} for when, label in events]
 
 
-def project_by_slug(slug):
+def project_by_slug(slug, *, full=True):
     from honaryaar.models import Project
 
-    row = _project_queryset().filter(slug=slug).first()
+    if full:
+        row = _project_queryset().filter(slug=slug).first()
+        if row is None:
+            return None
+        return _with_views([_project_dict(row)], Project)[0]
+    row = _project_card_queryset().filter(slug=slug).first()
     if row is None:
         return None
-    return _with_views([_project_dict(row)], Project)[0]
+    return _with_views([_project_card_dict(row)], Project)[0]
 
 
 def artist_by_slug(slug):
@@ -1615,40 +1620,46 @@ def opportunity_by_slug(slug):
 def opportunities_for_project(slug):
     from honaryaar.models import Opportunity
 
-    rows = _opportunity_queryset().filter(project__slug=slug)
-    return _with_views([_opportunity_dict(item) for item in rows], Opportunity)
+    rows = _opportunity_card_queryset().filter(project__slug=slug)
+    return _with_views([_opportunity_card_dict(item) for item in rows], Opportunity)
 
 
 def related_opportunities(opportunity, limit=5):
-    others = [item for item in _opportunities() if item["slug"] != opportunity["slug"]]
+    """Nearest open calls by shared project/role/art/city — SQL only, no full catalog."""
+    from django.db.models import Case, IntegerField, Value, When
 
-    def score(item):
-        points = 0
-        if item["project"] == opportunity["project"]:
-            points += 4
-        if item["role"] and item["role"] == opportunity["role"]:
-            points += 3
-        if item["art"] and item["art"] == opportunity["art"]:
-            points += 2
-        if item["production"] and item["production"] == opportunity["production"]:
-            points += 2
-        if item["city"] and item["city"] == opportunity["city"]:
-            points += 1
-        return points
-
-    ranked = sorted(others, key=lambda item: (-score(item), -item["pk"]))
-    picked = [item for item in ranked if score(item)][:limit]
-    if len(picked) < limit:
-        chosen = {item["slug"] for item in picked}
-        for item in ranked:
-            if item["slug"] in chosen:
-                continue
-            picked.append(item)
-            if len(picked) == limit:
-                break
     from honaryaar.models import Opportunity
 
-    return _with_views(picked, Opportunity)
+    qs = _opportunity_card_queryset().exclude(slug=opportunity["slug"]).annotate(
+        score=(
+            Case(
+                When(project__slug=opportunity.get("project"), then=Value(4)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            + Case(
+                When(role__slug=opportunity.get("role") or None, then=Value(3)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            + Case(
+                When(art_category__art=opportunity.get("art") or None, then=Value(2)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            + Case(
+                When(art_category__title=opportunity.get("production") or None, then=Value(2)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            + Case(
+                When(city__title=opportunity.get("city") or None, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+        )
+    ).order_by("-score", "-pk")[:limit]
+    return _with_views([_opportunity_card_dict(item) for item in qs], Opportunity)
 
 
 def _artist_text(artist):
@@ -2331,6 +2342,7 @@ def filter_chips(request, specs):
                 "label": label,
                 "active": active,
                 "href": f"?{encoded}" if encoded else request.path,
+                "params": {str(key): str(value) for key, value in params.items()},
             }
         )
     return chips

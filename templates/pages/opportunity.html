@@ -36,7 +36,7 @@
 
     </div>
     <aside class="opp-side">
-    <div class="opp-apply rounded-box border border-border p-4">
+    <div class="opp-apply rounded-box border border-border p-4" id="opp-apply">
         <h2 class="text-[18px] font-semibold leading-[26px]">ارسال درخواست</h2>
         {% if is_owner %}
             <p class="mt-2 text-sm leading-[22px] text-muted-foreground">این پروژه برای شماست. درخواست‌ها را در صفحهٔ پروژه ببینید.</p>
@@ -114,4 +114,15 @@
     {% endif %}
     {% include "components/report_modal.html" %}
     </div>
+    {% if is_owner %}
+        {% url 'me-project' project.slug as manage_url %}
+        <a class="mobile-cta" href="{{ manage_url }}">مدیریت پروژه</a>
+    {% elif application %}
+        {% url 'me-application' application.pk as application_url %}
+        <a class="mobile-cta" href="{{ application_url }}">پیگیری درخواست</a>
+    {% elif not user.is_authenticated %}
+        <a class="mobile-cta" href="{% url 'login' %}?next={{ request.path }}">ارسال درخواست</a>
+    {% elif opportunity.status == "open" %}
+        <a class="mobile-cta" href="#opp-apply">ارسال درخواست</a>
+    {% endif %}
 {% endblock %}

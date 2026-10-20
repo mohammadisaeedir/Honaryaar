@@ -59,7 +59,7 @@
             {% endif %}
         </aside>
     </div>
-    <section class="project-sheet__roles">
+    <section class="project-sheet__roles" id="open-roles">
         <h2>نقش‌های باز</h2>
         {% if opportunities %}
             <div class="catalog-grid catalog-grid--3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -76,4 +76,7 @@
     {% include "components/testimonial/list.html" with testimonials=project.testimonials %}
     {% include "components/report_modal.html" %}
     </div>
+    {% if opportunities %}
+        <a class="mobile-cta" href="#open-roles">نقش‌های باز ({{ opportunities|length }})</a>
+    {% endif %}
 {% endblock %}

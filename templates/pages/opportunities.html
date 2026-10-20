@@ -33,7 +33,10 @@
             {% if filters.age_to %}<input type="hidden" name="age_to" value="{{ filters.age_to }}">{% endif %}
             {% if filters.sort %}<input type="hidden" name="sort" value="{{ filters.sort }}">{% endif %}
             <label class="sr-only" for="opportunities-q">جستجو در فرصت‌ها</label>
-            <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
+            <div class="page-search__field">
+                <input class="field" id="opportunities-q" type="search" name="q" value="{{ filters.q }}" placeholder="نقش، شهر یا پروژه" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')">
+                {% include "components/filters/search_clear.html" with value=filters.q %}
+            </div>
             {% include "components/filters/suggest.html" with scope="opportunities" %}
         </form>
         <div class="tool-row">
@@ -60,4 +63,7 @@
     </div>
     </div>
     </div>
+    {% if opportunities %}
+        <button class="mobile-cta" type="button" data-mobile-apply>ارسال درخواست</button>
+    {% endif %}
 {% endblock %}

@@ -6,6 +6,7 @@
         <div class="search-modal__field">
             {% include "components/icon.html" with name="search" size="18" %}
             <input class="field" id="modal-q" type="search" name="q" value="{{ request.GET.q }}" placeholder="{% if page == 'artists' or page == 'artist' %}نام یا نقش{% elif page == 'projects' or page == 'project' %}نام پروژه یا شهر{% elif page == 'opportunities' or page == 'opportunity' %}نقش، شهر یا پروژه{% else %}مثلاً: بازیگر{% endif %}" data-search-typewriter enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly')" x-ref="searchQ">
+            {% include "components/filters/search_clear.html" with value=request.GET.q %}
         </div>
     </form>
     {% endwith %}

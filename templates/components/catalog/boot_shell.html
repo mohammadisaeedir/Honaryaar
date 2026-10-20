@@ -27,7 +27,10 @@
         {% include "components/filters/art_quick.html" %}
         <form class="page-search" method="get" action="{{ action }}" role="search" autocomplete="off" data-remember-search data-search-scope="{{ kind }}">
             <label class="sr-only" for="{{ kind }}-q-shell">{{ search_label }}</label>
-            <input class="field" id="{{ kind }}-q-shell" type="search" name="q" value="" placeholder="{{ placeholder }}" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <div class="page-search__field">
+                <input class="field" id="{{ kind }}-q-shell" type="search" name="q" value="" placeholder="{{ placeholder }}" enterkeyhint="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                {% include "components/filters/search_clear.html" with value="" %}
+            </div>
         </form>
         <div class="tool-row">
             <div class="sort-menu">

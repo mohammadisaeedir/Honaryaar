@@ -7,7 +7,7 @@
     <div class="sort-menu__panel" x-cloak x-show="open" @click.outside="open = false" role="dialog" aria-modal="true" aria-labelledby="sort-menu-title">
         <p class="sort-menu__title" id="sort-menu-title">مرتب‌سازی</p>
         {% for option in sort_options %}
-            <a class="sort-menu__option{% if option.selected %} is-on{% endif %}" href="{{ option.href }}">{{ option.label }}</a>
+            <a class="sort-menu__option{% if option.selected %} is-on{% endif %}" href="{{ option.href }}" data-sort="{{ option.key }}">{{ option.label }}</a>
         {% endfor %}
     </div>
 </div>

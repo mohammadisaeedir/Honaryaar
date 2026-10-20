@@ -613,15 +613,21 @@ def opportunity_detail(request, slug):
     if opportunity is None:
         raise Http404
     opportunity["views"] = catalog.note_view(request, Opportunity, opportunity["pk"])
-    project = catalog.project_by_slug(opportunity["project"])
+    project = catalog.project_by_slug(opportunity["project"], full=False)
 
-    row = Opportunity.objects.select_related("project").filter(slug=slug).first()
     profile = current_profile(request.user)
     application = None
     is_owner = False
-    if profile and row:
-        is_owner = row.project.owner_id == profile.pk
-        application = Application.objects.filter(profile=profile, opportunity=row).first()
+    if profile:
+        row = (
+            Opportunity.objects.select_related("project")
+            .filter(pk=opportunity["pk"])
+            .only("pk", "project_id", "project__owner_id")
+            .first()
+        )
+        if row:
+            is_owner = row.project.owner_id == profile.pk
+            application = Application.objects.filter(profile=profile, opportunity_id=row.pk).first()
     return render(
         request,
         "pages/opportunity.html",
