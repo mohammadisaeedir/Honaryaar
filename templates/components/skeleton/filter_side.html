@@ -1,0 +1,21 @@
+<div class="catalog-side skel-filter" aria-hidden="true">
+    <aside class="filter-drawer skel-filter__drawer">
+        <div class="filter-drawer__head">
+            <h2>فیلترها</h2>
+            <span class="bone skel-filter__tool"></span>
+        </div>
+        <div class="filter-drawer__body skel-filter__body">
+            {% for _ in "12345" %}
+                <div class="skel-filter__group">
+                    <div class="skel-filter__label">
+                        <span class="bone bone-md"></span>
+                        <span class="bone skel-filter__chev"></span>
+                    </div>
+                    <div class="skel-row skel-filter__chips">
+                        <span class="bone"></span><span class="bone"></span><span class="bone"></span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </aside>
+</div>

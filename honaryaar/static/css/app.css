@@ -2406,14 +2406,16 @@ body.is-filter-open {
         display: none !important;
     }
 
-    .catalog-body > .catalog-side {
+    .catalog-body > .catalog-side,
+    .catalog-body > .skel-filter {
         grid-column: 1;
         grid-row: 1;
         align-self: stretch;
         min-width: 0;
     }
 
-    .catalog-side > .filter-drawer {
+    .catalog-side > .filter-drawer,
+    .skel-filter__drawer {
         align-self: start;
         min-height: 0;
         position: sticky;
@@ -2429,6 +2431,14 @@ body.is-filter-open {
         box-shadow: none;
         transform: none !important;
         overflow: hidden;
+    }
+
+    .skel-filter__drawer {
+        flex-direction: column;
+    }
+
+    .catalog-body:has(.filter-acc) > .skel-filter {
+        display: none;
     }
 
     .catalog-layout .filter-drawer form {
@@ -3536,9 +3546,57 @@ html[data-theme="dark"] .pf-logoutDialog__btn--ghost {
 }
 
 .skel-pane { display: none; }
+.skel-filter { display: none; }
 html.is-booting .catalog-main > .skel-pane,
 html.is-booting main > .skel-pane { display: block; }
 html.is-booting .live-pane { display: none; }
+
+.skel-filter__tool {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+}
+
+.skel-filter__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skel-filter__group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 0 14px;
+    border-bottom: 1px solid var(--color-line);
+}
+
+.skel-filter__group:last-child { border-bottom: 0; }
+
+.skel-filter__label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 36px;
+}
+
+.skel-filter__chev {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+}
+
+.skel-filter__chips .bone {
+    width: 72px;
+    height: 32px;
+    border-radius: 999px;
+}
+
+@media (min-width: 64rem) {
+    .skel-filter { display: block; }
+}
 main.is-skel-cover { min-height: calc(100dvh - 8rem); }
 main.is-skel-cover > .skel-pane { display: block; }
 main.is-skel-cover > :not(.skel-pane) { display: none; }
@@ -3644,6 +3702,12 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+.card-photo img:not(.card-photo__glyph),
+.project-thumb img:not(.is-mark) {
+    transition: transform 0.4s ease;
+    transform-origin: center center;
 }
 
 .card-photo__bone {
@@ -4046,6 +4110,7 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     width: 18px;
     height: 18px;
     object-fit: contain;
+    transition: none;
 }
 
 .invite-projects button,
@@ -4366,6 +4431,15 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     .bone { animation: none; }
     .card-photo__bone::before,
     .card-photo__glyph { animation: none; }
+    .card-photo img:not(.card-photo__glyph),
+    .project-thumb img:not(.is-mark) {
+        transition: none;
+    }
+    .project-card:has(.project-card__hit:hover) .card-photo img:not(.card-photo__glyph),
+    .artist-tile:hover .card-photo img:not(.card-photo__glyph),
+    .role-card:has(.role-card__link:hover) .project-thumb img:not(.is-mark) {
+        transform: none;
+    }
 }
 
 .profile-head {
@@ -4931,6 +5005,12 @@ body.pf-logout-open { overflow: hidden; }
     overflow: hidden;
 }
 
+.project-card,
+.artist-tile,
+.role-card {
+    transition: border-color 0.2s ease;
+}
+
 .project-card__hit {
     position: absolute;
     inset: 0;
@@ -4942,8 +5022,16 @@ body.pf-logout-open { overflow: hidden; }
     outline-offset: 2px;
 }
 
-.project-card:has(.project-card__hit:hover) {
+.project-card:has(.project-card__hit:hover),
+.artist-tile:hover,
+.role-card:has(.role-card__link:hover) {
     border-color: #c13281;
+}
+
+.project-card:has(.project-card__hit:hover) .card-photo img:not(.card-photo__glyph),
+.artist-tile:hover .card-photo img:not(.card-photo__glyph),
+.role-card:has(.role-card__link:hover) .project-thumb img:not(.is-mark) {
+    transform: scale(1.08);
 }
 
 .project-card .card-mark,
