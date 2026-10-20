@@ -466,7 +466,15 @@
             });
         }, true);
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("{% url 'service-worker' %}");
+            // After first paint — SW update checks hit the network and must not delay boot.
+            function registerWorker() {
+                navigator.serviceWorker.register("{% url 'service-worker' %}", { scope: "/" }).catch(function () {});
+            }
+            if (document.readyState === "complete") {
+                setTimeout(registerWorker, 1);
+            } else {
+                window.addEventListener("load", function () { setTimeout(registerWorker, 1); });
+            }
         }
         (function () {
             var key = "honaryaar-recent-searches";
