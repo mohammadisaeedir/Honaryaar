@@ -26,6 +26,9 @@ CHROME_KEYS = {
     "artist_roles": "honaryaar:artist_roles:v1",
     "artist_arts": "honaryaar:artist_arts:v1",
     "artist_ages": "honaryaar:artist_ages:v1",
+    "opp_facets": "honaryaar:opp_facets:v1",
+    "opp_ages": "honaryaar:opp_ages:v1",
+    "project_cats": "honaryaar:project_cats:v1",
 }
 
 
@@ -951,20 +954,29 @@ def years_old(birth, today=None):
 
 
 def age_bounds():
-    lows = []
-    highs = []
-    for item in _opportunities():
-        if item["age_min"] is not None:
-            lows.append(item["age_min"])
-        if item["age_max"] is not None:
-            highs.append(item["age_max"])
-    if not lows and not highs:
-        return None
-    floor = min(lows or highs)
-    ceiling = max(highs or lows)
-    if ceiling <= floor:
-        return None
-    return floor, ceiling
+    def load():
+        from django.db.models import Max, Min
+
+        from honaryaar.models import PUBLIC_PROJECT_STATUSES, Opportunity
+
+        row = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).aggregate(
+            min_lo=Min("age_min"),
+            max_lo=Max("age_min"),
+            min_hi=Min("age_max"),
+            max_hi=Max("age_max"),
+        )
+        lows = [value for value in (row["min_lo"], row["max_lo"]) if value is not None]
+        highs = [value for value in (row["min_hi"], row["max_hi"]) if value is not None]
+        if not lows and not highs:
+            return None
+        floor = min(lows or highs)
+        ceiling = max(highs or lows)
+        if ceiling <= floor:
+            return None
+        return [floor, ceiling]
+
+    bounds = _remember_chrome("opp_ages", load)
+    return tuple(bounds) if bounds else None
 
 
 def artist_age_bounds():
@@ -1398,8 +1410,8 @@ def _projects():
 def latest_projects(limit=5):
     from honaryaar.models import Project
 
-    rows = _project_queryset().order_by("-pk")[:limit]
-    items = [_project_dict(item) for item in rows]
+    rows = _project_card_queryset().order_by("-pk")[:limit]
+    items = [_project_card_dict(item) for item in rows]
     return _with_views(items, Project)
 
 
@@ -1411,8 +1423,101 @@ def _opportunity_queryset():
     ).prefetch_related("project__contacts")
 
 
+def _opportunity_card_queryset():
+    from honaryaar.models import PUBLIC_PROJECT_STATUSES, Opportunity
+
+    return Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES).select_related(
+        "project", "role", "city", "art_category"
+    )
+
+
+def _opportunity_card_dict(item):
+    from honaryaar.pay import pay_label
+
+    return {
+        "pk": item.pk,
+        "slug": item.slug,
+        "title": item.title,
+        "project": item.project.slug,
+        "project_title": item.project.title,
+        "card_project": {
+            "title": item.project.title,
+            "image_key": item.project.image.name if item.project.image else "",
+            "image_thumb_key": item.project.image_thumb.name if item.project.image_thumb else "",
+            "image_public": True,
+            "image_public_acl": bool(item.project.image_public_acl),
+        },
+        "role": item.role.slug,
+        "art": item.art_category.art if item.art_category_id else "",
+        "art_title": item.art_category.get_art_display() if item.art_category_id else "",
+        "production": item.art_category.title if item.art_category_id else "",
+        "city": item.city.title if item.city_id else "",
+        "age_min": item.age_min,
+        "age_max": item.age_max,
+        "gender": item.gender,
+        "count": item.count,
+        "paid": item.paid,
+        "pay_type": item.pay_type,
+        "pay_amount": item.pay_amount,
+        "pay_label": pay_label(item.paid, item.pay_type, item.pay_amount),
+        "featured": item.featured,
+        "dates": format_date_range(item.start_date, item.end_date),
+        "deadline": format_date(item.deadline),
+        "deadline_on": item.deadline,
+        "description": "",
+        "requirements": [],
+        "status": item.status,
+        "collaboration_type": item.collaboration_type,
+        "experience_level": item.experience_level,
+        "special_conditions": item.special_conditions or [],
+    }
+
+
 def _opportunities():
     return _once("opportunities", lambda: [_opportunity_dict(item) for item in _opportunity_queryset()])
+
+
+def _project_card_queryset():
+    from django.db.models import Count, Q
+
+    from honaryaar.models import PUBLIC_PROJECT_STATUSES, Project
+
+    return (
+        Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
+        .select_related("owner", "owner__user", "art_category", "lead_role", "city")
+        .annotate(open_calls=Count("opportunities", filter=Q(opportunities__status="open"), distinct=True))
+    )
+
+
+def _project_card_dict(project):
+    from honaryaar.models import PUBLIC_PROJECT_STATUSES
+
+    art = project.art_category.art if project.art_category_id else ""
+    return {
+        "pk": project.pk,
+        "slug": project.slug,
+        "title": project.title,
+        "city": project.city.title if project.city_id else "",
+        "lead": _profile_name(project.owner) or (project.lead_name or ""),
+        "lead_slug": project.owner.slug if project.owner_id else "",
+        "lead_role": project.lead_role.slug if project.lead_role_id else "",
+        "art": art,
+        "art_title": project.art_category.get_art_display() if project.art_category_id else "",
+        "production": project.art_category.title if project.art_category_id else "",
+        "summary": "",
+        "open_calls": getattr(project, "open_calls", 0),
+        "start_date": project.start_date,
+        "end_date": project.end_date,
+        "urgent": is_urgent(project.start_date),
+        "featured": project.featured,
+        "status": project.get_status_display(),
+        "status_code": project.status,
+        "image_key": project.image.name if project.image else "",
+        "image_thumb_key": project.image_thumb.name if project.image_thumb else "",
+        "image_public": project.status in PUBLIC_PROJECT_STATUSES,
+        "image_public_acl": bool(project.image_public_acl),
+        "testimonials": [],
+    }
 
 
 def _approx(value):
@@ -1797,54 +1902,194 @@ def _opportunity_matches(item, query, city, paid, gender, production, role, age_
     return True
 
 
-def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status="", sort="", pay_type=""):
-    items = [
-        item
-        for item in _opportunities()
-        if _opportunity_matches(item, q, city, paid, gender, production, role, age_from, age_to, art, status, pay_type)
-    ]
+def _opportunity_list_queryset(
+    q="",
+    city="",
+    paid="",
+    gender="",
+    production="",
+    role="",
+    age_from=None,
+    age_to=None,
+    art="",
+    status="",
+    pay_type="",
+):
+    from django.db.models import Q
+
+    cities = _picked(city)
+    arts = _picked(art)
+    paid_values = _picked(paid)
+    genders = _picked(gender)
+    productions = _picked(production)
+    roles = _picked(role)
+    statuses = _picked(status)
+    pay_types = _picked(pay_type)
+    qs = _opportunity_card_queryset()
+    if statuses:
+        qs = qs.filter(status__in=statuses)
+    if cities:
+        qs = qs.filter(city__title__in=cities)
+    if arts:
+        qs = qs.filter(art_category__art__in=arts)
+    if productions:
+        qs = qs.filter(art_category__title__in=productions)
+    if roles:
+        qs = qs.filter(role__slug__in=roles)
+    if pay_types:
+        qs = qs.filter(pay_type__in=pay_types)
+    if paid_values and paid_values != {"paid", "unpaid"}:
+        if paid_values == {"paid"}:
+            qs = qs.filter(paid=True)
+        elif paid_values == {"unpaid"}:
+            qs = qs.filter(paid=False)
+    if genders:
+        if genders - {"any"}:
+            qs = qs.filter(Q(gender__in=genders) | Q(gender="any"))
+        else:
+            qs = qs.filter(gender__in=genders)
+    if age_from is not None and age_to is not None:
+        qs = qs.filter(Q(age_max__isnull=True) | Q(age_max__gte=age_from)).filter(
+            Q(age_min__isnull=True) | Q(age_min__lte=age_to)
+        )
+    if q:
+        qs = qs.filter(
+            Q(title__icontains=q)
+            | Q(project__title__icontains=q)
+            | Q(city__title__icontains=q)
+            | Q(art_category__title__icontains=q)
+            | Q(role__title__icontains=q)
+            | Q(description__icontains=q)
+        )
+    return qs
+
+
+def _order_opportunity_qs(qs, sort):
+    from django.db.models import F
+
+    if sort == "deadline":
+        return qs.order_by(F("deadline").asc(nulls_last=True), "-pk")
+    if sort == "title":
+        return qs.order_by("title", "-pk")
+    if sort == "paid":
+        return qs.order_by("-paid", "-pk")
+    return qs.order_by("-pk")
+
+
+def page_opportunities(
+    q="",
+    city="",
+    paid="",
+    gender="",
+    production="",
+    role="",
+    age_from=None,
+    age_to=None,
+    art="",
+    status="",
+    sort="",
+    pay_type="",
+    offset=0,
+    limit=8,
+):
     from honaryaar.models import Opportunity
 
-    return _with_views(_apply_sort(items, "opportunities", sort), Opportunity)
+    qs = _order_opportunity_qs(
+        _opportunity_list_queryset(
+            q=q,
+            city=city,
+            paid=paid,
+            gender=gender,
+            production=production,
+            role=role,
+            age_from=age_from,
+            age_to=age_to,
+            art=art,
+            status=status,
+            pay_type=pay_type,
+        ),
+        sort,
+    )
+    total = qs.count()
+    start = max(int(offset or 0), 0)
+    size = max(int(limit or 1), 1)
+    rows = list(qs[start : start + size])
+    return _with_views([_opportunity_card_dict(item) for item in rows], Opportunity), total
+
+
+def list_opportunities(q="", city="", paid="", gender="", production="", role="", age_from=None, age_to=None, art="", status="", sort="", pay_type=""):
+    from honaryaar.models import Opportunity
+
+    qs = _order_opportunity_qs(
+        _opportunity_list_queryset(
+            q=q,
+            city=city,
+            paid=paid,
+            gender=gender,
+            production=production,
+            role=role,
+            age_from=age_from,
+            age_to=age_to,
+            art=art,
+            status=status,
+            pay_type=pay_type,
+        ),
+        sort,
+    )
+    return _with_views([_opportunity_card_dict(item) for item in qs], Opportunity)
 
 
 def opportunity_facets():
-    items = _opportunities()
-    city_names = list(dict.fromkeys(item["city"] for item in items if item["city"]))
-    order = {title: index for index, title in enumerate(cities())}
-    city_names.sort(key=lambda title: (order.get(title, 10_000), title))
+    def load():
+        from honaryaar.models import PUBLIC_PROJECT_STATUSES, Art, Opportunity
+        from honaryaar.pay import PAY_LABELS, PAY_TYPES
 
-    role_slugs = list(dict.fromkeys(item["role"] for item in items if item["role"]))
-    grouped = {item["slug"]: item.get("group", "") for item in roles()}
-    role_rows = sorted(
-        (
-            {"slug": slug, "title": role_title(slug), "group": grouped.get(slug, "")}
-            for slug in role_slugs
-        ),
-        key=lambda item: item["title"],
-    )
-    from honaryaar.models import Art
+        base = Opportunity.objects.filter(project__status__in=PUBLIC_PROJECT_STATUSES)
+        city_names = list(dict.fromkeys(base.exclude(city=None).values_list("city__title", flat=True)))
+        order = {title: index for index, title in enumerate(cities())}
+        city_names.sort(key=lambda title: (order.get(title, 10_000), title))
 
-    present_arts = {item["art"] for item in items if item["art"]}
-    arts = [{"slug": value, "title": label} for value, label in Art.choices if value in present_arts]
-    productions = list(dict.fromkeys(item["production"] for item in items if item["production"]))
-    present_genders = {item["gender"] for item in items if item["gender"]}
-    genders = [
-        {"value": value, "label": gender_label(value)}
-        for value in ("male", "female", "any")
-        if value in present_genders
-    ]
-    from honaryaar.pay import PAY_LABELS, PAY_TYPES
+        role_rows = list(
+            base.exclude(role=None)
+            .values("role__slug", "role__title", "role__group")
+            .distinct()
+            .order_by("role__title")
+        )
+        roles = [
+            {"slug": row["role__slug"], "title": row["role__title"], "group": row["role__group"] or ""}
+            for row in role_rows
+            if row["role__slug"]
+        ]
+        present_arts = set(base.exclude(art_category=None).values_list("art_category__art", flat=True).distinct())
+        arts = [{"slug": value, "title": label} for value, label in Art.choices if value in present_arts]
+        productions = list(
+            dict.fromkeys(
+                base.exclude(art_category=None).order_by("art_category__priority", "art_category__title").values_list(
+                    "art_category__title", flat=True
+                )
+            )
+        )
+        present_genders = set(base.exclude(gender="").values_list("gender", flat=True).distinct())
+        genders = [
+            {"value": value, "label": gender_label(value)}
+            for value in ("male", "female", "any")
+            if value in present_genders
+        ]
+        return {
+            "cities": city_names,
+            "roles": roles,
+            "arts": arts,
+            "productions": productions,
+            "genders": genders,
+            "paid": [["paid", "با دستمزد"], ["unpaid", "بدون دستمزد"]],
+            "pay_type": [[value, PAY_LABELS[value]] for value in PAY_TYPES],
+        }
 
-    return {
-        "cities": city_names,
-        "roles": role_rows,
-        "arts": arts,
-        "productions": productions,
-        "genders": genders,
-        "paid": [("paid", "با دستمزد"), ("unpaid", "بدون دستمزد")],
-        "pay_type": [(value, PAY_LABELS[value]) for value in PAY_TYPES],
-    }
+    data = _remember_chrome("opp_facets", load)
+    # choice_group expects tuples for paid/pay_type
+    data["paid"] = [tuple(row) for row in data["paid"]]
+    data["pay_type"] = [tuple(row) for row in data["pay_type"]]
+    return data
 
 
 def opportunity_quick(facets):
@@ -1874,33 +2119,85 @@ def _project_text(project):
 
 
 def project_categories():
-    order = {item["title"]: item["priority"] for item in PRODUCTIONS}
-    titles = {item["production"] for item in _projects() if item["production"]}
-    return sorted(titles, key=lambda title: (order.get(title, 10_000), title))
+    def load():
+        from honaryaar.models import PUBLIC_PROJECT_STATUSES, Project
+
+        order = {item["title"]: item["priority"] for item in PRODUCTIONS}
+        titles = set(
+            Project.objects.filter(status__in=PUBLIC_PROJECT_STATUSES)
+            .exclude(art_category=None)
+            .values_list("art_category__title", flat=True)
+            .distinct()
+        )
+        return sorted(titles, key=lambda title: (order.get(title, 10_000), title))
+
+    return _remember_chrome("project_cats", load)
 
 
-def list_projects(q="", city="", art="", production="", status="", start="", sort=""):
+def _project_list_queryset(q="", city="", art="", production="", status="", start=""):
+    from django.db.models import Q
+
     cities = _picked(city)
     arts = _picked(art)
     productions = _picked(production)
     statuses = _picked(status)
-    start_on = parse_user_date(start)
-    items = _projects()
+    start_on = parse_user_date(start) if isinstance(start, str) else start
+    qs = _project_card_queryset()
     if cities:
-        items = [item for item in items if item["city"] in cities]
+        qs = qs.filter(city__title__in=cities)
     if arts:
-        items = [item for item in items if item["art"] in arts]
+        qs = qs.filter(art_category__art__in=arts)
     if productions:
-        items = [item for item in items if item["production"] in productions]
+        qs = qs.filter(art_category__title__in=productions)
     if statuses:
-        items = [item for item in items if item["status_code"] in statuses]
+        qs = qs.filter(status__in=statuses)
     if start_on:
-        items = [item for item in items if item["start_date"] and item["start_date"] >= start_on]
+        qs = qs.filter(start_date__isnull=False, start_date__gte=start_on)
     if q:
-        items = [item for item in items if _contains(_project_text(item), q)]
+        qs = qs.filter(
+            Q(title__icontains=q)
+            | Q(city__title__icontains=q)
+            | Q(summary__icontains=q)
+            | Q(art_category__title__icontains=q)
+            | Q(art_category__art__icontains=q)
+        )
+    return qs
+
+
+def _order_project_qs(qs, sort):
+    from django.db.models import F
+
+    if sort == "title":
+        return qs.order_by("title", "-pk")
+    if sort == "start":
+        return qs.order_by(F("start_date").asc(nulls_last=True), "-pk")
+    if sort == "featured":
+        return qs.order_by("-featured", "-pk")
+    return qs.order_by("-pk")
+
+
+def page_projects(q="", city="", art="", production="", status="", start="", sort="", offset=0, limit=6):
     from honaryaar.models import Project
 
-    return _with_views(_apply_sort(items, "projects", sort), Project)
+    qs = _order_project_qs(
+        _project_list_queryset(q=q, city=city, art=art, production=production, status=status, start=start),
+        sort,
+    )
+    total = qs.count()
+    begin = max(int(offset or 0), 0)
+    size = max(int(limit or 1), 1)
+    rows = list(qs[begin : begin + size])
+    return _with_views([_project_card_dict(item) for item in rows], Project), total
+
+
+def list_projects(q="", city="", art="", production="", status="", start="", sort=""):
+    from honaryaar.models import Project
+
+    qs = _order_project_qs(
+        _project_list_queryset(q=q, city=city, art=art, production=production, status=status, start=start),
+        sort,
+    )
+    return _with_views([_project_card_dict(item) for item in qs], Project)
 
 
 OPPORTUNITY_QUICK = [
@@ -2173,8 +2470,8 @@ def _talent_counts():
 def featured_opportunities():
     from honaryaar.models import Opportunity
 
-    rows = _opportunity_queryset().filter(featured=True)
-    items = [_opportunity_dict(item) for item in rows]
+    rows = _opportunity_card_queryset().filter(featured=True)
+    items = [_opportunity_card_dict(item) for item in rows]
     return _with_views(items, Opportunity)
 
 

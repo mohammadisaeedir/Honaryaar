@@ -180,8 +180,9 @@
                     next.setAttribute(attr.name, attr.value);
                 });
                 if (old.src) {
+                    // Keep stable ?v=… so browser/CDN cache hits; do not bust with _nav.
                     var url = new URL(old.src, location.href);
-                    url.searchParams.set("_nav", String(Date.now()));
+                    url.searchParams.delete("_nav");
                     next.src = url.pathname + url.search;
                 } else {
                     next.textContent = old.textContent;

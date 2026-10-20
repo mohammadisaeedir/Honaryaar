@@ -560,15 +560,18 @@ def opportunity_list(request):
     }
     sort, sort_label, sort_options = catalog.sort_state(request, "opportunities")
     filters["sort"] = sort
-    opportunities, total, shown, partial = _catalog_window(
-        request, catalog.list_opportunities(**filters), page_size=_OPPORTUNITY_PAGE
-    )
+    partial = request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET
     if partial:
+        offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), 10_000)
+        limit = min(max(_safe_int(request.GET.get("limit"), 1), 1), _ROW_CAP)
+        opportunities, total = catalog.page_opportunities(**filters, offset=offset, limit=limit)
         return render(
             request,
             "components/catalog/opportunity_page.html",
             {"opportunities": opportunities, "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity")},
         )
+    opportunities, total = catalog.page_opportunities(**filters, offset=0, limit=_OPPORTUNITY_PAGE)
+    shown = len(opportunities)
     facets = catalog.opportunity_facets()
     groups = [
         catalog.choice_group("status", "وضعیت", [("open", "باز"), ("closed", "بسته")], filters["status"]),
@@ -649,15 +652,18 @@ def project_list(request):
     filters["start"] = filters["start"].isoformat() if filters["start"] else ""
     sort, sort_label, sort_options = catalog.sort_state(request, "projects")
     filters["sort"] = sort
-    projects, total, shown, partial = _catalog_window(
-        request, catalog.list_projects(**filters), page_size=_PROJECT_PAGE
-    )
+    partial = request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET
     if partial:
+        offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), 10_000)
+        limit = min(max(_safe_int(request.GET.get("limit"), 1), 1), _ROW_CAP)
+        projects, total = catalog.page_projects(**filters, offset=offset, limit=limit)
         return render(
             request,
             "components/catalog/project_page.html",
             {"projects": projects, "bookmarked_projects": _bookmarked_slugs(request.user, "project")},
         )
+    projects, total = catalog.page_projects(**filters, offset=0, limit=_PROJECT_PAGE)
+    shown = len(projects)
     groups = [
         catalog.choice_group("status", "وضعیت", [("casting", "در حال جذب"), ("completed", "اتمام")], filters["status"]),
         {**catalog.choice_group("production", "نوع", [(title, title) for title in catalog.project_categories()], filters["production"]), "plain": True, "open": True},
