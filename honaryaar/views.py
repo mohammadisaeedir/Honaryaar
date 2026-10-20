@@ -818,7 +818,11 @@ def search(request):
 
 def web_manifest(request):
     path = settings.BASE_DIR / "honaryaar" / "static" / "manifest.webmanifest"
-    return FileResponse(path.open("rb"), content_type="application/manifest+json")
+    response = FileResponse(path.open("rb"), content_type="application/manifest+json")
+    # Tiny static PWA file — let browsers, Vercel, and Cloudflare keep it.
+    response["Cache-Control"] = "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+    response["CDN-Cache-Control"] = "public, max-age=604800"
+    return response
 
 
 def service_worker(request):
