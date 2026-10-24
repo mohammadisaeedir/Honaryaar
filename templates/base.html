@@ -68,11 +68,14 @@
         <script type="application/json" id="server-toasts">[{% for message in messages %}"{{ message|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]</script>
     {% endif %}
     <main class="{% block main_class %}site-main mx-auto w-full min-w-0 px-4 pb-24 pt-8 md:pb-16{% endblock %}">
-        {% breadcrumbs %}
+        {% block breadcrumbs %}{% breadcrumbs %}{% endblock %}
         {% block content %}{% endblock %}
     </main>
     {% block before_footer %}{% endblock %}
-    {% block site_footer %}{% include "components/layout/footer.html" %}{% endblock %}
+    {% block site_footer %}
+        {% include "components/layout/footer_promo.html" %}
+        {% include "components/layout/footer.html" %}
+    {% endblock %}
     <div x-data="{ removeOpen: false, removeTitle: '', removeForm: null }" @bookmark-remove.window="removeOpen = true; removeTitle = $event.detail.title; removeForm = $event.detail.form" x-effect="document.body.classList.toggle('pf-logout-open', removeOpen)" @keydown.escape.window="removeOpen = false">
         <div class="pf-logoutDialog" x-show="removeOpen" x-cloak @click.self="removeOpen = false">
             <div class="pf-logoutDialog__backdrop" @click="removeOpen = false"></div>

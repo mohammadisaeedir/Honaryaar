@@ -1,6 +1,6 @@
 {% load static honaryaar_ui %}
 {% profile_first_name user as given_name %}
-<header class="site-header sticky top-0 z-30 border-b border-border bg-background">
+<header class="site-header site-header--redesigned {% if request.path == '/about-us/' %}site-header--dark{% else %}site-header--light{% endif %} sticky top-0 z-30 border-b border-border bg-background">
     <div class="site-header__bar mx-auto flex h-16 w-full min-w-0 items-center gap-4 px-4">
         <a class="site-header__brand" href="{% url 'home' %}">
             <img class="site-logo-light block h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="80" height="32">

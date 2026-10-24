@@ -1,86 +1,117 @@
+{% load static %}
 <footer class="site-footer">
     <div class="site-footer__inner">
-        <div class="site-footer__top">
-            <blockquote class="site-footer__quote">
-                <p>هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد.</p>
-                <p lang="en" dir="ltr">The artist is always a student, of course; but he is not a student only.</p>
-                <footer>Daniel Burleigh Parkhurst · The Painter in Oil, 1898</footer>
-            </blockquote>
-            <section>
-                <h2 class="site-footer__title">راهنمای هنریار</h2>
-                <ul class="site-footer__list">
-                    <li><a href="{% url 'magazine' %}">مجله هنری</a></li>
-                    <li><a href="{% url 'terms' %}">قوانین و مقررات</a></li>
-                    <li><a href="{% url 'sitemap' %}">سایت مپ</a></li>
-                </ul>
-            </section>
-            <section>
-                <h2 class="site-footer__title">ارتباط با ما</h2>
-                <ul class="site-footer__list">
-                    <li><a href="{% url 'about' %}">درباره ما</a></li>
-                    <li><a href="{% url 'contact' %}">تماس با ما</a></li>
-                </ul>
-                <div class="site-footer__socials">
-                    {% for item in footer_socials %}
-                        <a href="{{ item.href }}" target="_blank" rel="noopener" aria-label="{{ item.label }}">
-                            {% include "components/icon.html" with name=item.icon size="20" %}
-                        </a>
-                    {% endfor %}
+        <div class="site-footer__grid">
+            <section class="site-footer__section site-footer__section--calls">
+                <h2 class="site-footer__title">فراخوان‌های هنری</h2>
+                <div class="site-footer__link-group">
+                    <h3 class="site-footer__label">شهرها</h3>
+                    <ul class="site-footer__list">
+                        <li><a href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
+                        <li><a href="{% url 'opportunities' %}">سایر شهرها</a></li>
+                    </ul>
+                </div>
+                <div class="site-footer__link-group">
+                    <h3 class="site-footer__title">فرصت‌های هنری</h3>
+                    <ul class="site-footer__list">
+                        {% for item in footer_productions %}
+                            <li><a href="{% url 'opportunities' %}?production={{ item|urlencode }}">{{ item }}</a></li>
+                        {% endfor %}
+                        {% for role in footer_roles|slice:":7" %}
+                            <li><a href="{% url 'opportunities' %}?role={{ role.slug }}">{{ role.title }}</a></li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </section>
+
+            <section class="site-footer__section site-footer__section--artists">
+                <h2 class="site-footer__title">هنرمندان فعال</h2>
+                <div class="site-footer__link-group">
+                    <h3 class="site-footer__label">شهرها</h3>
+                    <ul class="site-footer__list">
+                        <li><a href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
+                        <li><a href="{% url 'artists' %}">سایر شهرها</a></li>
+                    </ul>
+                </div>
+                <div class="site-footer__link-group">
+                    <h3 class="site-footer__title">حوزه‌های هنری</h3>
+                    <ul class="site-footer__list">
+                        {% for role in footer_roles|slice:":5" %}
+                            <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </section>
+
+            <div class="site-footer__utility">
+                <section class="site-footer__section">
+                    <h2 class="site-footer__title">پروژه‌های جدید</h2>
+                    <ul class="site-footer__list">
+                        {% for project in footer_projects %}
+                            <li><a href="{% url 'project' project.slug %}">{{ project.title }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                <section class="site-footer__section">
+                    <h2 class="site-footer__title">راهنمای هنریار</h2>
+                    <ul class="site-footer__list">
+                        <li><a href="{% url 'magazine' %}">مجله هنری</a></li>
+                        <li><a href="{% url 'terms' %}">قوانین و مقررات</a></li>
+                        <li><a href="{% url 'sitemap' %}">نقشه سایت</a></li>
+                    </ul>
+                </section>
+                <section class="site-footer__section">
+                    <h2 class="site-footer__title">ارتباط با ما</h2>
+                    <ul class="site-footer__list">
+                        <li><a href="{% url 'about' %}">درباره ما</a></li>
+                        <li><a href="{% url 'contact' %}">تماس با ما</a></li>
+                    </ul>
+                </section>
+            </div>
+
+            {% include "components/layout/footer_brand.html" %}
         </div>
 
-        <div class="site-footer__dirs">
-            <div class="site-footer__pair">
-                <h2 class="site-footer__title">{% include "components/icon.html" with name="megaphone" size="18" %}فراخوان‌های هنری</h2>
-                <div class="site-footer__pair-cols">
-                    <section>
-                        <ul class="site-footer__list">
-                            <li><a class="site-footer__city" href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">{% include "components/icon.html" with name="map-pin" size="16" %}تهران</a></li>
-                            <li><a class="site-footer__city" href="{% url 'opportunities' %}">{% include "components/icon.html" with name="map-pin" size="16" %}سایر شهرها</a></li>
-                        </ul>
-                        <h3 class="site-footer__label">انواع فرصت هنری</h3>
-                        <ul class="site-footer__list">
-                            {% for item in footer_productions %}
-                                <li><a href="{% url 'opportunities' %}?production={{ item|urlencode }}">{{ item }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </section>
-                    <section>
-                        <ul class="site-footer__list">
-                            {% for role in footer_roles|slice:":7" %}
-                                <li><a href="{% url 'opportunities' %}?role={{ role.slug }}">{{ role.title }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </section>
-                </div>
+        <div class="site-footer__mobile">
+            <div class="site-footer__accordions">
+                <details class="site-footer__accordion">
+                    <summary><span>فراخوان‌های هنری</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        <a href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">فراخوان‌های تهران</a>
+                        <a href="{% url 'opportunities' %}">سایر فراخوان‌ها</a>
+                    </div>
+                </details>
+                <details class="site-footer__accordion">
+                    <summary><span>هنرمندان فعال</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        <a href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">هنرمندان تهران</a>
+                        <a href="{% url 'artists' %}">همه هنرمندان</a>
+                    </div>
+                </details>
+                <details class="site-footer__accordion">
+                    <summary><span>پروژه‌های جدید</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        {% for project in footer_projects %}<a href="{% url 'project' project.slug %}">{{ project.title }}</a>{% endfor %}
+                    </div>
+                </details>
+                <details class="site-footer__accordion">
+                    <summary><span>راهنمای هنریار</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        <a href="{% url 'magazine' %}">مجله هنری</a>
+                        <a href="{% url 'terms' %}">قوانین و مقررات</a>
+                        <a href="{% url 'sitemap' %}">نقشه سایت</a>
+                    </div>
+                </details>
+                <details class="site-footer__accordion">
+                    <summary><span>ارتباط با ما</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        <a href="{% url 'about' %}">درباره ما</a>
+                        <a href="{% url 'contact' %}">تماس با ما</a>
+                    </div>
+                </details>
             </div>
-            <div class="site-footer__pair">
-                <div class="site-footer__pair-cols">
-                    <section>
-                        <h2 class="site-footer__title">{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h2>
-                        <ul class="site-footer__list">
-                            <li><a class="site-footer__city" href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">{% include "components/icon.html" with name="map-pin" size="16" %}تهران</a></li>
-                            <li><a class="site-footer__city" href="{% url 'artists' %}">{% include "components/icon.html" with name="map-pin" size="16" %}سایر شهرها</a></li>
-                        </ul>
-                        <ul class="site-footer__list site-footer__list--follow">
-                            {% for role in footer_roles|slice:":5" %}
-                                <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </section>
-                    <section>
-                        <h2 class="site-footer__title">{% include "components/icon.html" with name="clapperboard" size="18" %}پروژه‌های جدید</h2>
-                        <ul class="site-footer__list">
-                            {% for project in footer_projects %}
-                                <li>
-                                    <a href="{% url 'project' project.slug %}">{{ project.title }}</a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </section>
-                </div>
-            </div>
+
+            {% include "components/layout/footer_brand.html" with footer_brand_modifier="site-footer__brand--mobile" %}
         </div>
 
         <div class="site-footer__base">

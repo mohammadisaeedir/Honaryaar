@@ -1,29 +1,95 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}تماس با ما · هنریار{% endblock %}
 {% block og_title %}تماس با ما · هنریار{% endblock %}
 
+{% block main_class %}site-main contact-main mx-auto w-full min-w-0 px-4 pb-24 pt-8 md:pb-16{% endblock %}
+
 {% block content %}
-    <h1 class="mb-4 text-[28px] font-semibold leading-9">تماس با ما</h1>
-    {% if sent %}
-        <p class="plain-copy">پیام شما ثبت شد.</p>
-    {% else %}
-        <p class="plain-copy">برای همکاری، پرسش عمومی، یا هر حرف دیگری بنویسید.</p>
-        <form class="support-form" method="post" action="{% url 'contact' %}">
-            {% csrf_token %}
-            <fieldset class="mb-4">
-                <legend class="field-label">موضوع</legend>
-                {{ form.kind_reason }}
-                {% if form.kind_reason.errors %}<p class="support-error">{{ form.kind_reason.errors.0 }}</p>{% endif %}
-            </fieldset>
-            <label class="mb-4 block">
-                <span class="field-label">پیام</span>
-                <textarea class="field" name="body" rows="5">{{ form.body.value|default:'' }}</textarea>
-                {% if form.body.errors %}<p class="support-error">{{ form.body.errors.0 }}</p>{% endif %}
-            </label>
-            <div class="mt-4">
-                {% include "components/button.html" with label="ارسال" button_type="submit" %}
+    <section class="contact-page" aria-labelledby="contact-page-title">
+        <header class="contact-page__hero">
+            <h1 id="contact-page-title">با هنریار در تماس باشید</h1>
+            <p>پرسش، پیشنهاد یا مشکلی دارید؟ برای ما بنویسید.</p>
+        </header>
+
+        <div class="contact-page__grid">
+            <section class="contact-card contact-card--form" aria-labelledby="contact-form-title">
+                {% if sent %}
+                    <div class="contact-success" role="status" aria-live="polite">
+                        <h2 id="contact-form-title">پیام شما ثبت شد</h2>
+                        <p>پیام‌تان به دست ما رسید. در اولین فرصت پاسخ می‌دهیم.</p>
+                        <a class="contact-submit" href="{% url 'contact' %}">ارسال پیام دیگر</a>
+                    </div>
+                {% else %}
+                    <h2 id="contact-form-title">ارسال پیام</h2>
+                    <form class="contact-form" method="post" action="{% url 'contact' %}">
+                        {% csrf_token %}
+                        <label class="contact-form__field" for="id_kind_reason">
+                            <span>موضوع</span>
+                            <select class="contact-select" id="id_kind_reason" name="{{ form.kind_reason.html_name }}" required>
+                                <option value="">انتخاب کنید</option>
+                                {% for value, label in form.fields.kind_reason.choices %}
+                                    <option value="{{ value }}" {% if form.kind_reason.value == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.kind_reason.errors %}<p class="contact-form__error">{{ form.kind_reason.errors.0 }}</p>{% endif %}
+                        </label>
+                        <label class="contact-form__field" for="id_body">
+                            <span>پیام</span>
+                            <textarea class="contact-textarea" id="id_body" name="{{ form.body.html_name }}" rows="6" placeholder="پیام خود را بنویسید" required>{{ form.body.value|default:'' }}</textarea>
+                            {% if form.body.errors %}<p class="contact-form__error">{{ form.body.errors.0 }}</p>{% endif %}
+                        </label>
+                        <button class="contact-submit" type="submit">ارسال پیام</button>
+                    </form>
+                {% endif %}
+            </section>
+
+            <section class="contact-card contact-card--details" aria-labelledby="contact-details-title">
+                <h2 id="contact-details-title">راه‌های ارتباطی</h2>
+                <dl class="contact-details">
+                    <div>
+                        <dt>ایمیل</dt>
+                        <dd><a href="mailto:info@honaryaar.ir" dir="ltr">info@honaryaar.ir</a></dd>
+                        <img src="{% static 'contact/email.svg' %}" width="32" height="32" alt="">
+                    </div>
+                    <div>
+                        <dt>تلگرام</dt>
+                        <dd><a href="https://t.me/honaryaar" dir="ltr">@honaryaar_channel</a></dd>
+                        <img src="{% static 'contact/telegram.svg' %}" width="32" height="32" alt="">
+                    </div>
+                    <div>
+                        <dt>شماره تماس</dt>
+                        <dd><a href="tel:+989356706868" dir="ltr">0935 670 6868</a></dd>
+                        <img src="{% static 'contact/phone.svg' %}" width="32" height="32" alt="">
+                    </div>
+                </dl>
+                <p class="contact-hours">
+                    <span>ساعت پاسخگویی، روزهای شنبه تا پنجشنبه ساعت ۹ الی ۱۸</span>
+                    <img src="{% static 'contact/clock.svg' %}" width="32" height="32" alt="">
+                </p>
+            </section>
+        </div>
+
+        <section class="contact-social" aria-labelledby="contact-social-title">
+            <img class="contact-social__illustration" src="{% static 'contact/social-media-illustration.png' %}" width="170" height="170" alt="تصویر تلفن همراه و شبکه‌های اجتماعی">
+            <div class="contact-social__content">
+                <div>
+                    <h2 id="contact-social-title">هنریار در شبکه‌های اجتماعی</h2>
+                    <p>برای دسترسی به آخرین اخبار، فراخوان‌ها هنریار را در شبکه‌های اجتماعی دنبال کنید</p>
+                </div>
+                <div class="contact-social__links" aria-label="شبکه‌های اجتماعی هنریار">
+                    <span class="contact-social__link" role="img" aria-label="لینکدین هنریار به‌زودی">
+                        <img src="{% static 'contact/instagram.svg' %}" width="24" height="24" alt="">
+                    </span>
+                    <a class="contact-social__link" href="https://instagram.com/honaryaar" aria-label="اینستاگرام هنریار">
+                        <img src="{% static 'contact/linkedin.svg' %}" width="24" height="24" alt="">
+                    </a>
+                    <a class="contact-social__link" href="https://t.me/honaryaar" aria-label="تلگرام هنریار">
+                        <img src="{% static 'contact/x.svg' %}" width="24" height="24" alt="">
+                    </a>
+                </div>
             </div>
-        </form>
-    {% endif %}
+        </section>
+    </section>
 {% endblock %}

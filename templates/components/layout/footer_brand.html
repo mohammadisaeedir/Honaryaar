@@ -1,0 +1,25 @@
+{% load static %}
+<section class="site-footer__brand {{ footer_brand_modifier }}" aria-label="هنریار">
+    <img class="site-footer__logo" src="{% static 'footer/figma-raw-4.png' %}" width="157" height="64" alt="هنریار">
+    <div class="site-footer__follow">
+        <h2 class="site-footer__title">هنریار را در شبکه‌های اجتماعی دنبال کنید</h2>
+        <div class="site-footer__socials">
+            {% for item in footer_socials %}
+                <a href="{{ item.href }}" target="_blank" rel="noopener" aria-label="{{ item.label }}">
+                    {% if item.icon == "telegram" %}
+                        <img src="{% static 'footer/social-telegram.svg' %}" width="24" height="24" alt="">
+                    {% elif item.icon == "instagram" %}
+                        <img src="{% static 'footer/social-instagram.svg' %}" width="24" height="24" alt="">
+                    {% else %}
+                        <img src="{% static 'footer/social-bale.svg' %}" width="24" height="24" alt="">
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="site-footer__badges" aria-label="مجوزها">
+        <span><img src="{% static 'footer/badge-samandehi.png' %}" width="54" height="54" alt="ساماندهی"></span>
+        <span><img src="{% static 'footer/badge-two.png' %}" width="54" height="54" alt="نماد اعتماد"></span>
+        <span><img src="{% static 'footer/badge-three.png' %}" width="57" height="62" alt="نشان اعتماد"></span>
+    </div>
+</section>
