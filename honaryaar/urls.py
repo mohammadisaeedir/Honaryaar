@@ -53,6 +53,7 @@ from honaryaar.views import (
     guide,
     artist_list,
     home,
+    landing,
     opportunity_detail,
     opportunity_list,
     project_detail,
@@ -67,6 +68,7 @@ from honaryaar.views import (
 
 urlpatterns = [
     path("", home, name="home"),
+    path("landing/", landing, name="landing"),
     path("about-us/", about, name="about"),
     path("magazine/", guide, name="magazine"),
     path("terms/", guide, name="terms"),

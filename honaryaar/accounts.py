@@ -8,8 +8,13 @@ from django.db import IntegrityError, transaction
 from honaryaar.models import Profile, ProfileStatus
 
 _DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
+_PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
 _PHONE = re.compile(r"^09\d{9}$")
 _USERNAME_ALPHABET = string.ascii_lowercase + string.digits
+
+
+def display_phone(phone):
+    return (phone or "").translate(_PERSIAN_DIGITS)
 
 
 def normalize_phone(raw):

@@ -50,7 +50,7 @@
     {% include "components/skeleton/list.html" with kind="opportunities" %}
     <div class="live-pane mt-6" id="results">
         {% if opportunities %}
-            <div class="catalog-grid grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
+            <div class="catalog-grid catalog-grid--3 catalog-grid--calls grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-catalog-more data-offset="{{ page_shown }}" data-total="{{ page_total }}">
                 {% for opportunity in opportunities %}
                     {% include "components/casting/opportunity_card.html" %}
                 {% endfor %}

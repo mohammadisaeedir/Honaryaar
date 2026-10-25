@@ -25,6 +25,21 @@ def _join_cta(user):
 
 
 def home(request):
+    return render(
+        request,
+        "pages/home_redesign.html",
+        {
+            "hero_fields": catalog.hero_fields(),
+            "featured_opportunities": catalog.featured_opportunities()[:3],
+            "testimonials": catalog.featured_testimonials()[:3],
+            "posts": catalog.HOME_POSTS[:4],
+            "faqs": catalog.HOME_FAQS,
+            "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
+        },
+    )
+
+
+def landing(request):
     opportunities = catalog.featured_opportunities()
     origin = request.build_absolute_uri("/").rstrip("/")
     payload = {

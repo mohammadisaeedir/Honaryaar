@@ -1,0 +1,99 @@
+{% load static %}
+{% if not request.user.is_authenticated %}
+<div
+    class="login-modal"
+    id="login-modal"
+    data-session-phone="{{ request.session.login_phone|default:'' }}"
+    x-data="honarLoginModal"
+    x-cloak
+    x-show="open"
+    x-effect="document.body.classList.toggle('is-login-open', !!open)"
+    @honar-login-open.window="openModal($event.detail || {})"
+    @keydown.escape.window="if (open) closeModal()"
+    role="dialog"
+    aria-modal="true"
+    :aria-labelledby="step === 'otp' ? 'login-otp-title' : 'login-phone-title'"
+>
+    <div class="login-modal__backdrop" @click="closeModal()"></div>
+    <div class="login-modal__sheet" @click.stop>
+        <div class="login-modal__mobile-bar">
+            <button class="login-modal__icon-btn" type="button" @click="closeModal()" aria-label="بستن">
+                <img src="{% static 'home/login-close.svg' %}" width="20" height="20" alt="">
+            </button>
+            <img class="login-modal__logo" src="{% static 'brand/logo-fa.svg' %}" width="98" height="40" alt="هنریار">
+            <span class="login-modal__icon-btn is-spacer" aria-hidden="true"></span>
+        </div>
+
+        <div class="login-modal__panel" x-show="step === 'phone'" x-cloak>
+            <div class="login-modal__header">
+                <h2 id="login-phone-title">ورود / ثبت‌نام</h2>
+                <p>با شمارهٔ موبایل وارد شوید. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
+            </div>
+            <form class="login-modal__form" method="post" action="{% url 'login' %}" @submit.prevent="submitPhone()">
+                {% csrf_token %}
+                <input type="hidden" name="next" :value="next">
+                <label class="login-modal__field">
+                    <span>شمارهٔ موبایل</span>
+                    <input
+                        class="field login-modal__input"
+                        type="tel"
+                        name="phone"
+                        x-model="phone"
+                        x-ref="phoneInput"
+                        inputmode="numeric"
+                        autocomplete="tel"
+                        maxlength="16"
+                        placeholder="09123456789"
+                        dir="ltr"
+                    >
+                </label>
+                <p class="login-modal__error" x-show="error" x-text="error" x-cloak></p>
+                <p class="login-modal__terms login-modal__terms--desktop">با ادامه، قوانین و مقررات هنریار را می‌پذیرید.</p>
+                <div class="login-modal__actions login-modal__actions--phone">
+                    <button class="login-modal__primary" type="submit" :disabled="busy" x-text="busy ? '...' : 'دریافت کد تایید'"></button>
+                </div>
+                <p class="login-modal__terms login-modal__terms--mobile">با ادامه، قوانین و مقررات هنریار را می‌پذیرید.</p>
+            </form>
+        </div>
+
+        <div class="login-modal__panel" x-show="step === 'otp'" x-cloak>
+            <div class="login-modal__header">
+                <h2 id="login-otp-title">دریافت کد تایید</h2>
+                <p>کد ارسال شده به موبایل خود را وارد کنید</p>
+            </div>
+            <form class="login-modal__form" method="post" action="{% url 'login-code' %}" @submit.prevent="submitCode()">
+                {% csrf_token %}
+                <input type="hidden" name="next" :value="next">
+                <input type="hidden" name="code" :value="codeValue()">
+                <div class="login-modal__otp-body">
+                    <button class="login-modal__phone-edit" type="button" @click="backToPhone()" aria-label="تغییر شماره">
+                        <img src="{% static 'home/login-edit.svg' %}" width="20" height="20" alt="">
+                        <span dir="ltr" x-text="phoneDisplay"></span>
+                    </button>
+                    <div class="login-modal__otp" dir="ltr">
+                        <template x-for="(digit, index) in digits" :key="index">
+                            <input
+                                class="field login-modal__otp-cell"
+                                type="text"
+                                inputmode="numeric"
+                                maxlength="1"
+                                autocomplete="one-time-code"
+                                :value="digit"
+                                @input="onDigitInput($event, index)"
+                                @keydown="onDigitKey($event, index)"
+                                @paste.prevent="onDigitPaste($event)"
+                                :data-otp-index="index"
+                            >
+                        </template>
+                    </div>
+                </div>
+                <p class="login-modal__error" x-show="error" x-text="error" x-cloak></p>
+                <div class="login-modal__actions login-modal__actions--otp">
+                    <button class="login-modal__primary" type="submit" :disabled="busy || !codeReady()" x-text="busy ? '...' : 'ورود به حساب کاربری'"></button>
+                    <button class="login-modal__resend" type="button" :disabled="busy || !!timer" @click="resendCode()" x-text="timerLabel()"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}

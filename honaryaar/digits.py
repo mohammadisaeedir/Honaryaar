@@ -4,14 +4,49 @@ _PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
 _SKIP_BLOCK = re.compile(
     r"(?is)(<(?:script|style|textarea)\b[^>]*>.*?</(?:script|style|textarea)\s*>)"
 )
-_TAG_OR_TEXT = re.compile(r"(<[^>]*>)|([^<]+)")
+
+
+def _next_tag_end(html, start):
+    """Return index after a tag that begins at start, respecting quoted attrs."""
+    if start >= len(html) or html[start] != "<":
+        return start
+    if html.startswith("<!--", start):
+        end = html.find("-->", start + 4)
+        return len(html) if end < 0 else end + 3
+    i = start + 1
+    quote = None
+    while i < len(html):
+        ch = html[i]
+        if quote:
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in "\"'":
+            quote = ch
+            i += 1
+            continue
+        if ch == ">":
+            return i + 1
+        i += 1
+    return len(html)
 
 
 def _convert_markup(html):
-    return _TAG_OR_TEXT.sub(
-        lambda match: match.group(1) if match.group(1) is not None else match.group(2).translate(_PERSIAN_DIGITS),
-        html,
-    )
+    out = []
+    cursor = 0
+    length = len(html)
+    while cursor < length:
+        tag_at = html.find("<", cursor)
+        if tag_at < 0:
+            out.append(html[cursor:].translate(_PERSIAN_DIGITS))
+            break
+        if tag_at > cursor:
+            out.append(html[cursor:tag_at].translate(_PERSIAN_DIGITS))
+        end = _next_tag_end(html, tag_at)
+        out.append(html[tag_at:end])
+        cursor = end
+    return "".join(out)
 
 
 def persian_digits_html(html):

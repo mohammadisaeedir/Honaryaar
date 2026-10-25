@@ -76,6 +76,18 @@
 
     function signedIn() {
         if (bar.dataset.auth === "1") return true;
+        if (typeof window.openHonarLogin === "function") {
+            try {
+                var next = "";
+                var href = bar.dataset.login || "";
+                var match = href.match(/[?&]next=([^&]+)/);
+                if (match) next = decodeURIComponent(match[1]);
+                window.openHonarLogin(next, "phone");
+            } catch (error) {
+                window.location = bar.dataset.login;
+            }
+            return false;
+        }
         window.location = bar.dataset.login;
         return false;
     }

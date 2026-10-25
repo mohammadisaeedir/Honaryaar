@@ -1,0 +1,37 @@
+{% load static honaryaar_ui %}
+{% url 'opportunity' opportunity.slug as opportunity_url %}
+<article class="call-card">
+    {% if show_pick %}
+        <label class="pick-box"><input type="checkbox" data-pick value="{{ opportunity.slug }}" aria-label="انتخاب"></label>
+    {% endif %}
+    <a class="call-card__hit" href="{{ opportunity_url }}" aria-label="{{ opportunity.title }}"></a>
+    <div class="call-card__meta">
+        {% if opportunity.featured %}<span class="call-card__badge">ویژه</span>{% endif %}
+        <div class="call-card__category">
+            <span>{{ opportunity.production|default:'نمایش صحنه‌ای' }}</span>
+            <img class="call-card__meta-divider" src="{% static 'home/featured-call-meta-divider.svg' %}" width="12" height="1" alt="" aria-hidden="true">
+            <span class="call-card__art">
+                <span>{{ opportunity.art_title|default:'تئاتر' }}</span>
+                <img src="{% static 'home/featured-call-art.svg' %}" width="20" height="20" alt="" aria-hidden="true">
+            </span>
+        </div>
+    </div>
+
+    <img class="call-card__divider" src="{% static 'home/featured-call-divider.svg' %}" width="368" height="1" alt="" aria-hidden="true">
+
+    <div class="call-card__body">
+        <div class="call-card__identity">
+            {% include "components/card_mark.html" with kind="opportunity" slug=opportunity.slug title=opportunity.title marks=bookmarked_opportunities %}
+            <div class="call-card__titles">
+                <h3>{{ opportunity.title }}</h3>
+                <p>{{ opportunity.project_title }}</p>
+            </div>
+        </div>
+        <div class="call-card__facts" aria-label="جزئیات فراخوان">
+            <span>{{ opportunity.count }}+</span>
+            {% if opportunity.city %}<span>{{ opportunity.city }}</span>{% endif %}
+            <span>{{ opportunity.gender|gender_label }}</span>
+            <span>{{ opportunity.pay_label }}</span>
+        </div>
+    </div>
+</article>

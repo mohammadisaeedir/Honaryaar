@@ -1,35 +1,33 @@
 {% load static honaryaar_ui %}
 {% profile_first_name user as given_name %}
-<header class="site-header site-header--redesigned {% if request.path == '/about-us/' %}site-header--dark{% else %}site-header--light{% endif %} sticky top-0 z-30 border-b border-border bg-background">
-    <div class="site-header__bar mx-auto flex h-16 w-full min-w-0 items-center gap-4 px-4">
-        <a class="site-header__brand" href="{% url 'home' %}">
-            <img class="site-logo-light block h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="80" height="32">
-            <img class="site-logo-dark h-8 w-auto" style="height: 2rem; width: auto" src="{% static 'brand/logo-fa-dark.svg' %}" alt="" aria-hidden="true" width="80" height="32">
+<header class="site-header site-header--figma {% if request.path == '/about-us/' %}site-header--dark{% endif %} sticky top-0 z-30">
+    <div class="site-header__bar">
+        <a class="site-header__brand" href="{% url 'home' %}" aria-label="هنریار">
+            <img class="site-logo-light" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="98" height="40">
+            <img class="site-logo-dark" src="{% static 'brand/logo-fa-dark.svg' %}" alt="" aria-hidden="true" width="98" height="40">
         </a>
+
         <nav class="site-nav" aria-label="اصلی">
-            <a class="{% if request.path == '/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'home' %}">خانه</a>
-            <a class="{% if '/opportunities/' in request.path or request.path == '/opportunities/' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'opportunities' %}">فراخوان‌ها</a>
-            <a class="{% if '/artists/' in request.path %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'artists' %}">هنرمندان</a>
-            <a class="{% if request.path == '/projects/' or '/projects/' == request.path|slice:':10' %}text-foreground{% else %}text-muted-foreground{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
+            <a class="{% if request.path == '/' %}is-active{% endif %}" href="{% url 'home' %}">خانه</a>
+            <a class="{% if '/opportunities/' in request.path %}is-active{% endif %}" href="{% url 'opportunities' %}">فراخوان‌ها</a>
+            <a class="{% if '/artists/' in request.path %}is-active{% endif %}" href="{% url 'artists' %}">هنرمندان</a>
+            <a class="{% if request.path == '/projects/' or request.path|slice:':10' == '/projects/' %}is-active{% endif %}" href="{% url 'projects' %}">پروژه‌ها</a>
         </nav>
+
         <div class="site-header__q">
             <button class="site-header__q-btn{% if request.GET.q %} has-value{% endif %}" type="button" aria-keyshortcuts="Meta+K Control+K" @click="searchOpen = true">
                 <span class="site-header__q-label">
-                    {% include "components/icon.html" with name="search" size="18" %}
                     {% if request.GET.q %}
                         <span>{{ request.GET.q }}</span>
                     {% else %}
-                        <span data-search-typewriter>مثلاً: بازیگر</span>
+                        <span data-search-typewriter>بازیگر مرد در تهران</span>
                     {% endif %}
-                </span>
-                <span class="site-header__kbd" aria-hidden="true">
-                    <kbd class="is-mac">{% include "components/icon.html" with name="command" size="12" %}</kbd>
-                    <kbd class="is-win">Ctrl</kbd>
-                    <kbd>K</kbd>
+                    <img class="site-header__q-icon" src="{% static 'home/header-search.svg' %}" width="24" height="24" alt="" aria-hidden="true">
                 </span>
             </button>
             {% include "components/layout/search_modal.html" %}
         </div>
+
         <div class="site-header__end">
             <div class="theme-switch" role="group" aria-label="حالت نمایش">
                 <button type="button" data-theme-value="light" aria-label="روز" aria-pressed="true">
@@ -39,15 +37,21 @@
                     {% include "components/icon.html" with name="moon" size="18" %}
                 </button>
             </div>
+
+            <a class="site-header__cta" href="{% if user.is_authenticated %}{% url 'me-project-new' %}{% else %}{% url 'login' %}?next={% url 'me-project-new' %}{% endif %}">
+                <span>ثبت رایگان فراخوان</span>
+                <img src="{% static 'home/header-plus.svg' %}" width="20" height="20" alt="" aria-hidden="true">
+            </a>
+
             {% if user.is_authenticated %}
                 <div class="site-account-wrap" x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false">
-                    <a class="site-account site-account--mobile" href="{% url 'me-profile' %}">
-                        {% include "components/icon.html" with name="user" %}
+                    <a class="site-header__account site-account--mobile" href="{% url 'me-profile' %}">
                         <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
+                        <img src="{% static 'home/header-user.svg' %}" width="20" height="20" alt="" aria-hidden="true">
                     </a>
-                    <button class="site-account site-account--desk" type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
-                        {% include "components/icon.html" with name="user" %}
+                    <button class="site-header__account site-account--desk" type="button" @click="open = !open" :aria-expanded="open" aria-haspopup="menu">
                         <span class="site-account__name">{% if given_name %}{{ given_name }}{% else %}پروفایل{% endif %}</span>
+                        <img src="{% static 'home/header-user.svg' %}" width="20" height="20" alt="" aria-hidden="true">
                     </button>
                     <div class="site-account__panel" x-cloak x-show="open" role="menu">
                         <a role="menuitem" href="{% url 'me-profile' %}">
@@ -63,9 +67,9 @@
                     </div>
                 </div>
             {% else %}
-                <a class="site-account" href="{% url 'login' %}">
-                    {% include "components/icon.html" with name="user" %}
-                    <span class="site-account__name">ورود/ثبت نام</span>
+                <a class="site-header__account" href="{% url 'login' %}">
+                    <span class="site-account__name">ورود / ثبت‌نام</span>
+                    <img src="{% static 'home/header-user.svg' %}" width="20" height="20" alt="" aria-hidden="true">
                 </a>
             {% endif %}
         </div>

@@ -156,6 +156,35 @@ class AdminLanguageTests(TestCase):
 
 
 class PageViewTests(TestCase):
+    def test_homepage_uses_the_new_hero_while_landing_keeps_the_previous_page(self):
+        homepage = self.client.get(reverse("home"))
+        self.assertEqual(homepage.status_code, 200)
+        self.assertContains(homepage, "صحنه‌ی بعدی تو، همین‌جاست")
+        self.assertContains(homepage, "home/hero-figma-1.png")
+        self.assertContains(homepage, 'class="new-home-hero__rotate hero-rotate"')
+        self.assertContains(homepage, "hero-rotate.js")
+        self.assertContains(homepage, "هنریار چطور کمکت می‌کند؟")
+        self.assertContains(homepage, "home/feature-profile.svg")
+        self.assertContains(homepage, "فراخوان‌های ویژه")
+        self.assertContains(homepage, "home/featured-call-art.svg")
+        self.assertContains(homepage, "هنریار، از نگاه اهل صحنه")
+        self.assertContains(homepage, "home/testimonial-divider.svg")
+        self.assertContains(homepage, "متن نقش روشن بود")
+        self.assertContains(homepage, "سارا محمدی")
+        self.assertContains(homepage, "تازه‌های مجله")
+        self.assertContains(homepage, "home/magazine-card.png")
+        self.assertContains(homepage, "چطور برای یک نقش کوتاه آماده شویم")
+        self.assertContains(homepage, "سوالات متداول")
+        self.assertContains(homepage, "home/faq-illustration.png")
+        self.assertContains(homepage, "برای یک نقش چطور درخواست بدهم؟")
+        self.assertContains(homepage, "هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد")
+        self.assertContains(homepage, "home/quote-illustration.png")
+
+        landing = self.client.get(reverse("landing"))
+        self.assertEqual(landing.status_code, 200)
+        self.assertContains(landing, "در جستجوی فرصت هنری")
+        self.assertContains(landing, 'content="noindex, nofollow"')
+
     def test_opening_a_profile_counts_once_per_session(self):
         from honaryaar.accounts import ensure_profile
 
@@ -225,11 +254,11 @@ class DocumentErdTests(TestCase):
         denied = self.client.get(reverse("admin-documents"))
         self.assertEqual(denied.status_code, 403)
 
-
 class AccountIdentityTests(TestCase):
     def test_registration_stores_phone_apart_from_username(self):
         response = self.client.post(reverse("login"), {"phone": "۰۹۱۲۳۴۵۶۷۸۹"})
-        self.assertRedirects(response, reverse("login-code"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("auth=otp", response["Location"])
         response = self.client.post(reverse("login-code"), {"code": "6789"})
         self.assertRedirects(response, reverse("home"))
 

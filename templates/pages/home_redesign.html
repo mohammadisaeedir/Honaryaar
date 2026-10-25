@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static honaryaar_ui %}
+
+{% block title %}هنریار | فراخوان‌های تئاتر{% endblock %}
+{% block meta_description %}فراخوان‌های تئاتر را ببین، با پروژه‌ها آشنا شو و برای نقش مناسب خودت درخواست بده.{% endblock %}
+{% block og_title %}هنریار | فراخوان‌های تئاتر{% endblock %}
+{% block og_description %}فراخوان‌های تئاتر را ببین، با پروژه‌ها آشنا شو و برای نقش مناسب خودت درخواست بده.{% endblock %}
+{% block body_class %}home-redesign-page min-h-dvh overflow-x-clip bg-background text-sm leading-[22px] text-foreground antialiased{% endblock %}
+{% block main_class %}site-main home-redesign-main mx-auto w-full min-w-0{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home-redesign.css' %}?v={{ asset_v }}">
+    <script src="{% static 'js/hero-rotate.js' %}?v={{ asset_v }}" defer></script>
+    <script src="{% static 'js/home-faq.js' %}?v={{ asset_v }}" defer></script>
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+    <section class="new-home-hero" aria-labelledby="new-home-title">
+        <div class="new-home-hero__card">
+            <div class="new-home-hero__copy">
+                <div class="new-home-hero__heading-group">
+                    <div class="new-home-hero__heading">
+                        <h1 id="new-home-title">صحنه‌ی بعدی تو، همین‌جاست...</h1>
+                        <p class="new-home-hero__rotate hero-rotate" data-words="{{ hero_fields|join:'|' }}" aria-label="{{ hero_fields|join:'، ' }}">
+                            <span class="hero-word">{{ hero_fields.0|default:'تئاتر' }}</span>
+                        </p>
+                    </div>
+                    <p class="new-home-hero__description">فراخوان‌های تئاتر را ببین، با پروژه‌ها آشنا شو و برای نقش مناسب خودت درخواست بده.</p>
+                </div>
+                <a class="new-home-hero__cta" href="{% url 'opportunities' %}">مشاهده فراخوان‌های موجود</a>
+            </div>
+            <div class="new-home-hero__art" aria-hidden="true">
+                <img src="{% static 'home/hero-figma-1.png' %}" width="960" height="1072" alt="">
+            </div>
+        </div>
+
+        <ul class="new-home-stats" aria-label="آمار هنریار">
+            <li><strong>۶۵+</strong><span>فراخوان همکاری</span></li>
+            <li><strong>۲۵+</strong><span>نقش تخصصی</span></li>
+            <li><strong>۳۰+</strong><span>پروژه در حال جذب</span></li>
+            <li><strong>۵+</strong><span>شهر</span></li>
+        </ul>
+    </section>
+
+    <section class="new-home-features" aria-labelledby="new-home-features-title">
+        <div class="new-home-features__panel">
+            <h2 id="new-home-features-title">هنریار چطور کمکت می‌کند؟</h2>
+            <div class="new-home-features__list">
+                <article class="new-home-feature">
+                    <img src="{% static 'home/feature-project.svg' %}" width="34" height="34" alt="" aria-hidden="true">
+                    <div>
+                        <h3>بازیگر مناسب پروژه‌ات را پیدا کن</h3>
+                        <p>فراخوان منتشر کن و درخواست‌ها و رزومه‌ها را یک‌جا بررسی کن تا انتخاب راحت‌تر شود.</p>
+                    </div>
+                </article>
+                <article class="new-home-feature">
+                    <img src="{% static 'home/feature-role.svg' %}" width="34" height="34" alt="" aria-hidden="true">
+                    <div>
+                        <h3>نقش بعدی‌ات را پیدا کن</h3>
+                        <p>جزئیات فراخوان‌ها و نقش‌ها را ببین و برای همکاری‌هایی که با توانایی‌هایت جورند درخواست بده.</p>
+                    </div>
+                </article>
+                <article class="new-home-feature">
+                    <img src="{% static 'home/feature-profile.svg' %}" width="34" height="34" alt="" aria-hidden="true">
+                    <div>
+                        <h3>توانایی‌هایت را معرفی کن</h3>
+                        <p>رزومه، مهارت‌ها و نمونه‌کارهایت را در یک پروفایل جمع کن؛ یک لینک برای معرفی خودت به پروژه‌ها.</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    {% if featured_opportunities %}
+        <section class="new-home-featured" aria-labelledby="new-home-featured-title">
+            <div class="new-home-featured__header">
+                <a class="new-home-featured__more" href="{% url 'opportunities' %}">
+                    <span>مشاهده بیشتر</span>
+                    <span class="new-home-featured__more-icon" aria-hidden="true"></span>
+                </a>
+                <h2 id="new-home-featured-title">فراخوان‌های ویژه</h2>
+            </div>
+
+            <div class="new-home-featured__list">
+                {% for opportunity in featured_opportunities %}
+                    {% include "components/casting/call_card.html" %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if testimonials %}
+        <section class="new-home-testimonials" aria-labelledby="new-home-testimonials-title">
+            <h2 id="new-home-testimonials-title">هنریار، از نگاه اهل صحنه</h2>
+
+            <div class="new-home-testimonials__list">
+                {% for item in testimonials %}
+                    {% media_src item.image_thumb_key item.image_public item.image_public_acl item.image_key "photo" as portrait %}
+                    <figure class="new-home-testimonial">
+                        <blockquote>{{ item.quote }}</blockquote>
+                        <img class="new-home-testimonial__divider" src="{% static 'home/testimonial-divider.svg' %}" width="355" height="1" alt="" aria-hidden="true">
+                        <figcaption>
+                            {% if portrait %}
+                                <img class="new-home-testimonial__avatar" src="{{ portrait }}" alt="">
+                            {% else %}
+                                <span class="new-home-testimonial__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
+                            {% endif %}
+                            <span class="new-home-testimonial__author">
+                                <strong>{{ item.name }}</strong>
+                                {% if item.role %}<span>{{ item.role }}</span>{% endif %}
+                            </span>
+                        </figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if posts %}
+        <section class="new-home-magazine" aria-labelledby="new-home-magazine-title">
+            <div class="new-home-magazine__header">
+                <a class="new-home-magazine__more" href="{% url 'magazine' %}">
+                    <img src="{% static 'home/magazine-more.svg' %}" width="24" height="24" alt="" aria-hidden="true">
+                    <span>مشاهده بیشتر</span>
+                </a>
+                <h2 id="new-home-magazine-title">تازه‌های مجله</h2>
+            </div>
+
+            <div class="new-home-magazine__list">
+                {% for post in posts %}
+                    <a class="new-home-magazine__card" href="{% url 'magazine' %}">
+                        <span class="new-home-magazine__image">
+                            <img src="{% static 'home/magazine-card.png' %}" width="1440" height="960" alt="" loading="lazy" decoding="async">
+                        </span>
+                        <span class="new-home-magazine__body">
+                            <span class="new-home-magazine__badge">{{ post.kicker }}</span>
+                            <span class="new-home-magazine__title">{{ post.title }}</span>
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if faqs %}
+        <section class="new-home-faq" aria-labelledby="new-home-faq-title" data-home-faq>
+            <h2 id="new-home-faq-title">سوالات متداول</h2>
+            <div class="new-home-faq__content">
+                <div class="new-home-faq__art" aria-hidden="true">
+                    <img src="{% static 'home/faq-illustration.png' %}" width="1312" height="1199" alt="">
+                </div>
+                <div class="new-home-faq__list">
+                    {% for item in faqs %}
+                        <details class="new-home-faq__item"{% if forloop.first %} open{% endif %}>
+                            <summary>
+                                <span>{{ item.question }}</span>
+                                <span class="new-home-faq__indicator" aria-hidden="true">
+                                    <img class="new-home-faq__arrow new-home-faq__arrow--up" src="{% static 'home/faq-arrow-up.svg' %}" width="24" height="24" alt="">
+                                    <img class="new-home-faq__arrow new-home-faq__arrow--down" src="{% static 'home/faq-arrow-down.svg' %}" width="24" height="24" alt="">
+                                </span>
+                            </summary>
+                            <div class="new-home-faq__panel">
+                                <p>{{ item.answer }}</p>
+                            </div>
+                        </details>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="new-home-quote" aria-labelledby="new-home-quote-text">
+        <figure class="new-home-quote__card">
+            <span class="new-home-quote__illustration" aria-hidden="true">
+                <img src="{% static 'home/quote-illustration.png' %}" width="1120" height="1404" alt="">
+            </span>
+            <figcaption class="new-home-quote__copy">
+                <blockquote id="new-home-quote-text">“هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد”</blockquote>
+                <p dir="ltr">Daniel Burleigh Parkhurst · The Painter in Oil, ۱۸۹۸</p>
+            </figcaption>
+        </figure>
+    </section>
+{% endblock %}

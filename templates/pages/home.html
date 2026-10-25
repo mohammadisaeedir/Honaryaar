@@ -2,6 +2,7 @@
 {% load static honaryaar_ui %}
 
 {% block title %}هنریار | فراخوان تئاتر و پیدا کردن هنرمند{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
 {% block meta_description %}هنریار جای دیدن فراخوان‌های تئاتر و پیدا کردن هنرمند است. نقش، شهر و پروژه را ببینید و برای همان نقش درخواست بدهید.{% endblock %}
 {% block og_title %}هنریار | فراخوان تئاتر و پیدا کردن هنرمند{% endblock %}
 {% block og_description %}هنریار جای دیدن فراخوان‌های تئاتر و پیدا کردن هنرمند است. نقش، شهر و پروژه را ببینید و برای همان نقش درخواست بدهید.{% endblock %}
@@ -12,6 +13,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/home.css' %}?v={{ asset_v }}">
+    <script src="{% static 'js/hero-rotate.js' %}?v={{ asset_v }}" defer></script>
     <script src="{% static 'js/lottie.min.js' %}?v={{ asset_v }}" defer></script>
     <script src="{% static 'js/lottie-home.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
@@ -131,22 +133,6 @@
     </section>
 
     {% include "components/testimonial/list.html" with testimonials=testimonials %}
-    <script>
-        document.querySelectorAll(".hero-rotate").forEach(function (root) {
-            var word = root.querySelector(".hero-word");
-            var words = (root.getAttribute("data-words") || "").split("|").filter(Boolean);
-            if (!word || words.length < 2) return;
-            var index = 0;
-            setInterval(function () {
-                word.classList.add("is-changing");
-                setTimeout(function () {
-                    index = (index + 1) % words.length;
-                    word.textContent = words[index];
-                    word.classList.remove("is-changing");
-                }, 450);
-            }, 2400);
-        });
-    </script>
 {% endblock %}
 
 {% block before_footer %}

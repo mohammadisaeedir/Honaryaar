@@ -9,7 +9,7 @@
         </a>
         <a class="{% if '/opportunities/' in request.path %}is-active{% endif %}" href="{% url 'opportunities' %}">
             {% include "components/icon.html" with name="megaphone" %}
-            <span>فرصت‌ها</span>
+            <span>فراخوان‌ها</span>
         </a>
         <a class="{% if '/artists/' in request.path %}is-active{% endif %}" href="{% url 'artists' %}">
             {% include "components/icon.html" with name="users" %}

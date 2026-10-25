@@ -1,14 +1,17 @@
+from urllib.parse import urlencode
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from django.db import transaction
 
-from honaryaar.accounts import ensure_profile, user_for_phone
+from honaryaar.accounts import display_phone, ensure_profile, user_for_phone
 from honaryaar.forms import CodeForm, CreditFormSet, MediaFormSet, PhoneForm, ProfileForm, RoleFormSet
 from honaryaar.media_files import NEED_FILE, NEED_LABEL, MediaError
 from honaryaar.media_service import attach_profile_picture, parse_upload_id, save_profile_media, url_for_key
@@ -21,34 +24,81 @@ def _safe_next(value):
     return value
 
 
+def _wants_json(request):
+    accept = request.headers.get("Accept", "")
+    return request.headers.get("X-Requested-With") == "fetch" or "application/json" in accept
+
+
+def _auth_launch(nxt, step="phone"):
+    # Always host the modal on home so protected next URLs cannot loop.
+    query = [("auth", "otp" if step == "otp" else "1")]
+    if nxt:
+        query.append(("next", nxt))
+    return "/?" + urlencode(query)
+
+
 def login_phone(request):
     nxt = _safe_next(request.POST.get("next") or request.GET.get("next"))
     if request.user.is_authenticated:
         return redirect(nxt or "home")
-    form = PhoneForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        request.session["login_phone"] = form.cleaned_data["phone"]
-        request.session["login_next"] = nxt
-        return redirect("login-code")
-    return render(request, "pages/login.html", {"form": form, "next": nxt})
+    if request.method == "POST":
+        form = PhoneForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data["phone"]
+            request.session["login_phone"] = phone
+            request.session["login_next"] = nxt
+            if _wants_json(request):
+                return JsonResponse(
+                    {
+                        "ok": True,
+                        "step": "otp",
+                        "phone": phone,
+                        "phone_display": display_phone(phone),
+                    }
+                )
+            return redirect(_auth_launch(nxt, "otp"))
+        error = form.errors.get("phone", ["شماره موبایل را درست وارد کنید."])[0]
+        if _wants_json(request):
+            return JsonResponse({"ok": False, "error": error}, status=400)
+        return redirect(_auth_launch(nxt, "phone"))
+    return redirect(_auth_launch(nxt, "phone"))
 
 
 def login_code(request):
-    nxt = request.session.get("login_next") or ""
+    nxt = _safe_next(request.session.get("login_next") or request.POST.get("next") or request.GET.get("next"))
     if request.user.is_authenticated:
         return redirect(nxt or "home")
     phone = request.session.get("login_phone")
     if not phone:
-        return redirect("login")
-    form = CodeForm(phone, request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        user = user_for_phone(phone)
-        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-        request.session.pop("login_phone", None)
-        request.session.pop("login_next", None)
-        messages.success(request, "وارد شدید.")
-        return redirect(nxt or "home")
-    return render(request, "pages/login_code.html", {"form": form, "phone": phone})
+        if _wants_json(request) and request.method == "POST":
+            return JsonResponse({"ok": False, "error": "شماره موبایل را دوباره وارد کنید.", "step": "phone"}, status=400)
+        return redirect(_auth_launch(nxt, "phone"))
+    if request.method == "POST":
+        form = CodeForm(phone, request.POST)
+        if form.is_valid():
+            user = user_for_phone(phone)
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            request.session.pop("login_phone", None)
+            request.session.pop("login_next", None)
+            messages.success(request, "وارد شدید.")
+            target = nxt or reverse("home")
+            if _wants_json(request):
+                return JsonResponse({"ok": True, "redirect": target})
+            return redirect(target)
+        error = form.errors.get("code", ["کد درست نیست."])[0]
+        if _wants_json(request):
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "error": error,
+                    "step": "otp",
+                    "phone": phone,
+                    "phone_display": display_phone(phone),
+                },
+                status=400,
+            )
+        return redirect(_auth_launch(nxt, "otp"))
+    return redirect(_auth_launch(nxt, "otp"))
 
 
 @require_POST
