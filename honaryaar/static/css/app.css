@@ -2840,12 +2840,26 @@ button.site-account {
     z-index: 40;
     top: calc(100% + 8px);
     inset-inline-end: 0;
-    width: 168px;
+    width: 188px;
     padding: 8px 0;
     border: 1px solid var(--color-line);
     border-radius: 16px;
     background: var(--color-card);
     box-shadow: 0 12px 32px rgb(23 19 26 / 12%);
+}
+
+.site-account__badge {
+    margin-inline-start: auto;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
 }
 
 .site-header .site-account__panel,

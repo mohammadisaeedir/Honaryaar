@@ -201,6 +201,31 @@ def _sidebar(request):
                         _nav(_("Bookmarks"), "bookmark", "admin:honaryaar_bookmark_changelist"),
                     ],
                 },
+                {
+                    "title": _("Notifications"),
+                    "items": [
+                        _nav(
+                            _("Templates"),
+                            "notifications",
+                            "admin:honaryaar_notificationtemplate_changelist",
+                        ),
+                        _nav(
+                            _("Notification log"),
+                            "history",
+                            "admin:honaryaar_notificationlog_changelist",
+                        ),
+                        _nav(
+                            _("In-app inbox"),
+                            "inbox",
+                            "admin:honaryaar_inappnotification_changelist",
+                        ),
+                        _nav(
+                            _("Push devices"),
+                            "smartphone",
+                            "admin:honaryaar_pushdevice_changelist",
+                        ),
+                    ],
+                },
             ]
         )
     groups.append(
@@ -232,6 +257,7 @@ UNFOLD = {
         _static_file("css/admin-font.css"),
         _static_file("css/art-picker.css"),
         _static_file("css/skill-picker.css"),
+        _static_file("css/admin-rtl.css"),
     ],
     "SIDEBAR": {
         "navigation": _sidebar,
@@ -470,6 +496,19 @@ MEDIA_MAX_VIDEO_BYTES = _int_env("MEDIA_MAX_VIDEO_BYTES", 50 * 1024 * 1024)
 MEDIA_MAX_AUDIO_BYTES = _int_env("MEDIA_MAX_AUDIO_BYTES", 15 * 1024 * 1024)
 MEDIA_PRESIGN_SECONDS = _int_env("MEDIA_PRESIGN_SECONDS", 600)
 MEDIA_ABANDON_HOURS = _int_env("MEDIA_ABANDON_HOURS", 24)
+
+# Notifications (push-first; SMS later)
+# PUSH_PROVIDER=log|fcm — use fcm when Firebase credentials + web config are set.
+PUSH_PROVIDER = os.environ.get("PUSH_PROVIDER", "log").strip() or "log"
+NOTIFICATION_LOG_RETENTION_DAYS = _int_env("NOTIFICATION_LOG_RETENTION_DAYS", 90)
+FCM_CREDENTIALS_FILE = os.environ.get("FCM_CREDENTIALS_FILE", "").strip()
+FCM_CREDENTIALS_JSON = os.environ.get("FCM_CREDENTIALS_JSON", "").strip()
+FIREBASE_API_KEY = os.environ.get("FIREBASE_API_KEY", "").strip()
+FIREBASE_AUTH_DOMAIN = os.environ.get("FIREBASE_AUTH_DOMAIN", "").strip()
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "").strip()
+FIREBASE_MESSAGING_SENDER_ID = os.environ.get("FIREBASE_MESSAGING_SENDER_ID", "").strip()
+FIREBASE_APP_ID = os.environ.get("FIREBASE_APP_ID", "").strip()
+FIREBASE_VAPID_KEY = os.environ.get("FIREBASE_VAPID_KEY", "").strip()
 
 
 # Email

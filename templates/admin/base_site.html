@@ -1,5 +1,4 @@
 {% extends "admin/base.html" %}
-{% load static %}
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
 
@@ -8,8 +7,3 @@
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
-
-{% block extrahead %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/admin-rtl.css' %}?v={{ asset_v }}">
-{% endblock %}

@@ -1,0 +1,115 @@
+{% extends "pages/account/shell.html" %}
+{% load honaryaar_ui %}
+
+{% block title %}اعلان‌ها · هنریار{% endblock %}
+{% block account_title %}اعلان‌ها{% endblock %}
+
+{% block account_main %}
+    <div class="pf-plp" dir="rtl">
+        <div class="pf-board__head">
+            <h1>اعلان‌ها{% if unread_count %} <span class="pf-notif-count">({{ unread_count }})</span>{% endif %}</h1>
+            {% if unread_count %}
+                <form method="post" action="{% url 'me-notifications-read-all' %}">
+                    {% csrf_token %}
+                    <button class="pf-board__add" type="submit">خواندن همه</button>
+                </form>
+            {% endif %}
+        </div>
+
+        <section class="pf-push-card" aria-label="وضعیت اعلان‌های مرورگر" data-push-card>
+            <div class="pf-push-card__copy">
+                <strong class="pf-push-card__title">اعلان‌های مرورگر / PWA</strong>
+                <p class="pf-push-card__status" data-push-status>در حال بررسی…</p>
+            </div>
+            <button class="pf-board__add" type="button" data-push-enable hidden>فعال‌سازی اعلان</button>
+        </section>
+
+        {% if notifications %}
+            <div class="pf-notif-list">
+                {% for item in notifications %}
+                    <form method="post" action="{% url 'me-notification-open' item.pk %}" class="pf-notif {% if not item.is_read %}pf-notif--unread{% endif %}">
+                        {% csrf_token %}
+                        <button class="pf-notif__btn" type="submit">
+                            <span class="pf-notif__copy">
+                                <span class="pf-notif__title">{{ item.title }}</span>
+                                {% if item.body %}<span class="pf-notif__body">{{ item.body }}</span>{% endif %}
+                                <span class="pf-notif__time">{{ item.created_at|date:"Y/m/d H:i" }}</span>
+                            </span>
+                        </button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% else %}
+            {% include "components/account/empty.html" with icon="bell" text="هنوز اعلانی ندارید." %}
+        {% endif %}
+    </div>
+    <script>
+    (function () {
+        var statusEl = document.querySelector("[data-push-status]");
+        var enableBtn = document.querySelector("[data-push-enable]");
+        if (!statusEl) return;
+
+        function label(status) {
+            if (!status) return "وضعیت نامشخص";
+            var mode = status.mode === "pwa" ? "اپ نصب‌شده (PWA)" : "مرورگر دسکتاپ/موبایل";
+            if (!status.supported) {
+                return mode + " · این محیط از اعلان پشتیبانی نمی‌کند.";
+            }
+            if (!status.fcmConfigured) {
+                return mode + " · صندوق اعلان‌ها فعال است؛ ارسال Push هنوز پیکربندی نشده.";
+            }
+            if (status.permission === "granted") {
+                return mode + " · مجوز داده شده" + (status.tokenRegistered ? " و دستگاه ثبت شد." : "؛ در حال ثبت دستگاه…");
+            }
+            if (status.permission === "denied") {
+                return mode + " · مجوز رد شده. از تنظیمات مرورگر/سیستم دوباره اجازه بدهید.";
+            }
+            return mode + " · برای دریافت Push روی «فعال‌سازی اعلان» بزنید.";
+        }
+
+        function paint(status) {
+            statusEl.textContent = label(status);
+            if (!enableBtn) return;
+            var show =
+                status &&
+                status.supported &&
+                status.fcmConfigured &&
+                status.permission !== "granted" &&
+                status.permission !== "denied";
+            enableBtn.hidden = !show;
+        }
+
+        function read() {
+            if (window.HonaryaarPush) {
+                paint(window.HonaryaarPush.getStatus());
+                return;
+            }
+            var standalone =
+                window.matchMedia("(display-mode: standalone)").matches ||
+                window.navigator.standalone === true;
+            paint({
+                mode: standalone ? "pwa" : "browser",
+                supported: "Notification" in window && "serviceWorker" in navigator,
+                permission: "Notification" in window ? Notification.permission : "unsupported",
+                fcmConfigured: !!(window.HONARYAAR_PUSH && window.HONARYAAR_PUSH.enabled),
+                tokenRegistered: false,
+            });
+        }
+
+        read();
+        if (enableBtn) {
+            enableBtn.addEventListener("click", function () {
+                if (!window.HonaryaarPush) return;
+                enableBtn.disabled = true;
+                window.HonaryaarPush.enable()
+                    .then(paint)
+                    .finally(function () {
+                        enableBtn.disabled = false;
+                        read();
+                    });
+            });
+        }
+        setTimeout(read, 800);
+    })();
+    </script>
+{% endblock %}

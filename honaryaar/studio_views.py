@@ -68,6 +68,8 @@ def _project_step(slug, invite=""):
 
 
 def _ensure_match(profile, opportunity, application=None, invite=None):
+    from honaryaar.notifications import notify_collaboration_started
+
     match, created = Match.objects.get_or_create(
         profile=profile,
         opportunity=opportunity,
@@ -78,6 +80,7 @@ def _ensure_match(profile, opportunity, application=None, invite=None):
         },
     )
     if created:
+        notify_collaboration_started(match)
         return match
     if application and match.application_id is None:
         match.application = application
@@ -272,8 +275,10 @@ def project_manage(request, slug):
                 messages.success(request, f"فرصت «{cleaned['title']}» اضافه شد.")
             return redirect(_project_step(project.slug))
         if action == "invite" and invite_form.is_valid():
+            from honaryaar.notifications import notify_invite_sent
+
             invited = invite_form.cleaned_data["opportunity"]
-            _invite, created = Invite.objects.get_or_create(
+            invite, created = Invite.objects.get_or_create(
                 profile=invite_form.cleaned_data["profile"],
                 opportunity=invited,
                 defaults={"message": invite_form.cleaned_data["message"]},
@@ -281,6 +286,7 @@ def project_manage(request, slug):
             if not created:
                 invite_form.add_error(None, "این دعوت قبلاً فرستاده شده.")
             else:
+                notify_invite_sent(invite)
                 messages.success(request, "دعوت فرستاده شد.")
                 return redirect(_project_step(project.slug, invite=invited.pk))
     applications = Application.objects.filter(opportunity__project=project).select_related(
@@ -367,6 +373,8 @@ def application_status(request, pk):
     status = request.POST.get("status", "")
     if status not in ApplicationStatus.values:
         raise Http404
+    from honaryaar.notifications import notify_application_status
+
     application.status = status
     application.save(update_fields=["status"])
     if status == ApplicationStatus.MATCHED:
@@ -375,6 +383,7 @@ def application_status(request, pk):
         Match.objects.filter(application=application, status=MatchStatus.ACTIVE).update(
             status=MatchStatus.CLOSED
         )
+    notify_application_status(application)
     label = APPLICATION_LABELS.get(status, status)
     messages.success(request, f"وضعیت درخواست به «{label}» تغییر کرد.")
     return redirect(_project_step(application.opportunity.project.slug))
@@ -393,14 +402,17 @@ def apply(request, slug):
     )
     if opportunity.project.owner_id == profile.pk:
         return redirect("me-project", slug=opportunity.project.slug)
+    from honaryaar.notifications import notify_application_submitted
+
     form = ApplyForm(request.POST)
     message = form.cleaned_data["message"] if form.is_valid() else ""
-    _application, created = Application.objects.get_or_create(
+    application, created = Application.objects.get_or_create(
         profile=profile,
         opportunity=opportunity,
         defaults={"message": message},
     )
     if created:
+        notify_application_submitted(application)
         messages.success(request, "درخواست شما ثبت شد.")
     else:
         messages.success(request, "این درخواست را قبلاً فرستاده‌اید.")
@@ -508,16 +520,20 @@ def invite_detail(request, pk):
             profile=profile,
             status=InviteStatus.SENT,
         )
+        from honaryaar.notifications import notify_invite_replied
+
         decision = request.POST.get("decision")
         if decision == "accept":
             invite.status = InviteStatus.ACCEPTED
             invite.save(update_fields=["status"])
+            notify_invite_replied(invite)
             _ensure_match(profile, invite.opportunity, invite=invite)
             messages.success(request, "دعوت را قبول کردید.")
         elif decision == "decline":
             invite.status = InviteStatus.DECLINED
             invite.save(update_fields=["status"])
             Match.objects.filter(invite=invite, status=MatchStatus.ACTIVE).update(status=MatchStatus.CLOSED)
+            notify_invite_replied(invite)
             messages.success(request, "دعوت را رد کردید.")
         return redirect("me-invite", pk=invite.pk)
     invite = get_object_or_404(

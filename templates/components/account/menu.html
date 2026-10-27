@@ -1,22 +1,39 @@
 {% load honaryaar_ui %}
 {% with name=request.resolver_match.url_name %}
 <nav class="pf-mobile-menu" dir="rtl" aria-label="حساب کاربری">
-    <a class="pf-mobile-menu__row {% if name == 'me-projects' or name == 'me-project' or name == 'me-project-new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-projects' %}">
-        {% include "components/icon.html" with name="clapperboard" %}
-        <span class="pf-mobile-menu__label">پروژه‌ها</span>
-    </a>
-    <a class="pf-mobile-menu__row {% if name == 'board_overview' or name == 'board_view' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_overview' %}">
-        {% include "components/icon.html" with name="clapperboard" %}
-        <span class="pf-mobile-menu__label">بورد پروژه‌ها</span>
-    </a>
-    <a class="pf-mobile-menu__row {% if name == 'my_tasks_dashboard' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'my_tasks_dashboard' %}">
-        {% include "components/icon.html" with name="file-text" %}
-        <span class="pf-mobile-menu__label">تسک‌ها و رویدادها</span>
-    </a>
-    <a class="pf-mobile-menu__row {% if name == 'board_project_new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_project_new' %}">
-        {% include "components/icon.html" with name="clapperboard" %}
-        <span class="pf-mobile-menu__label">ساخت بورد جدید</span>
-    </a>
+    <div
+        class="pf-group"
+        x-data="{ open: {% if name == 'me-projects' or name == 'me-project' or name == 'me-project-new' or name == 'board_overview' or name == 'board_view' or name == 'my_tasks_dashboard' or name == 'board_project_new' or name == 'project_invites_list' or name == 'project_invite_accept' or name == 'project_invite_reject' %}true{% else %}false{% endif %} }"
+        :class="{ 'is-open': open }"
+    >
+        <button
+            class="pf-mobile-menu__row pf-mobile-menu__main {% if name == 'me-projects' or name == 'me-project' or name == 'me-project-new' or name == 'board_overview' or name == 'board_view' or name == 'my_tasks_dashboard' or name == 'board_project_new' or name == 'project_invites_list' or name == 'project_invite_accept' or name == 'project_invite_reject' %}pf-mobile-menu__row--active{% endif %}"
+            type="button"
+            @click="open = !open"
+            :aria-expanded="open.toString()"
+        >
+            {% include "components/icon.html" with name="clapperboard" %}
+            <span class="pf-mobile-menu__label">پروژه‌ها</span>
+            <span class="pf-chev pf-sidebar__chev" aria-hidden="true"></span>
+        </button>
+        <div class="pf-sidebar__submenu" x-show="open" x-cloak>
+            <a class="pf-mobile-menu__row pf-mobile-menu__row--sub {% if name == 'me-projects' or name == 'me-project' or name == 'me-project-new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-projects' %}">
+                <span class="pf-mobile-menu__label">پروژه‌های من</span>
+            </a>
+            <a class="pf-mobile-menu__row pf-mobile-menu__row--sub {% if name == 'board_overview' or name == 'board_view' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_overview' %}">
+                <span class="pf-mobile-menu__label">بورد پروژه‌ها</span>
+            </a>
+            <a class="pf-mobile-menu__row pf-mobile-menu__row--sub {% if name == 'my_tasks_dashboard' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'my_tasks_dashboard' %}">
+                <span class="pf-mobile-menu__label">تسک‌ها و رویدادها</span>
+            </a>
+            <a class="pf-mobile-menu__row pf-mobile-menu__row--sub {% if name == 'board_project_new' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'board_project_new' %}">
+                <span class="pf-mobile-menu__label">ساخت بورد جدید</span>
+            </a>
+            <a class="pf-mobile-menu__row pf-mobile-menu__row--sub {% if name == 'project_invites_list' or name == 'project_invite_accept' or name == 'project_invite_reject' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'project_invites_list' %}">
+                <span class="pf-mobile-menu__label">عضویت در تیم</span>
+            </a>
+        </div>
+    </div>
     <a class="pf-mobile-menu__row {% if name == 'me-applications' or name == 'me-application' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-applications' %}">
         {% include "components/icon.html" with name="file-text" %}
         <span class="pf-mobile-menu__label">درخواست‌های من</span>
@@ -25,17 +42,20 @@
         {% include "components/icon.html" with name="mail" %}
         <span class="pf-mobile-menu__label">دعوت‌ها</span>
     </a>
-    <a class="pf-mobile-menu__row {% if name == 'project_invites_list' or name == 'project_invite_accept' or name == 'project_invite_reject' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'project_invites_list' %}">
-        {% include "components/icon.html" with name="mail" %}
-        <span class="pf-mobile-menu__label">دعوت‌های پروژه</span>
-    </a>
     <a class="pf-mobile-menu__row {% if name == 'me-collaborations' or name == 'me-collaboration' or name == 'me-matches' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-collaborations' %}">
         {% include "components/icon.html" with name="handshake" %}
         <span class="pf-mobile-menu__label">همکاری‌ها</span>
     </a>
+    <a class="pf-mobile-menu__row {% if name == 'me-notifications' or name == 'me-notification-open' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-notifications' %}">
+        {% include "components/icon.html" with name="bell" %}
+        <span class="pf-mobile-menu__label">اعلان‌ها</span>
+        {% if notification_unread %}
+            <span class="pf-menu-badge" aria-label="{{ notification_unread }} اعلان خوانده‌نشده">{{ notification_unread }}</span>
+        {% endif %}
+    </a>
     <hr class="pf-rule" aria-hidden="true">
     <a class="pf-mobile-menu__row {% if name == 'me-tickets' %}pf-mobile-menu__row--active{% endif %}" href="{% url 'me-tickets' %}">
-        {% include "components/icon.html" with name="bell" %}
+        {% include "components/icon.html" with name="mail" %}
         <span class="pf-mobile-menu__label">پشتیبانی</span>
     </a>
     <button class="pf-mobile-menu__row" type="button" @click="logoutOpen = true">

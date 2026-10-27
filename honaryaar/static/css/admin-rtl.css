@@ -1,11 +1,14 @@
+/* Unfold admin sidebar + spacing when the panel is Persian (dir=rtl). */
+
 html[dir="rtl"] #nav-sidebar {
-    left: auto;
-    right: 0;
+    left: auto !important;
+    right: 0 !important;
 }
 
-html[dir="rtl"] #nav-sidebar .resize {
-    right: auto;
-    left: -3px;
+html[dir="rtl"] #nav-sidebar .resize,
+html[dir="rtl"] #nav-sidebar [class*="cursor-col-resize"] {
+    right: auto !important;
+    left: -3px !important;
 }
 
 html[dir="rtl"] .text-left {
@@ -18,6 +21,11 @@ html[dir="rtl"] .ml-auto {
 }
 
 html[dir="rtl"] .mr-3 {
+    margin-right: 0;
+    margin-left: 0.75rem;
+}
+
+html[dir="rtl"] #nav-sidebar .material-symbols-outlined.md-18.mr-3 {
     margin-right: 0;
     margin-left: 0.75rem;
 }

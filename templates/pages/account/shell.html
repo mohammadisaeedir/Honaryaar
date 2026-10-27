@@ -65,4 +65,16 @@
 <script src="{% static 'js/skill-picker.js' %}?v={{ asset_v }}"></script>
 <script src="{% static 'js/role-picker.js' %}?v={{ asset_v }}"></script>
 <script src="{% static 'js/contact-picker.js' %}?v={{ asset_v }}"></script>
+<script>
+window.HONARYAAR_PUSH = {
+    enabled: {% if push_enabled %}true{% else %}false{% endif %},
+    csrf: "{{ csrf_token }}",
+    firebase: {{ push_firebase_json|safe }},
+    endpoints: {
+        devices: "{% url 'push-devices' %}",
+        config: "{% url 'push-config' %}"
+    }
+};
+</script>
+<script src="{% static 'js/push.js' %}?v={{ asset_v }}"></script>
 {% endblock %}

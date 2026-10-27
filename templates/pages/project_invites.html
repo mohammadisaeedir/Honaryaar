@@ -1,8 +1,8 @@
 {% extends "pages/account/shell.html" %}
 {% load static %}
 
-{% block title %}دعوت‌های پروژه · هنریار{% endblock %}
-{% block account_title %}دعوت‌های پروژه{% endblock %}
+{% block title %}عضویت در تیم · هنریار{% endblock %}
+{% block account_title %}عضویت در تیم{% endblock %}
 
 {% block extra_css %}
     {{ block.super }}
@@ -12,10 +12,10 @@
 {% block account_main %}
     <div class="lb" dir="rtl">
         <div class="pf-board__head">
-            <h1 class="text-[28px] font-semibold leading-9">دعوت‌های پروژه</h1>
-            <a class="pf-board__quiet" href="{% url 'me-profile' %}">حساب من</a>
+            <h1 class="text-[28px] font-semibold leading-9">عضویت در تیم</h1>
+            <a class="pf-board__quiet" href="{% url 'me-projects' %}">پروژه‌های من</a>
         </div>
-        <p class="lb__meta">دعوت به تیم پروژه — جدا از دعوت‌های کستینگ.</p>
+        <p class="lb__meta">پیشنهاد عضویت در تیم بورد پروژه — جدا از دعوت‌های کستینگ.</p>
 
         <div class="mt-6">
             {% for invite in invites %}
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             {% empty %}
-                <p class="lb-empty">دعوت پروژه‌ای ندارید.</p>
+                <p class="lb-empty">پیشنهاد عضویت در تیمی ندارید.</p>
             {% endfor %}
         </div>
     </div>

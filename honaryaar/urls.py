@@ -38,6 +38,13 @@ from honaryaar.studio_views import (
     project_manage,
     project_new,
 )
+from honaryaar.notification_views import (
+    my_notifications,
+    notification_open,
+    notifications_read_all,
+    push_config,
+    push_devices,
+)
 from honaryaar.support_views import contact, my_ticket, my_tickets, report_artist, report_opportunity, report_project
 from honaryaar.views import (
     about,
@@ -100,6 +107,11 @@ urlpatterns = [
     path("me/profile/", me_profile, name="me-profile"),
     path("me/media/uploads/", media_upload_start, name="media-upload-start"),
     path("me/media/uploads/<uuid:upload_id>/complete/", media_upload_complete, name="media-upload-complete"),
+    path("me/notifications/", my_notifications, name="me-notifications"),
+    path("me/notifications/read-all/", notifications_read_all, name="me-notifications-read-all"),
+    path("me/notifications/<int:pk>/open/", notification_open, name="me-notification-open"),
+    path("me/push/config/", push_config, name="push-config"),
+    path("me/push/devices/", push_devices, name="push-devices"),
     path("me/tickets/", my_tickets, name="me-tickets"),
     path("me/tickets/<int:pk>/", my_ticket, name="me-ticket"),
     path("me/projects/new/", project_new, name="me-project-new"),

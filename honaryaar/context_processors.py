@@ -17,10 +17,23 @@ def assets(request):
         version = max(int(path.stat().st_mtime) for path in css_dir.glob("*.css"))
     except (OSError, ValueError):
         version = 1
+    unread = 0
+    user = getattr(request, "user", None)
+    if user is not None and getattr(user, "is_authenticated", False):
+        from honaryaar.models import InAppNotification
+
+        unread = InAppNotification.objects.filter(user=user, is_read=False).count()
+    from honaryaar.fcm import web_config
+    import json
+
+    firebase = web_config() if user is not None and getattr(user, "is_authenticated", False) else None
     return {
         "asset_v": version,
         "production_preview": preview_active(),
         "data_source_switch": switch_visible(request),
+        "notification_unread": unread,
+        "push_enabled": bool(firebase),
+        "push_firebase_json": json.dumps(firebase or {}),
     }
 
 

@@ -797,6 +797,8 @@ def board_member_invite(request, project, membership):
         except (TypeError, ValueError, Role.DoesNotExist):
             return _json_error("نقش نامعتبر است.")
     existing = ProjectMember.objects.filter(project=project, profile=profile).first()
+    from honaryaar.notifications import notify_project_member_invited
+
     if existing:
         if existing.invite_status == ProjectMember.InviteStatus.ACCEPTED:
             return _json_error("این کاربر از قبل عضو پروژه است.")
@@ -809,6 +811,7 @@ def board_member_invite(request, project, membership):
         existing.save(
             update_fields=["invite_status", "permission", "role", "invited_by", "updated_at"]
         )
+        notify_project_member_invited(existing)
         return JsonResponse(_member_payload(existing), status=201)
     row = ProjectMember.objects.create(
         project=project,
@@ -818,6 +821,7 @@ def board_member_invite(request, project, membership):
         invite_status=ProjectMember.InviteStatus.INVITED,
         invited_by=membership.profile,
     )
+    notify_project_member_invited(row)
     return JsonResponse(_member_payload(row), status=201)
 
 
@@ -964,5 +968,5 @@ def project_invite_reject(request, pk):
     )
     invite.invite_status = ProjectMember.InviteStatus.REMOVED
     invite.save(update_fields=["invite_status", "updated_at"])
-    messages.success(request, "دعوت رد شد.")
+    messages.success(request, "پیشنهاد عضویت رد شد.")
     return redirect("project_invites_list")

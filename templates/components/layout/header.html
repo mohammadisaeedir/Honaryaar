@@ -63,7 +63,14 @@
                         <a role="menuitem" href="{% url 'me-applications' %}">{% include "components/icon.html" with name="file-text" size="18" %}درخواست‌ها</a>
                         <a role="menuitem" href="{% url 'me-invites' %}">{% include "components/icon.html" with name="mail" size="18" %}دعوت‌ها</a>
                         <a role="menuitem" href="{% url 'me-collaborations' %}">{% include "components/icon.html" with name="handshake" size="18" %}همکاری‌ها</a>
-                        <a role="menuitem" href="{% url 'me-tickets' %}">{% include "components/icon.html" with name="bell" size="18" %}پشتیبانی</a>
+                        <a role="menuitem" href="{% url 'me-notifications' %}">
+                            {% include "components/icon.html" with name="bell" size="18" %}
+                            اعلان‌ها
+                            {% if notification_unread %}
+                                <span class="site-account__badge" aria-label="{{ notification_unread }} اعلان خوانده‌نشده">{{ notification_unread }}</span>
+                            {% endif %}
+                        </a>
+                        <a role="menuitem" href="{% url 'me-tickets' %}">{% include "components/icon.html" with name="mail" size="18" %}پشتیبانی</a>
                     </div>
                 </div>
             {% else %}

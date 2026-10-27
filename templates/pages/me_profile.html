@@ -121,7 +121,7 @@
                 <div class="me-stack">
                     <section class="me-card lb-home-projects" id="board-projects">
                         <div class="me-card__head">
-                            <h2>پروژه‌های من{% if board_invite_count %} <span class="me-badge">{{ board_invite_count }} دعوت</span>{% endif %}</h2>
+                            <h2>پروژه‌های من{% if board_invite_count %} <span class="me-badge">{{ board_invite_count }} عضویت</span>{% endif %}</h2>
                             <a class="me-edit" href="{% url 'board_project_new' %}" aria-label="ساخت پروژه جدید">+</a>
                         </div>
                         {% if board_projects %}
@@ -146,7 +146,7 @@
                             <a class="inline-flex min-h-11 items-center justify-center rounded-input bg-primary px-4 text-sm font-semibold text-white" href="{% url 'board_project_new' %}">+ ساخت پروژه جدید</a>
                             <a class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 text-sm font-semibold" href="{% url 'my_tasks_dashboard' %}">تسک‌ها و رویدادها</a>
                             {% if board_invite_count %}
-                                <a class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 text-sm font-semibold" href="{% url 'project_invites_list' %}">دعوت‌ها ({{ board_invite_count }})</a>
+                                <a class="inline-flex min-h-11 items-center justify-center rounded-input border border-border px-4 text-sm font-semibold" href="{% url 'project_invites_list' %}">عضویت در تیم ({{ board_invite_count }})</a>
                             {% endif %}
                         </div>
                     </section>

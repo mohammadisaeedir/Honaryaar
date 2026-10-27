@@ -1346,3 +1346,190 @@ class TicketMessage(models.Model):
             return ""
         name = f"{user.first_name} {user.last_name}".strip()
         return name or user.get_username()
+
+
+class NotificationChannel(models.TextChoices):
+    PUSH = "push", "Push"
+    SMS = "sms", "SMS"
+    EMAIL = "email", "Email"
+
+
+class NotificationLogStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    SENT = "sent", "Sent"
+    FAILED = "failed", "Failed"
+    SKIPPED = "skipped", "Skipped"
+
+
+class NotificationTemplate(models.Model):
+    """Editable copy for outbound notifications. One row per (code, channel)."""
+
+    code = models.SlugField(
+        max_length=80,
+        help_text="Stable event key, e.g. invite.sent. Shared across channels.",
+    )
+    channel = models.CharField(
+        max_length=16,
+        choices=NotificationChannel.choices,
+        default=NotificationChannel.PUSH,
+    )
+    name = models.CharField(max_length=120, help_text="Admin label.")
+    title = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Push/email title. Supports {{ variable }} placeholders.",
+    )
+    body = models.TextField(help_text="Message body. Supports {{ variable }} placeholders.")
+    deep_link = models.CharField(
+        max_length=300,
+        blank=True,
+        help_text="Optional in-app path, e.g. /me/invites/{{ invite_id }}/",
+    )
+    is_active = models.BooleanField(default=True)
+    available_vars = models.TextField(
+        blank=True,
+        help_text="Hint for admins: variables available in this template.",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["code", "channel"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "channel"],
+                name="unique_notification_template_code_channel",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.code} · {self.get_channel_display()}"
+
+
+class PushDevice(models.Model):
+    """Registered device token for push delivery."""
+
+    class Platform(models.TextChoices):
+        WEB = "web", "Web"
+        IOS = "ios", "iOS"
+        ANDROID = "android", "Android"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_devices",
+    )
+    token = models.CharField(max_length=512, unique=True)
+    platform = models.CharField(
+        max_length=16,
+        choices=Platform.choices,
+        default=Platform.WEB,
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-last_seen_at", "-pk"]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.platform}"
+
+
+class NotificationLog(models.Model):
+    """Audit trail of every notification attempt (kept for a configurable window)."""
+
+    template = models.ForeignKey(
+        NotificationTemplate,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="logs",
+    )
+    code = models.SlugField(max_length=80, db_index=True)
+    channel = models.CharField(
+        max_length=16,
+        choices=NotificationChannel.choices,
+        default=NotificationChannel.PUSH,
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="notification_logs",
+    )
+    title = models.CharField(max_length=200, blank=True)
+    body = models.TextField(blank=True)
+    deep_link = models.CharField(max_length=300, blank=True)
+    status = models.CharField(
+        max_length=16,
+        choices=NotificationLogStatus.choices,
+        default=NotificationLogStatus.PENDING,
+        db_index=True,
+    )
+    provider = models.CharField(max_length=40, blank=True)
+    provider_ref = models.CharField(max_length=200, blank=True)
+    error = models.TextField(blank=True)
+    context = models.JSONField(default=dict, blank=True)
+    content_type = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    related = GenericForeignKey("content_type", "object_id")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        indexes = [
+            models.Index(fields=["channel", "status", "-created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.code} · {self.channel} · {self.status}"
+
+
+class InAppNotification(models.Model):
+    """User-facing inbox row created alongside outbound push attempts."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="in_app_notifications",
+    )
+    code = models.SlugField(max_length=80, db_index=True)
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    deep_link = models.CharField(max_length=300, blank=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    log = models.ForeignKey(
+        NotificationLog,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="inbox_items",
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    related = GenericForeignKey("content_type", "object_id")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        indexes = [
+            models.Index(fields=["user", "is_read", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.code} · {'read' if self.is_read else 'new'}"

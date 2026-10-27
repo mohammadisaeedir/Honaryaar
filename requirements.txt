@@ -5,3 +5,4 @@ boto3==1.40.61
 Pillow==11.3.0
 psycopg[binary]==3.3.6
 redis==6.4.0
+google-auth==2.41.1

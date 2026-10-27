@@ -1,7 +1,7 @@
 [x-cloak] { display: none !important; }
 
 body.account-page {
-    background: #f0f3f7;
+    background: var(--color-surface, #f0f3f7);
     color: var(--color-foreground);
 }
 
@@ -522,11 +522,12 @@ body.account-page main.account-main {
 
 .pf-mobile-menu__row--sub .pf-mobile-menu__label,
 .pf-sidebar__subrow .pf-sidebar__label {
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .pf-mobile-menu__row--sub {
-    padding-inline-end: 36px;
+    min-height: 40px;
+    padding: 6px 12px 6px 12px;
 }
 
 .pf-label--danger { color: #ef3b2e; }
@@ -545,7 +546,6 @@ body.account-page main.account-main {
 }
 
 .pf-sidebar__chev {
-    transform: rotate(180deg);
     transition: transform 0.2s ease;
 }
 
@@ -554,13 +554,128 @@ body.account-page main.account-main {
     transform: rotate(-90deg);
 }
 
+.pf-menu-badge {
+    margin-inline-start: auto;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #c13281;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 22px;
+    text-align: center;
+}
+
+.pf-push-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+}
+
+.pf-push-card__copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pf-push-card__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-foreground);
+}
+
+.pf-push-card__status {
+    margin: 0;
+    font-size: 12px;
+    line-height: 18px;
+    color: var(--color-muted-foreground);
+}
+
+.pf-notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pf-notif {
+    margin: 0;
+}
+
+.pf-notif__btn {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-card);
+    text-align: right;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.pf-notif--unread .pf-notif__btn {
+    border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    background: var(--color-art-theatre-bg);
+}
+
+.pf-notif__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pf-notif__title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 22px;
+    color: var(--color-foreground);
+}
+
+.pf-notif__body {
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--color-muted-foreground);
+}
+
+.pf-notif__time {
+    font-size: 11px;
+    line-height: 18px;
+    color: var(--color-muted-foreground);
+    opacity: 0.85;
+}
+
+.pf-notif-count {
+    color: var(--color-primary);
+    font-size: 0.85em;
+}
+
 .pf-rule {
     border: 0;
     border-top: 1px solid var(--color-line);
     margin: 8px 0;
 }
 
-.pf-sidebar__submenu { display: flex; flex-direction: column; gap: 2px; }
+.pf-sidebar__submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 0 4px;
+    padding: 0 0 4px 0;
+}
+
+.pf-group > .pf-mobile-menu__main {
+    width: 100%;
+}
 
 .pf-profile-board {
     direction: rtl;
@@ -636,7 +751,7 @@ body.account-page main.account-main {
     font-size: 12px;
     font-weight: 500;
     line-height: 18px;
-    color: #778aa2;
+    color: var(--color-muted-foreground);
 }
 
 .ticket-table__row {
@@ -644,7 +759,7 @@ body.account-page main.account-main {
 }
 
 .ticket-table__row:hover td {
-    background: #fbfaf8;
+    background: var(--color-surface);
 }
 
 .ticket-table a {
@@ -707,7 +822,7 @@ body.account-page main.account-main {
     padding: 32px 16px;
     border: 1px solid var(--color-border);
     border-radius: 16px;
-    background: #f7f7f5;
+    background: var(--color-surface);
     text-align: center;
 }
 
@@ -1000,7 +1115,7 @@ body.pf-logout-open { overflow: hidden; }
     font-size: 12px;
     font-weight: 500;
     line-height: 32px;
-    color: #37404b;
+    color: var(--color-foreground);
 }
 
 .pf-logoutDialog__text {
@@ -1465,7 +1580,7 @@ body.pf-logout-open { overflow: hidden; }
     padding: 16px;
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    background: #fbfaf8;
+    background: var(--color-surface);
 }
 
 .credit-editor[hidden] { display: none; }
@@ -1750,6 +1865,11 @@ body.pf-logout-open { overflow: hidden; }
     .me-hero__text { padding-top: 8px; }
 }
 
+html[data-theme="dark"] body.account-page {
+    background: var(--color-background);
+    color: var(--color-foreground);
+}
+
 html[data-theme="dark"] .me-hero__banner,
 html[data-theme="dark"] .me-hero__banner--empty,
 html[data-theme="dark"] .media-upload--cover .media-upload__preview {
@@ -1771,3 +1891,152 @@ html[data-theme="dark"] .pf-request--active { background: #1a2e24; color: #b7e4c
 html[data-theme="dark"] .pf-request--rejected,
 html[data-theme="dark"] .pf-request--declined,
 html[data-theme="dark"] .pf-request--closed { background: var(--color-muted); color: var(--color-muted-foreground); }
+
+html[data-theme="dark"] .pf-panel,
+html[data-theme="dark"] .pf-sidebar__panel,
+html[data-theme="dark"] .pf-mobile-hub__card {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-foreground);
+}
+
+html[data-theme="dark"] .pf-sidebar__userLink,
+html[data-theme="dark"] .pf-mobile-menu__row--active,
+html[data-theme="dark"] .pf-sidebar__row--active,
+html[data-theme="dark"] .pf-sidebar__userLink--active {
+    background: var(--color-surface);
+}
+
+html[data-theme="dark"] .pf-push-card,
+html[data-theme="dark"] .pf-empty,
+html[data-theme="dark"] .credit-editor,
+html[data-theme="dark"] .ticket-table__row:hover td {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .pf-notif__btn {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-foreground);
+}
+
+html[data-theme="dark"] .pf-notif--unread .pf-notif__btn {
+    background: var(--color-art-theatre-bg);
+    border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+html[data-theme="dark"] .pf-notif__title,
+html[data-theme="dark"] .pf-push-card__title,
+html[data-theme="dark"] .pf-board-user__name,
+html[data-theme="dark"] .pf-topbar__title,
+html[data-theme="dark"] .pf-board__head h1,
+html[data-theme="dark"] .me-hero h1 {
+    color: var(--color-foreground);
+}
+
+html[data-theme="dark"] .pf-notif__body,
+html[data-theme="dark"] .pf-notif__time,
+html[data-theme="dark"] .pf-push-card__status,
+html[data-theme="dark"] .pf-empty p,
+html[data-theme="dark"] .ticket-table th,
+html[data-theme="dark"] .me-hero h1.is-empty,
+html[data-theme="dark"] .me-hero__meta {
+    color: var(--color-muted-foreground);
+}
+
+html[data-theme="dark"] .pf-menu-badge {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+html[data-theme="dark"] .saved-rows li,
+html[data-theme="dark"] .pf-record > div,
+html[data-theme="dark"] .pf-rule,
+html[data-theme="dark"] .ticket-table th,
+html[data-theme="dark"] .ticket-table td,
+html[data-theme="dark"] .me-sheet th,
+html[data-theme="dark"] .me-sheet td {
+    border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .profile-tabs {
+    border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .profile-tabs__tab {
+    color: var(--color-muted-foreground);
+}
+
+html[data-theme="dark"] .profile-tabs__tab.is-on {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}
+
+html[data-theme="dark"] .skill-dots i {
+    background: color-mix(in srgb, var(--color-primary) 28%, var(--color-surface));
+}
+
+html[data-theme="dark"] .skill-dots i.is-on {
+    background: var(--color-primary);
+}
+
+html[data-theme="dark"] .me-switch {
+    background: #5a4654;
+}
+
+html[data-theme="dark"] .me-switch.is-on {
+    background: var(--color-primary);
+}
+
+html[data-theme="dark"] .me-switch span {
+    background: var(--color-card);
+}
+
+html[data-theme="dark"] .me-icon-btn {
+    background: var(--color-surface);
+    color: var(--color-muted-foreground);
+}
+
+html[data-theme="dark"] .me-icon-btn:hover,
+html[data-theme="dark"] .me-icon-btn.is-on,
+html[data-theme="dark"] .me-edit:hover {
+    color: #f0a0c8;
+}
+
+html[data-theme="dark"] .credit-editor__role {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23f7eef3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+html[data-theme="dark"] .me-slides__card,
+html[data-theme="dark"] .me-grid > section,
+html[data-theme="dark"] .me-card {
+    background: var(--color-card);
+    border-color: var(--color-border);
+    color: var(--color-foreground);
+}
+
+html[data-theme="dark"] .pf-logoutDialog__backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] .pf-logoutDialog__sheet {
+    background: var(--color-card);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .pf-chev {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23cbb8c4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M12 5l-5 5 5 5'/%3E%3C/svg%3E");
+}
+
+html[data-theme="dark"] .pf-empty__art .icon,
+html[data-theme="dark"] .pf-mobile-menu__row > svg,
+html[data-theme="dark"] .pf-sidebar__row > svg {
+    color: var(--color-muted-foreground);
+}
+
+html[data-theme="dark"] .me-pill,
+html[data-theme="dark"] .me-chip {
+    background: var(--color-art-theatre-bg);
+    color: #f3b6d4;
+}

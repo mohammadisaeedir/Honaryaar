@@ -46,8 +46,12 @@ from honaryaar.models import (
     KIND_REASON_VALUES,
     KindReason,
     Match,
+    InAppNotification,
+    NotificationLog,
+    NotificationTemplate,
     Opportunity,
     ArtCategory,
+    PushDevice,
     SpecialCondition,
     Profile,
     ProfileContact,
@@ -1135,6 +1139,117 @@ class MatchAdmin(StatusChipMixin, ModelAdmin):
     list_filter = ("status",)
     search_fields = ("profile__name", "opportunity__title")
     autocomplete_fields = ("profile", "opportunity", "application", "invite")
+
+
+@admin.register(NotificationTemplate)
+class NotificationTemplateAdmin(ModelAdmin):
+    list_display = ("code", "channel", "name", "is_active", "updated_at")
+    list_filter = ("channel", "is_active")
+    search_fields = ("code", "name", "title", "body")
+    list_editable = ("is_active",)
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "code",
+                    "channel",
+                    "name",
+                    "is_active",
+                )
+            },
+        ),
+        (
+            _("Content"),
+            {
+                "fields": ("title", "body", "deep_link", "available_vars"),
+                "description": _(
+                    "Use {{ variable }} placeholders. See available_vars for each template."
+                ),
+            },
+        ),
+        (_("Timestamps"), {"fields": ("created_at", "updated_at")}),
+    )
+
+
+@admin.register(NotificationLog)
+class NotificationLogAdmin(ModelAdmin):
+    list_display = (
+        "created_at",
+        "code",
+        "channel",
+        "user",
+        "status",
+        "title",
+        "provider",
+        "sent_at",
+    )
+    list_filter = ("channel", "status", "code", "provider")
+    search_fields = ("code", "title", "body", "user__username", "error", "provider_ref")
+    readonly_fields = (
+        "template",
+        "code",
+        "channel",
+        "user",
+        "title",
+        "body",
+        "deep_link",
+        "status",
+        "provider",
+        "provider_ref",
+        "error",
+        "context",
+        "content_type",
+        "object_id",
+        "created_at",
+        "sent_at",
+    )
+    date_hierarchy = "created_at"
+    list_select_related = ("user", "template")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PushDevice)
+class PushDeviceAdmin(ModelAdmin):
+    list_display = ("user", "platform", "is_active", "last_seen_at", "created_at")
+    list_filter = ("platform", "is_active")
+    search_fields = ("user__username", "token")
+    autocomplete_fields = ("user",)
+    readonly_fields = ("created_at", "last_seen_at")
+
+
+@admin.register(InAppNotification)
+class InAppNotificationAdmin(ModelAdmin):
+    list_display = ("created_at", "user", "code", "title", "is_read", "read_at")
+    list_filter = ("is_read", "code")
+    search_fields = ("title", "body", "user__username", "code")
+    readonly_fields = (
+        "user",
+        "code",
+        "title",
+        "body",
+        "deep_link",
+        "is_read",
+        "read_at",
+        "log",
+        "content_type",
+        "object_id",
+        "created_at",
+    )
+    date_hierarchy = "created_at"
+    list_select_related = ("user",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 def kind_reason_choices(kind):

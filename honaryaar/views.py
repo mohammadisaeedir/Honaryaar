@@ -381,7 +381,11 @@ def artist_invite(request):
         Opportunity.objects.filter(project__owner=owner),
         pk=request.POST.get("opportunity") or 0,
     )
-    _invite, created = Invite.objects.get_or_create(profile=artist, opportunity=opportunity)
+    invite, created = Invite.objects.get_or_create(profile=artist, opportunity=opportunity)
+    if created:
+        from honaryaar.notifications import notify_invite_sent
+
+        notify_invite_sent(invite)
     return JsonResponse(
         {
             "ok": True,
@@ -867,8 +871,20 @@ def web_manifest(request):
 
 
 def service_worker(request):
-    path = settings.BASE_DIR / "honaryaar" / "static" / "sw.js"
-    response = FileResponse(path.open("rb"), content_type="application/javascript")
+    from django.shortcuts import render
+
+    from honaryaar.fcm import web_config
+
+    firebase = web_config()
+    response = render(
+        request,
+        "sw.js",
+        {
+            "fcm_enabled": bool(firebase),
+            "firebase": firebase or {},
+        },
+        content_type="application/javascript",
+    )
     response["Service-Worker-Allowed"] = "/"
     response["Cache-Control"] = "no-cache"
     return response
