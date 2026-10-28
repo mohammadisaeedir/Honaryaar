@@ -35,11 +35,13 @@
             {% include "components/filters/suggest.html" with scope="projects" %}
         </form>
         <div class="tool-row">
-            {% include "components/filters/sort.html" %}
             {% include "components/filters/panel.html" with action=request.path %}
+            {% include "components/filters/sort.html" %}
             {% include "components/filters/quick.html" %}
         </div>
+        {% include "components/filters/bulk.html" with part="button" %}
     </div>
+    {% include "components/filters/bulk.html" with part="bar" kind="projects" %}
     {% include "components/skeleton/list.html" with kind="projects" %}
     <div class="live-pane">
     {% if projects %}

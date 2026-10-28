@@ -18,6 +18,7 @@ STAT_KEYS = {
     "listing": "honaryaar:stats:listing:v1",
     "hire": "honaryaar:stats:hire:v1",
     "talent": "honaryaar:stats:talent:v1",
+    "post_call": "honaryaar:stats:post_call:v1",
 }
 CHROME_KEYS = {
     "chrome": "honaryaar:chrome:v1",
@@ -1359,11 +1360,12 @@ def _birth_cutoff(age, today):
         return today.replace(year=today.year - age, day=28)
 
 
-def _artist_list_queryset(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark=""):
+def _artist_list_queryset(q="", city="", role="", group="", art="", age_from=None, age_to=None, gender="", bookmark=""):
     from django.db.models import Count, Q
 
     cities = _picked(city)
     role_slugs = _picked(role)
+    role_groups = _picked(group)
     arts = _picked(art)
     genders = _picked(gender)
     saved = _picked(bookmark)
@@ -1372,6 +1374,8 @@ def _artist_list_queryset(q="", city="", role="", art="", age_from=None, age_to=
         qs = qs.filter(city__title__in=cities)
     if role_slugs:
         qs = qs.filter(profile_roles__role__slug__in=role_slugs)
+    if role_groups:
+        qs = qs.filter(profile_roles__role__group__in=role_groups)
     if arts:
         qs = qs.filter(arts__overlap=list(arts))
     if genders:
@@ -1818,6 +1822,7 @@ def page_artists(
     q="",
     city="",
     role="",
+    group="",
     art="",
     age_from=None,
     age_to=None,
@@ -1835,6 +1840,7 @@ def page_artists(
             q=q,
             city=city,
             role=role,
+            group=group,
             art=art,
             age_from=age_from,
             age_to=age_to,
@@ -1851,7 +1857,7 @@ def page_artists(
     return items, total
 
 
-def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gender="", bookmark="", sort=""):
+def list_artists(q="", city="", role="", group="", art="", age_from=None, age_to=None, gender="", bookmark="", sort=""):
     """All matching artist cards (search / sitemap). Lean card shape, SQL filters."""
     from honaryaar.models import Profile
 
@@ -1860,6 +1866,7 @@ def list_artists(q="", city="", role="", art="", age_from=None, age_to=None, gen
             q=q,
             city=city,
             role=role,
+            group=group,
             art=art,
             age_from=age_from,
             age_to=age_to,
@@ -2468,6 +2475,42 @@ def hero_fields():
 
 def talent_stats():
     return _remember_stats("talent", _talent_counts)
+
+
+def post_call_stats():
+    """Rounded landing stats for /post-call/. Cached for ten minutes."""
+    return _remember_stats("post_call", _post_call_counts)
+
+
+def _post_call_counts():
+    from honaryaar.models import (
+        PUBLIC_PROJECT_STATUSES,
+        Match,
+        MatchStatus,
+        Opportunity,
+        OpportunityStatus,
+        Profile,
+        ProfileSkill,
+    )
+
+    artists = Profile.objects.filter(profile_roles__isnull=False).distinct().count()
+    skills = (
+        ProfileSkill.objects.filter(profile__profile_roles__isnull=False)
+        .values("skill_id")
+        .distinct()
+        .count()
+    )
+    open_calls = Opportunity.objects.filter(
+        status=OpportunityStatus.OPEN,
+        project__status__in=PUBLIC_PROJECT_STATUSES,
+    ).count()
+    collaborations = Match.objects.filter(status=MatchStatus.ACTIVE).count()
+    return [
+        {"value": persian_number(round_up_five(artists)), "label": "پروفایل هنرمند"},
+        {"value": persian_number(round_up_five(skills)), "label": "تخصص هنری"},
+        {"value": persian_number(round_up_five(open_calls)), "label": "فراخوان باز"},
+        {"value": persian_number(round_up_five(collaborations)), "label": "همکاری شکل‌گرفته"},
+    ]
 
 
 def _talent_counts():

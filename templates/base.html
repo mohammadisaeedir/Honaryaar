@@ -253,7 +253,7 @@
             var main = document.querySelector("main");
             var source = document.getElementById("catalog-shell-" + kind);
             if (!main || !source) return false;
-            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker");
+            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker", "is-picking");
             if (window.Alpine && typeof Alpine.destroyTree === "function") Alpine.destroyTree(main);
             main.classList.remove("is-skel-cover");
             main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });
@@ -314,7 +314,7 @@
             var doc = new DOMParser().parseFromString(html, "text/html");
             var nextMain = doc.querySelector("main");
             if (!nextMain) return false;
-            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker");
+            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker", "is-picking");
             if (window.Alpine && typeof Alpine.destroyTree === "function") Alpine.destroyTree(main);
             main.classList.remove("is-skel-cover");
             main.replaceChildren();
@@ -513,7 +513,7 @@
             var main = document.querySelector("main");
             var source = document.getElementById("skel-src-" + kind);
             if (!main || !source) return false;
-            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker");
+            document.body.classList.remove("is-filter-open", "is-sort-open", "is-invite-open", "is-filter-picker", "is-picking");
             if (window.Alpine && typeof Alpine.destroyTree === "function") Alpine.destroyTree(main);
             main.classList.remove("is-skel-cover");
             main.querySelectorAll(":scope > .skel-pane.is-skel-temp").forEach(function (node) { node.remove(); });

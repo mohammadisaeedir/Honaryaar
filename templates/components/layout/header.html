@@ -1,6 +1,6 @@
 {% load static honaryaar_ui %}
 {% profile_first_name user as given_name %}
-<header class="site-header site-header--figma {% if request.path == '/about-us/' %}site-header--dark{% endif %} sticky top-0 z-30">
+<header class="site-header site-header--figma {% if request.path == '/about-us/' or request.path == '/post-call/' %}site-header--dark{% endif %} sticky top-0 z-30">
     <div class="site-header__bar">
         <a class="site-header__brand" href="{% url 'home' %}" aria-label="هنریار">
             <img class="site-logo-light" src="{% static 'brand/logo-fa.svg' %}" alt="هنریار" width="98" height="40">
@@ -38,7 +38,7 @@
                 </button>
             </div>
 
-            <a class="site-header__cta" href="{% if user.is_authenticated %}{% url 'me-project-new' %}{% else %}{% url 'login' %}?next={% url 'me-project-new' %}{% endif %}">
+            <a class="site-header__cta" href="{% if user.is_authenticated %}{% url 'me-project-new' %}{% else %}{% url 'post-call' %}{% endif %}">
                 <span>ثبت رایگان فراخوان</span>
                 <img src="{% static 'home/header-plus.svg' %}" width="20" height="20" alt="" aria-hidden="true">
             </a>

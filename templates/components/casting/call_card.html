@@ -2,7 +2,14 @@
 {% url 'opportunity' opportunity.slug as opportunity_url %}
 <article class="call-card">
     {% if show_pick %}
-        <label class="pick-box"><input type="checkbox" data-pick value="{{ opportunity.slug }}" aria-label="انتخاب"></label>
+        <label class="pick-box"><input type="checkbox" data-pick value="{{ opportunity.slug }}" aria-label="انتخاب {{ opportunity.title }}"></label>
+        <div class="pick-summary">
+            <span class="pick-summary__title">{{ opportunity.title }}</span>
+            <span class="pick-summary__meta">
+                {{ opportunity.art_title|default:'تئاتر' }}
+                {% if opportunity.pay_label %} · {{ opportunity.pay_label }}{% endif %}
+            </span>
+        </div>
     {% endif %}
     <a class="call-card__hit" href="{{ opportunity_url }}" aria-label="{{ opportunity.title }}"></a>
     <div class="call-card__meta">

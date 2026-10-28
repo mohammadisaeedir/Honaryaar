@@ -1,0 +1,7 @@
+{# Mobile-only “more items” tile at the end of a horizontal list. Expects: href #}
+<a class="carousel-more" href="{{ href }}">
+    <span class="carousel-more__icon" aria-hidden="true">
+        {% include "components/icon.html" with name="chevron-right" size="20" %}
+    </span>
+    <span class="carousel-more__label">موارد بیشتر</span>
+</a>

@@ -1,6 +1,16 @@
 {% load honaryaar_ui %}
 <article class="artist-tile">
-    <label class="pick-box"><input type="checkbox" data-pick value="{{ artist.slug }}" aria-label="انتخاب"></label>
+    <label class="pick-box"><input type="checkbox" data-pick value="{{ artist.slug }}" aria-label="انتخاب {{ artist.legal_name }}"></label>
+    <div class="pick-summary">
+        <span class="pick-summary__title">
+            {% if artist.first_name or artist.last_name %}
+                {% if artist.first_name %}{{ artist.first_name }} {% endif %}{{ artist.last_name }}
+            {% else %}
+                {{ artist.name }}
+            {% endif %}
+        </span>
+        {% if artist.role_titles %}<span class="pick-summary__meta">{{ artist.role_titles.0 }}</span>{% endif %}
+    </div>
     <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
         {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
         {% include "components/media/card_photo.html" with src=face %}

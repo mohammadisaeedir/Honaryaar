@@ -33,16 +33,16 @@
             </div>
         </form>
         <div class="tool-row">
+            <button class="filter-open" type="button" disabled aria-disabled="true">
+                {% include "components/icon.html" with name="sliders" size="18" %}
+                فیلتر
+            </button>
             <div class="sort-menu">
                 <button class="sort-menu__btn" type="button" disabled aria-disabled="true">
                     <span>جدیدترین</span>
                     {% include "components/icon.html" with name="sort" size="16" %}
                 </button>
             </div>
-            <button class="filter-open" type="button" disabled aria-disabled="true">
-                {% include "components/icon.html" with name="sliders" size="18" %}
-                فیلتر
-            </button>
         </div>
     </div>
     {% include "components/skeleton/list.html" with kind=kind %}

@@ -20,7 +20,10 @@
             <button class="login-modal__icon-btn" type="button" @click="closeModal()" aria-label="بستن">
                 <img src="{% static 'home/login-close.svg' %}" width="20" height="20" alt="">
             </button>
-            <img class="login-modal__logo" src="{% static 'brand/logo-fa.svg' %}" width="98" height="40" alt="هنریار">
+            <span class="login-modal__logo">
+                <img class="site-logo-light" src="{% static 'brand/logo-fa.svg' %}" width="98" height="40" alt="هنریار">
+                <img class="site-logo-dark" src="{% static 'brand/logo-fa-dark.svg' %}" width="98" height="40" alt="" aria-hidden="true">
+            </span>
             <span class="login-modal__icon-btn is-spacer" aria-hidden="true"></span>
         </div>
 

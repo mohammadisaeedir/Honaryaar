@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="{% static 'css/home-redesign.css' %}?v={{ asset_v }}">
     <script src="{% static 'js/hero-rotate.js' %}?v={{ asset_v }}" defer></script>
     <script src="{% static 'js/home-faq.js' %}?v={{ asset_v }}" defer></script>
+    <script src="{% static 'js/home-carousel.js' %}?v={{ asset_v }}" defer></script>
 {% endblock %}
 
 {% block breadcrumbs %}{% endblock %}
@@ -74,7 +75,12 @@
     </section>
 
     {% if featured_opportunities %}
-        <section class="new-home-featured" aria-labelledby="new-home-featured-title">
+        <section
+            class="new-home-featured"
+            aria-labelledby="new-home-featured-title"
+            data-home-carousel
+            data-per-view="3"
+        >
             <div class="new-home-featured__header">
                 <a class="new-home-featured__more" href="{% url 'opportunities' %}">
                     <span>مشاهده بیشتر</span>
@@ -83,43 +89,83 @@
                 <h2 id="new-home-featured-title">فراخوان‌های ویژه</h2>
             </div>
 
-            <div class="new-home-featured__list">
-                {% for opportunity in featured_opportunities %}
-                    {% include "components/casting/call_card.html" %}
-                {% endfor %}
+            <div class="new-home-carousel">
+                <div class="new-home-carousel__view">
+                    <div class="new-home-featured__list" data-home-carousel-track>
+                        {% for opportunity in featured_opportunities %}
+                            {% include "components/casting/call_card.html" %}
+                        {% endfor %}
+                        {% url 'opportunities' as featured_more_href %}
+                        {% include "components/carousel_more.html" with href=featured_more_href %}
+                    </div>
+                </div>
+                {% if featured_opportunities|length > 3 %}
+                    <div class="post-call-artists__nav">
+                        <button type="button" data-dir="-1" aria-label="قبلی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                        <button type="button" data-dir="1" aria-label="بعدی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                    </div>
+                {% endif %}
             </div>
         </section>
     {% endif %}
 
     {% if testimonials %}
-        <section class="new-home-testimonials" aria-labelledby="new-home-testimonials-title">
+        <section
+            class="new-home-testimonials"
+            aria-labelledby="new-home-testimonials-title"
+            data-home-carousel
+            data-per-view="3"
+        >
             <h2 id="new-home-testimonials-title">هنریار، از نگاه اهل صحنه</h2>
 
-            <div class="new-home-testimonials__list">
-                {% for item in testimonials %}
-                    {% media_src item.image_thumb_key item.image_public item.image_public_acl item.image_key "photo" as portrait %}
-                    <figure class="new-home-testimonial">
-                        <blockquote>{{ item.quote }}</blockquote>
-                        <img class="new-home-testimonial__divider" src="{% static 'home/testimonial-divider.svg' %}" width="355" height="1" alt="" aria-hidden="true">
-                        <figcaption>
-                            {% if portrait %}
-                                <img class="new-home-testimonial__avatar" src="{{ portrait }}" alt="">
-                            {% else %}
-                                <span class="new-home-testimonial__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
-                            {% endif %}
-                            <span class="new-home-testimonial__author">
-                                <strong>{{ item.name }}</strong>
-                                {% if item.role %}<span>{{ item.role }}</span>{% endif %}
-                            </span>
-                        </figcaption>
-                    </figure>
-                {% endfor %}
+            <div class="new-home-carousel">
+                <div class="new-home-carousel__view">
+                    <div class="new-home-testimonials__list" data-home-carousel-track>
+                        {% for item in testimonials %}
+                            {% media_src item.image_thumb_key item.image_public item.image_public_acl item.image_key "photo" as portrait %}
+                            <figure class="new-home-testimonial">
+                                <blockquote>{{ item.quote }}</blockquote>
+                                <img class="new-home-testimonial__divider" src="{% static 'home/testimonial-divider.svg' %}" width="355" height="1" alt="" aria-hidden="true">
+                                <figcaption>
+                                    {% if portrait %}
+                                        <img class="new-home-testimonial__avatar" src="{{ portrait }}" alt="">
+                                    {% else %}
+                                        <span class="new-home-testimonial__avatar" aria-hidden="true">{{ item.name|slice:":1" }}</span>
+                                    {% endif %}
+                                    <span class="new-home-testimonial__author">
+                                        <strong>{{ item.name }}</strong>
+                                        {% if item.role %}<span>{{ item.role }}</span>{% endif %}
+                                    </span>
+                                </figcaption>
+                            </figure>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if testimonials|length > 3 %}
+                    <div class="post-call-artists__nav">
+                        <button type="button" data-dir="-1" aria-label="قبلی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                        <button type="button" data-dir="1" aria-label="بعدی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                    </div>
+                {% endif %}
             </div>
         </section>
     {% endif %}
 
     {% if posts %}
-        <section class="new-home-magazine" aria-labelledby="new-home-magazine-title">
+        <section
+            class="new-home-magazine"
+            aria-labelledby="new-home-magazine-title"
+            data-home-carousel
+            data-per-view="3"
+        >
             <div class="new-home-magazine__header">
                 <a class="new-home-magazine__more" href="{% url 'magazine' %}">
                     <img src="{% static 'home/magazine-more.svg' %}" width="24" height="24" alt="" aria-hidden="true">
@@ -128,18 +174,34 @@
                 <h2 id="new-home-magazine-title">تازه‌های مجله</h2>
             </div>
 
-            <div class="new-home-magazine__list">
-                {% for post in posts %}
-                    <a class="new-home-magazine__card" href="{% url 'magazine' %}">
-                        <span class="new-home-magazine__image">
-                            <img src="{% static 'home/magazine-card.png' %}" width="1440" height="960" alt="" loading="lazy" decoding="async">
-                        </span>
-                        <span class="new-home-magazine__body">
-                            <span class="new-home-magazine__badge">{{ post.kicker }}</span>
-                            <span class="new-home-magazine__title">{{ post.title }}</span>
-                        </span>
-                    </a>
-                {% endfor %}
+            <div class="new-home-carousel">
+                <div class="new-home-carousel__view">
+                    <div class="new-home-magazine__list" data-home-carousel-track>
+                        {% for post in posts %}
+                            <a class="new-home-magazine__card" href="{% url 'magazine' %}">
+                                <span class="new-home-magazine__image">
+                                    <img src="{% static 'home/magazine-card.png' %}" width="1440" height="960" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <span class="new-home-magazine__body">
+                                    <span class="new-home-magazine__badge">{{ post.kicker }}</span>
+                                    <span class="new-home-magazine__title">{{ post.title }}</span>
+                                </span>
+                            </a>
+                        {% endfor %}
+                        {% url 'magazine' as magazine_more_href %}
+                        {% include "components/carousel_more.html" with href=magazine_more_href %}
+                    </div>
+                </div>
+                {% if posts|length > 3 %}
+                    <div class="post-call-artists__nav">
+                        <button type="button" data-dir="-1" aria-label="قبلی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                        <button type="button" data-dir="1" aria-label="بعدی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                    </div>
+                {% endif %}
             </div>
         </section>
     {% endif %}

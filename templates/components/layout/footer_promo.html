@@ -1,19 +1,24 @@
 {% load static %}
-<section class="footer-promo" aria-labelledby="footer-promo-title">
-    <img class="footer-promo__art" src="{% static 'footer-promo/stage-performer.png' %}" width="929" height="310" alt="بازیگر روی صحنه">
+{% url 'opportunities' as default_promo_href %}
+<section class="footer-promo{% if footer_promo_simple %} footer-promo--simple{% endif %}" aria-labelledby="footer-promo-title">
+    <img class="footer-promo__art" src="{% static 'footer-promo/stage-performer.png' %}" width="929" height="310" alt="" aria-hidden="true">
     <div class="footer-promo__inner">
         <div class="footer-promo__content">
             <div class="footer-promo__copy">
-                <h2 id="footer-promo-title">برای نقش بعدی‌ات آماده‌ای؟</h2>
-                <p>رزومه و نمونه‌کارت را یک‌جا معرفی کن، فراخوان‌ها را ببین و برای نقش مناسب خودت درخواست بده.</p>
+                <h2 id="footer-promo-title">{{ footer_promo_title|default:"برای نقش بعدی‌ات آماده‌ای؟" }}</h2>
+                <p>{{ footer_promo_text|default:"رزومه و نمونه‌کارت را یک‌جا معرفی کن، فراخوان‌ها را ببین و برای نقش مناسب خودت درخواست بده." }}</p>
             </div>
-            <ul class="footer-promo__benefits">
-                <li><img src="{% static 'footer-promo/profile.svg' %}" width="24" height="24" alt="">رزومه‌ات را یک‌جا معرفی کن.</li>
-                <li><img src="{% static 'footer-promo/portfolio.svg' %}" width="24" height="24" alt="">نمونه‌کارت را نشان بده.</li>
-                <li><img src="{% static 'footer-promo/location.svg' %}" width="24" height="24" alt="">فراخوان مناسب خودت را پیدا کن.</li>
-                <li><img src="{% static 'footer-promo/apply.svg' %}" width="24" height="24" alt="">برای نقش دلخواهت درخواست بده.</li>
-            </ul>
-            <a class="footer-promo__action" href="{% url 'opportunities' %}">نقش بعدی‌ات را پیدا کن</a>
+            {% if not footer_promo_simple %}
+                <ul class="footer-promo__benefits">
+                    <li><img src="{% static 'footer-promo/profile.svg' %}" width="24" height="24" alt="">رزومه‌ات را یک‌جا معرفی کن.</li>
+                    <li><img src="{% static 'footer-promo/portfolio.svg' %}" width="24" height="24" alt="">نمونه‌کارت را نشان بده.</li>
+                    <li><img src="{% static 'footer-promo/location.svg' %}" width="24" height="24" alt="">فراخوان مناسب خودت را پیدا کن.</li>
+                    <li><img src="{% static 'footer-promo/apply.svg' %}" width="24" height="24" alt="">برای نقش دلخواهت درخواست بده.</li>
+                </ul>
+            {% endif %}
+            <a class="footer-promo__action" href="{{ footer_promo_href|default:default_promo_href }}">
+                {{ footer_promo_cta|default:"نقش بعدی‌ات را پیدا کن" }}
+            </a>
         </div>
     </div>
 </section>

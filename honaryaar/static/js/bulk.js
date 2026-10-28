@@ -25,7 +25,9 @@
         ignore += 1;
         var picked = chosen();
         var total = boxes().length;
-        var label = fa(picked.length) + " انتخاب";
+        var label = picked.length && picked.length === total
+            ? "همه " + fa(picked.length) + " انتخاب"
+            : fa(picked.length) + " انتخاب";
         if (count.textContent !== label) count.textContent = label;
         all.checked = total > 0 && picked.length === total;
         all.indeterminate = picked.length > 0 && picked.length < total;
@@ -35,8 +37,9 @@
         queueMicrotask(function () { ignore -= 1; });
     }
 
-    toggle.addEventListener("click", function () {
-        var on = layout.classList.toggle("is-picking");
+    function setPicking(on) {
+        layout.classList.toggle("is-picking", on);
+        document.body.classList.toggle("is-picking", on);
         toggle.classList.toggle("is-on", on);
         toggle.setAttribute("aria-pressed", on ? "true" : "false");
         bar.hidden = !on;
@@ -46,10 +49,32 @@
             all.indeterminate = false;
         }
         paint();
+    }
+
+    toggle.addEventListener("click", function () {
+        setPicking(!layout.classList.contains("is-picking"));
     });
+
+    var closeBtn = bar.querySelector("[data-bulk-close]");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", function () {
+            setPicking(false);
+        });
+    }
 
     layout.addEventListener("change", function (event) {
         if (event.target.matches("[data-pick]")) paint();
+    });
+
+    layout.addEventListener("click", function (event) {
+        if (!layout.classList.contains("is-picking")) return;
+        if (event.target.closest("a, button, input, label, .pick-box")) return;
+        var summary = event.target.closest(".pick-summary");
+        if (!summary) return;
+        var box = summary.parentElement && summary.parentElement.querySelector("[data-pick]");
+        if (!box) return;
+        box.checked = !box.checked;
+        paint();
     });
 
     all.addEventListener("change", function () {
@@ -117,7 +142,7 @@
             post(bar.dataset.bookmark, values).then(function (payload) {
                 values.forEach(function (slug) {
                     var box = layout.querySelector('[data-pick][value="' + CSS.escape(slug) + '"]');
-                    var mark = box && box.closest("article").querySelector(".card-mark__btn");
+                    var mark = box && box.closest("article") && box.closest("article").querySelector(".card-mark__btn");
                     if (!mark) return;
                     mark.classList.add("is-on");
                     mark.setAttribute("aria-pressed", "true");

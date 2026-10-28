@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% load static honaryaar_ui %}
+
+{% block title %}ثبت رایگان فراخوان · هنریار{% endblock %}
+{% block meta_description %}پروژه‌ات را در هنریار معرفی کن، بگو به چه همکاری نیاز داری و با هنرمندانی آشنا شو که می‌توانند بخشی از آن باشند.{% endblock %}
+{% block og_title %}ثبت رایگان فراخوان · هنریار{% endblock %}
+{% block og_description %}عوامل مناسب پروژه‌ات را پیدا کن. پروژه را معرفی کن و فراخوان رایگان بساز.{% endblock %}
+{% block main_class %}post-call-main{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/home-redesign.css' %}?v={{ asset_v }}">
+    <script src="{% static 'js/home-faq.js' %}?v={{ asset_v }}" defer></script>
+{% endblock %}
+
+{% block content %}
+    <section class="post-call-hero" aria-labelledby="post-call-hero-title">
+        <div class="post-call-hero__media" aria-hidden="true">
+            <img
+                class="post-call-hero__bg"
+                src="{% static 'post-call/hero-banner.png' %}"
+                width="1672"
+                height="941"
+                alt=""
+                decoding="async"
+                fetchpriority="high"
+            >
+            <div class="post-call-hero__shade"></div>
+        </div>
+
+        <div class="post-call-hero__panel">
+            <div class="post-call-hero__copy">
+                <h1 id="post-call-hero-title">عوامل مناسب پروژه‌ات را پیدا کن</h1>
+                <p>پروژه‌ات را در هنریار معرفی کن، بگو به چه همکاری نیاز داری و با هنرمندانی آشنا شو که می‌توانند بخشی از آن باشند.</p>
+            </div>
+            <a class="post-call-hero__cta" href="{{ start_href }}">ثبت رایگان فراخوان</a>
+        </div>
+    </section>
+
+    <section class="post-call-intro" aria-labelledby="post-call-intro-title">
+        <header class="post-call-intro__heading">
+            <h2 id="post-call-intro-title">آشنایی‌های تازه، همکاری‌های تازه</h2>
+            <p>هنریار جایی برای پیدا کردن همکار و شکل‌گرفتن پروژه‌های هنری است.</p>
+        </header>
+        <ul class="post-call-intro__stats">
+            {% for stat in post_call_stats %}
+                <li class="post-call-intro__stat">
+                    <strong dir="ltr">+{{ stat.value }}</strong>
+                    <span>{{ stat.label }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="post-call-features" aria-labelledby="post-call-features-title">
+        <div class="post-call-features__card">
+            <h2 id="post-call-features-title">یافتن همکار، فراتر از آشناهای همیشگی</h2>
+            <ul class="post-call-features__list">
+                <li class="post-call-features__item">
+                    <div class="post-call-features__copy">
+                        <h3>دایرهٔ همکارانت را بزرگ‌تر کن</h3>
+                        <p>پروفایل هنرمندان را ببین، با تخصص و سابقه‌شان آشنا شو و کسانی را پیدا کن که پیش‌تر نمی‌شناختی.</p>
+                    </div>
+                    <span class="post-call-features__icon" aria-hidden="true">
+                        <img src="{% static 'post-call/icon-group.svg' %}" width="34" height="34" alt="">
+                    </span>
+                </li>
+                <li class="post-call-features__item">
+                    <div class="post-call-features__copy">
+                        <h3>روشن بگو دنبال چه کسی هستی</h3>
+                        <p>تخصص موردنیاز، زمان و محل همکاری و شرایط مالی را مشخص کن تا هنرمندان با شناخت بهتری درخواست بدهند.</p>
+                    </div>
+                    <span class="post-call-features__icon" aria-hidden="true">
+                        <img src="{% static 'post-call/icon-search-person.svg' %}" width="34" height="34" alt="">
+                    </span>
+                </li>
+                <li class="post-call-features__item">
+                    <div class="post-call-features__copy">
+                        <h3>درخواست‌ها را یک‌جا بررسی کن</h3>
+                        <p>درخواست‌های فراخوانت را کنار هم ببین و برای گفت‌وگو با افراد مناسب‌تر تصمیم بگیر.</p>
+                    </div>
+                    <span class="post-call-features__icon" aria-hidden="true">
+                        <img src="{% static 'post-call/icon-folder-check.svg' %}" width="34" height="34" alt="">
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section
+        class="post-call-steps"
+        aria-labelledby="post-call-steps-title"
+        x-data="{
+            step: 1,
+            badges: ['مرحله اول', 'مرحله دوم', 'مرحله سوم'],
+            labels: ['پروژه‌ات را معرفی کن', 'فراخوان همکاری بساز', 'درخواست‌ها را بررسی کن'],
+            bodies: [
+                'بگو روی چه اثری کار می‌کنی، پروژه در چه مرحله‌ای است و چه زمانی قرار است اجرا شود.',
+                'تخصص موردنیاز، زمان و محل همکاری و شرایط مالی را مشخص کن تا هنرمندان با شناخت بهتری درخواست بدهند.',
+                'درخواست‌های فراخوانت را کنار هم ببین و برای گفت‌وگو با افراد مناسب‌تر تصمیم بگیر.'
+            ]
+        }"
+    >
+        <div class="post-call-steps__desk">
+            <div class="post-call-steps__copy">
+                <h2 id="post-call-steps-title">از معرفی پروژه تا آشنایی با همکار بعدی</h2>
+                <ol class="post-call-steps__list" role="list">
+                    <li class="post-call-steps__item" :class="{ 'is-active': step === 1 }">
+                        <button type="button" class="post-call-steps__trigger" @click="step = 1" :aria-expanded="step === 1">
+                            <span class="post-call-steps__badge">مرحله اول</span>
+                            <span class="post-call-steps__label">پروژه‌ات را معرفی کن</span>
+                        </button>
+                        <p class="post-call-steps__body" x-show="step === 1" x-cloak>
+                            بگو روی چه اثری کار می‌کنی، پروژه در چه مرحله‌ای است و چه زمانی قرار است اجرا شود.
+                        </p>
+                    </li>
+                    <li class="post-call-steps__item" :class="{ 'is-active': step === 2 }">
+                        <button type="button" class="post-call-steps__trigger" @click="step = 2" :aria-expanded="step === 2">
+                            <span class="post-call-steps__badge">مرحله دوم</span>
+                            <span class="post-call-steps__label">فراخوان همکاری بساز</span>
+                        </button>
+                        <p class="post-call-steps__body" x-show="step === 2" x-cloak>
+                            تخصص موردنیاز، زمان و محل همکاری و شرایط مالی را مشخص کن تا هنرمندان با شناخت بهتری درخواست بدهند.
+                        </p>
+                    </li>
+                    <li class="post-call-steps__item" :class="{ 'is-active': step === 3 }">
+                        <button type="button" class="post-call-steps__trigger" @click="step = 3" :aria-expanded="step === 3">
+                            <span class="post-call-steps__badge">مرحله سوم</span>
+                            <span class="post-call-steps__label">درخواست‌ها را بررسی کن</span>
+                        </button>
+                        <p class="post-call-steps__body" x-show="step === 3" x-cloak>
+                            درخواست‌های فراخوانت را کنار هم ببین و برای گفت‌وگو با افراد مناسب‌تر تصمیم بگیر.
+                        </p>
+                    </li>
+                </ol>
+            </div>
+            <figure class="post-call-steps__visual">
+                <img
+                    x-show="step === 1"
+                    src="{% static 'post-call/steps-step-1.png' %}"
+                    width="1536"
+                    height="1024"
+                    alt=""
+                    decoding="async"
+                    fetchpriority="high"
+                >
+                <img
+                    x-show="step === 2"
+                    x-cloak
+                    src="{% static 'post-call/steps-step-2.png' %}"
+                    width="1536"
+                    height="1024"
+                    alt=""
+                    decoding="async"
+                    loading="lazy"
+                >
+                <img
+                    x-show="step === 3"
+                    x-cloak
+                    src="{% static 'post-call/steps-step-3.png' %}"
+                    width="1536"
+                    height="1024"
+                    alt=""
+                    decoding="async"
+                    loading="lazy"
+                >
+            </figure>
+        </div>
+
+        <div class="post-call-steps__phone">
+            <p class="post-call-steps__phone-heading">از معرفی پروژه تا آشنایی با همکار بعدی</p>
+            <div class="post-call-steps__progress" aria-hidden="true">
+                <span :class="{ 'is-on': step >= 1 }"></span>
+                <span :class="{ 'is-on': step >= 2 }"></span>
+                <span :class="{ 'is-on': step >= 3 }"></span>
+            </div>
+            <div class="post-call-steps__phone-content">
+                <span class="post-call-steps__badge" x-text="badges[step - 1]"></span>
+                <p class="post-call-steps__phone-title" x-text="labels[step - 1]"></p>
+                <figure class="post-call-steps__phone-visual">
+                    <img
+                        x-show="step === 1"
+                        src="{% static 'post-call/steps-step-1.png' %}"
+                        width="1536"
+                        height="1024"
+                        alt=""
+                        decoding="async"
+                    >
+                    <img
+                        x-show="step === 2"
+                        x-cloak
+                        src="{% static 'post-call/steps-step-2.png' %}"
+                        width="1536"
+                        height="1024"
+                        alt=""
+                        decoding="async"
+                        loading="lazy"
+                    >
+                    <img
+                        x-show="step === 3"
+                        x-cloak
+                        src="{% static 'post-call/steps-step-3.png' %}"
+                        width="1536"
+                        height="1024"
+                        alt=""
+                        decoding="async"
+                        loading="lazy"
+                    >
+                </figure>
+                <p class="post-call-steps__phone-body" x-text="bodies[step - 1]"></p>
+            </div>
+            <div class="post-call-steps__nav">
+                <button
+                    type="button"
+                    class="post-call-steps__nav-btn"
+                    @click="step = Math.max(1, step - 1)"
+                    :disabled="step === 1"
+                    aria-label="مرحله قبل"
+                >
+                    <img
+                        class="post-call-steps__nav-icon post-call-steps__nav-icon--prev"
+                        src="{% static 'post-call/steps-nav-chevron.svg' %}"
+                        width="20"
+                        height="20"
+                        alt=""
+                    >
+                </button>
+                <button
+                    type="button"
+                    class="post-call-steps__nav-btn"
+                    @click="step = Math.min(3, step + 1)"
+                    :disabled="step === 3"
+                    aria-label="مرحله بعد"
+                >
+                    <img
+                        class="post-call-steps__nav-icon post-call-steps__nav-icon--next"
+                        src="{% static 'post-call/steps-nav-chevron.svg' %}"
+                        width="20"
+                        height="20"
+                        alt=""
+                    >
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section class="post-call-roles" aria-labelledby="post-call-roles-title">
+        <header class="post-call-roles__heading">
+            <h2 id="post-call-roles-title">برای هر بخش از پروژه، یک همراه مناسب</h2>
+            <p>یک اثر با همکاری آدم‌هایی با تخصص‌های متفاوت شکل می‌گیرد.</p>
+        </header>
+        <div class="post-call-roles__scroller">
+            <ul class="post-call-roles__grid">
+                {% for role in role_categories %}
+                    <li>
+                        <a class="post-call-roles__card" href="{{ role.href }}">
+                            <span class="post-call-roles__icon" aria-hidden="true">
+                                <img src="{% static role.icon %}" width="32" height="32" alt="">
+                            </span>
+                            <div class="post-call-roles__copy">
+                                <strong>{{ role.title }}</strong>
+                                <span>({{ role.count }})</span>
+                            </div>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </section>
+
+    {% if discover_artists %}
+        <section
+            class="post-call-artists"
+            aria-labelledby="post-call-artists-title"
+            data-post-call-artists
+        >
+            <header class="post-call-artists__head">
+                <div class="post-call-artists__intro">
+                    <h2 id="post-call-artists-title">با هنرمندان بیشتری آشنا شو</h2>
+                    <p>تازه‌ترین پروفایل‌های هنریار را ببین؛ شاید همکار پروژهٔ بعدی‌ات همین‌جا باشد.</p>
+                </div>
+                <a class="post-call-artists__more" href="{% url 'artists' %}">
+                    <span>مشاهده بیشتر</span>
+                    <span class="post-call-artists__more-icon" aria-hidden="true"></span>
+                </a>
+            </header>
+
+            <div class="post-call-artists__carousel">
+                <div class="post-call-artists__view">
+                    <ul class="post-call-artists__track" role="list">
+                        {% for artist in discover_artists %}
+                            <li class="post-call-artists__slide">
+                                <article class="post-call-artist">
+                                    <a class="post-call-artist__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
+                                        {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
+                                        {% include "components/media/card_photo.html" with src=face %}
+                                    </a>
+                                    <div class="post-call-artist__body">
+                                        <div class="post-call-artist__identity">
+                                            <h3 class="post-call-artist__name">
+                                                <a href="{% url 'artist' artist.slug %}">{{ artist.name }}</a>
+                                            </h3>
+                                            {% include "components/card_mark.html" with kind="profile" slug=artist.slug title=artist.legal_name marks=bookmarked %}
+                                        </div>
+                                        {% if artist.role_titles %}
+                                            <ul class="post-call-artist__roles">
+                                                {% if artist.extra_roles %}
+                                                    <li class="post-call-artist__more">+{{ artist.extra_roles }}</li>
+                                                {% endif %}
+                                                {% for title in artist.role_titles|slice:":2" %}
+                                                    <li>{{ title }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            </li>
+                        {% endfor %}
+                        <li class="post-call-artists__more-slide">
+                            {% url 'artists' as artists_more_href %}
+                            {% include "components/carousel_more.html" with href=artists_more_href %}
+                        </li>
+                    </ul>
+                </div>
+                {% if discover_artists|length > 3 %}
+                    <div class="post-call-artists__nav">
+                        <button type="button" data-dir="-1" aria-label="قبلی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                        <button type="button" data-dir="1" aria-label="بعدی">
+                            {% include "components/icon.html" with name="chevron-right" size="18" %}
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+        <script>
+            document.querySelectorAll("[data-post-call-artists]").forEach(function (root) {
+                if (root.dataset.ready) return;
+                root.dataset.ready = "1";
+                var track = root.querySelector(".post-call-artists__track");
+                var cards = track
+                    ? Array.prototype.filter.call(track.children, function (el) {
+                          return el.classList.contains("post-call-artists__slide");
+                      })
+                    : [];
+                var prev = root.querySelector("[data-dir='-1']");
+                var next = root.querySelector("[data-dir='1']");
+                if (!track || !prev || !next || !cards.length) return;
+                var index = 0;
+                function perView() {
+                    var width = window.innerWidth;
+                    if (width < 640) return 1;
+                    if (width < 1024) return 2;
+                    if (width < 1280) return 3;
+                    return 4;
+                }
+                function step() {
+                    if (!cards.length) return 0;
+                    var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+                    return cards[0].getBoundingClientRect().width + gap;
+                }
+                function isNativeScroll() {
+                    return window.innerWidth < 768;
+                }
+                function go(value) {
+                    if (isNativeScroll()) {
+                        track.style.transform = "";
+                        return;
+                    }
+                    var max = Math.max(0, cards.length - perView());
+                    index = Math.max(0, Math.min(max, value));
+                    track.style.transform = "translateX(" + (index * step()) + "px)";
+                    prev.disabled = index === 0;
+                    next.disabled = index === max;
+                }
+                root.querySelectorAll("[data-dir]").forEach(function (button) {
+                    button.addEventListener("click", function () {
+                        go(index + Number(button.getAttribute("data-dir")));
+                    });
+                });
+                window.addEventListener("resize", function () { go(index); });
+                go(0);
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block before_footer %}
+    <div class="post-call-home-end">
+        {% if faqs %}
+            <section class="new-home-faq" aria-labelledby="post-call-faq-title" data-home-faq>
+                <h2 id="post-call-faq-title">سوالات متداول</h2>
+                <div class="new-home-faq__content">
+                    <div class="new-home-faq__art" aria-hidden="true">
+                        <img src="{% static 'home/faq-illustration.png' %}" width="1312" height="1199" alt="">
+                    </div>
+                    <div class="new-home-faq__list">
+                        {% for item in faqs %}
+                            <details class="new-home-faq__item"{% if forloop.first %} open{% endif %}>
+                                <summary>
+                                    <span>{{ item.question }}</span>
+                                    <span class="new-home-faq__indicator" aria-hidden="true">
+                                        <img class="new-home-faq__arrow new-home-faq__arrow--up" src="{% static 'home/faq-arrow-up.svg' %}" width="24" height="24" alt="">
+                                        <img class="new-home-faq__arrow new-home-faq__arrow--down" src="{% static 'home/faq-arrow-down.svg' %}" width="24" height="24" alt="">
+                                    </span>
+                                </summary>
+                                <div class="new-home-faq__panel">
+                                    <p>{{ item.answer }}</p>
+                                </div>
+                            </details>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="new-home-quote" aria-labelledby="post-call-quote-text">
+            <figure class="new-home-quote__card">
+                <span class="new-home-quote__illustration" aria-hidden="true">
+                    <img src="{% static 'home/quote-illustration.png' %}" width="1120" height="1404" alt="">
+                </span>
+                <figcaption class="new-home-quote__copy">
+                    <blockquote id="post-call-quote-text">“هنرمند کسی‌ست که هیچ‌گاه از هنرجو بودن دست نمی‌کشد”</blockquote>
+                    <p dir="ltr">Daniel Burleigh Parkhurst · The Painter in Oil, ۱۸۹۸</p>
+                </figcaption>
+            </figure>
+        </section>
+    </div>
+{% endblock %}

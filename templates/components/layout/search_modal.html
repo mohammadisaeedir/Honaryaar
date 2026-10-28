@@ -1,5 +1,11 @@
 <div class="search-modal" x-show="searchOpen" x-cloak x-effect="if (searchOpen) { $nextTick(() => { if (window.syncSearchModal) window.syncSearchModal(); $refs.searchQ && $refs.searchQ.focus(); }) }">
     <div class="search-modal__backdrop" @click="searchOpen = false"></div>
+    <div class="search-modal__top">
+        <h2 id="search-modal-title">جستجو</h2>
+        <button class="search-modal__close" type="button" @click="searchOpen = false" aria-label="بستن">
+            {% include "components/icon.html" with name="x" size="20" %}
+        </button>
+    </div>
     {% with page=request.resolver_match.url_name %}
     <form class="search-modal__form" method="get" action="{% if page == 'artists' or page == 'artist' %}{% url 'artists' %}{% elif page == 'projects' or page == 'project' %}{% url 'projects' %}{% elif page == 'opportunities' or page == 'opportunity' %}{% url 'opportunities' %}{% else %}{% url 'search' %}{% endif %}" role="search" autocomplete="off" data-remember-search data-search-scope="{% if page == 'artists' or page == 'artist' %}artists{% elif page == 'projects' or page == 'project' %}projects{% elif page == 'opportunities' or page == 'opportunity' %}opportunities{% else %}search{% endif %}" @submit="searchOpen = false">
         <label class="sr-only" for="modal-q">جستجو</label>
@@ -11,13 +17,6 @@
     </form>
     {% endwith %}
     <div class="search-modal__panel" role="dialog" aria-modal="true" aria-labelledby="search-modal-title" @click="if ($event.target.closest('a[href]')) searchOpen = false">
-        <div class="search-modal__top">
-            <h2 id="search-modal-title">جستجو</h2>
-            <button class="search-modal__close" type="button" @click="searchOpen = false" aria-label="بستن">
-                {% include "components/icon.html" with name="x" size="20" %}
-            </button>
-        </div>
-
         {% include "components/filters/recent.html" with scope="all" %}
 
         <div class="search-modal__arts" aria-label="جستجوهای محبوب">
@@ -29,7 +28,6 @@
                 {% endif %}
                     {% include "components/art_icon.html" with slug=art.slug %}
                     <span>{{ art.title }}</span>
-                    {% if art.soon %}<span class="search-modal__soon">به زودی</span>{% endif %}
                 {% if art.soon %}</span>{% else %}</a>{% endif %}
             {% endfor %}
         </div>
@@ -37,7 +35,7 @@
         <section class="search-modal__section" aria-label="فرصت‌های محبوب">
             <h3>{% include "components/icon.html" with name="megaphone" size="18" %}فرصت‌های محبوب</h3>
             <div class="search-modal__chips">
-                {% for role in search_roles|slice:":5" %}
+                {% for role in search_roles|slice:":4" %}
                     <a href="{% url 'opportunities' %}?role={{ role.slug }}">{{ role.title }}</a>
                 {% endfor %}
             </div>
@@ -46,7 +44,7 @@
         <section class="search-modal__section" aria-label="هنرمندان فعال">
             <h3>{% include "components/icon.html" with name="users" size="18" %}هنرمندان فعال</h3>
             <div class="search-modal__chips">
-                {% for role in search_roles|slice:":5" %}
+                {% for role in search_roles|slice:":4" %}
                     <a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a>
                 {% endfor %}
             </div>

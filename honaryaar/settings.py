@@ -415,18 +415,32 @@ def production_database(raw):
 
 
 def _database_from_env():
-    # Vercel sets VERCEL=1 and injects the Neon connection. Local ignores that.
-    if os.environ.get("VERCEL") == "1":
+    # Prefer an explicit remote URL (Vercel Neon, VPS, etc.). Local Postgres
+    # is used only when no remote connection is configured.
+    if (
+        os.environ.get("DATABASE_URL")
+        or os.environ.get("VERCEL") == "1"
+        or os.environ.get("PGHOST")
+    ):
         return _neon_database()
     return _local_database()
 
 
-# The local process always opens the database on this machine. A superuser can
-# point reads at the live database from the admin account menu. That alias is
-# read-only and is absent during tests.
+# Default opens the configured database. Locally a superuser can also point
+# reads at the live database from the admin account menu. That alias is
+# read-only and is absent during tests / on the live host itself.
 DATABASES = {"default": _database_from_env()}
 _production_url = os.environ.get("PROD_DATABASE_URL", "").strip()
-if _production_url and os.environ.get("VERCEL") != "1" and "test" not in sys.argv:
+_using_remote_default = bool(
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("VERCEL") == "1"
+    or os.environ.get("PGHOST")
+)
+if (
+    _production_url
+    and not _using_remote_default
+    and "test" not in sys.argv
+):
     DATABASES["production"] = production_database(_production_url)
 
 DATABASE_ROUTERS = ["honaryaar.data_source.ProductionPreviewRouter"]

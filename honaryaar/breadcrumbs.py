@@ -49,6 +49,7 @@ def crumbs(context):
         "search": "جستجو",
         "login": "ورود",
         "about": "درباره ما",
+        "post-call": "ثبت رایگان فراخوان",
         "magazine": "مجله هنری",
         "terms": "قوانین و مقررات",
         "contact": "تماس با ما",

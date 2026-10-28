@@ -2,6 +2,15 @@
 {% media_src project.image_thumb_key project.image_public project.image_public_acl project.image_key "photo" as card_image %}
 {% url 'project' project.slug as project_url %}
 <article class="project-card flex h-full flex-col rounded-card border border-border bg-background p-4">
+    <label class="pick-box"><input type="checkbox" data-pick value="{{ project.slug }}" aria-label="انتخاب {{ project.title }}"></label>
+    <div class="pick-summary">
+        <span class="pick-summary__title">{{ project.title }}</span>
+        {% if project.start_date %}
+            <span class="pick-summary__meta">{{ project.start_date|jalali }}</span>
+        {% elif project.end_date %}
+            <span class="pick-summary__meta">{{ project.end_date|jalali }}</span>
+        {% endif %}
+    </div>
     <a class="project-card__hit" href="{{ project_url }}" aria-label="{{ project.title }}"></a>
     <div class="project-card__media">
         {% include "components/media/card_photo.html" with src=card_image alt=project.title %}

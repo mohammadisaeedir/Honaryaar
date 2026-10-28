@@ -24,6 +24,7 @@
         <form class="page-search" method="get" action="{% url 'artists' %}" role="search" autocomplete="off" data-remember-search data-search-scope="artists" @focusin="suggest = true" @focusout="if (!$event.relatedTarget || !$el.contains($event.relatedTarget)) suggest = false">
             {% for value in filters.city %}<input type="hidden" name="city" value="{{ value }}">{% endfor %}
             {% for value in filters.role %}<input type="hidden" name="role" value="{{ value }}">{% endfor %}
+            {% for value in filters.group %}<input type="hidden" name="group" value="{{ value }}">{% endfor %}
             {% for value in filters.art %}<input type="hidden" name="art" value="{{ value }}">{% endfor %}
             {% for value in filters.gender %}<input type="hidden" name="gender" value="{{ value }}">{% endfor %}
             {% for value in filters.bookmark %}<input type="hidden" name="bookmark" value="{{ value }}">{% endfor %}
@@ -38,11 +39,11 @@
             {% include "components/filters/suggest.html" with scope="artists" %}
         </form>
         <div class="tool-row">
-            {% include "components/filters/bulk.html" with part="button" %}
-            {% include "components/filters/sort.html" %}
             {% include "components/filters/panel.html" with action=request.path %}
+            {% include "components/filters/sort.html" %}
             {% include "components/filters/quick.html" %}
         </div>
+        {% include "components/filters/bulk.html" with part="button" %}
     </div>
     {% include "components/filters/bulk.html" with part="bar" kind="artists" %}
     {% include "components/skeleton/list.html" with kind="artists" %}

@@ -66,6 +66,7 @@ class CounterCacheTests(TestCase):
             catalog.listing_stats()
             catalog.hire_stats()
             catalog.talent_stats()
+            catalog.post_call_stats()
             self.assertEqual({ttl for _key, ttl in fake.ttls}, {catalog._STATS_TTL})
             self.assertEqual(catalog._STATS_TTL, 10 * 60)
             self.assertEqual(set(fake.store), set(catalog.STAT_KEYS.values()))

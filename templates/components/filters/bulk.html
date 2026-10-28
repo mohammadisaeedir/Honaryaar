@@ -5,18 +5,35 @@
         <span>انتخاب</span>
     </button>
 {% else %}
-    <div class="bulk-bar" data-bulk-bar hidden data-auth="{% if request.user.is_authenticated %}1{% else %}0{% endif %}" data-login="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" {% if kind == "artists" %}data-bookmark="{% url 'bookmark-artists' %}" data-invite="1"{% else %}data-bookmark="{% url 'bookmark-opportunities' %}" data-apply="{% url 'apply-many' %}"{% endif %}>
+    <div
+        class="bulk-bar"
+        data-bulk-bar
+        hidden
+        data-auth="{% if request.user.is_authenticated %}1{% else %}0{% endif %}"
+        data-login="{% url 'login' %}?next={{ request.get_full_path|urlencode }}"
+        {% if kind == "artists" %}
+            data-bookmark="{% url 'bookmark-artists' %}"
+            data-invite="1"
+        {% elif kind == "projects" %}
+            data-bookmark="{% url 'bookmark-projects' %}"
+        {% else %}
+            data-bookmark="{% url 'bookmark-opportunities' %}"
+            data-apply="{% url 'apply-many' %}"
+        {% endif %}
+    >
         <label class="bulk-all">
             <input type="checkbox" data-pick-all>
-            <span>همه</span>
+            <span data-pick-count>۰ انتخاب</span>
         </label>
-        <span data-pick-count>۰ انتخاب</span>
-        {% if kind == "artists" %}
-            <button class="bulk-bar__btn" type="button" data-bulk-go data-bulk-invite disabled>دعوت</button>
-        {% else %}
-            <button class="bulk-bar__btn" type="button" data-bulk-go data-bulk-apply disabled>درخواست</button>
-        {% endif %}
-        <button class="bulk-bar__btn bulk-bar__btn--quiet" type="button" data-bulk-go data-bulk-bookmark disabled>نشان</button>
+        <div class="bulk-bar__actions">
+            {% if kind == "artists" %}
+                <button class="bulk-bar__btn" type="button" data-bulk-go data-bulk-invite disabled>دعوت</button>
+            {% elif kind == "opportunities" %}
+                <button class="bulk-bar__btn" type="button" data-bulk-go data-bulk-apply disabled>درخواست</button>
+            {% endif %}
+            <button class="bulk-bar__btn bulk-bar__btn--quiet" type="button" data-bulk-go data-bulk-bookmark disabled>نشان</button>
+            <button class="bulk-bar__btn bulk-bar__btn--quiet bulk-bar__close" type="button" data-bulk-close aria-label="بستن انتخاب">لغو</button>
+        </div>
     </div>
     <script src="{% static 'js/bulk.js' %}?v={{ asset_v }}" defer></script>
 {% endif %}

@@ -30,9 +30,9 @@ def home(request):
         "pages/home_redesign.html",
         {
             "hero_fields": catalog.hero_fields(),
-            "featured_opportunities": catalog.featured_opportunities()[:3],
-            "testimonials": catalog.featured_testimonials()[:3],
-            "posts": catalog.HOME_POSTS[:4],
+            "featured_opportunities": catalog.featured_opportunities()[:12],
+            "testimonials": catalog.featured_testimonials()[:12],
+            "posts": catalog.HOME_POSTS[:8],
             "faqs": catalog.HOME_FAQS,
             "bookmarked_opportunities": _bookmarked_slugs(request.user, "opportunity"),
         },
@@ -100,6 +100,82 @@ def landing(request):
 
 def about(request):
     return render(request, "about.html")
+
+
+def post_call(request):
+    """Guest landing for publishing a call. Logged-in users go straight to the form."""
+    if request.user.is_authenticated:
+        return redirect("me-project-new")
+
+    from django.db.models import Count
+    from urllib.parse import urlencode
+
+    from honaryaar.models import ProfileRole
+
+    # Same universe as /artists/?group=… — distinct artists with a role in that group.
+    role_group_counts = {
+        row["role__group"]: row["n"]
+        for row in (
+            ProfileRole.objects.exclude(role__group="")
+            .values("role__group")
+            .annotate(n=Count("profile_id", distinct=True))
+        )
+    }
+    # RTL visual order: first item sits on the right.
+    role_categories = [
+        ("بازیگری و اجرا", "بازیگری و اجرا", "post-call/role-acting.svg"),
+        ("کارگردانی", "کارگردانی", "post-call/role-directing.svg"),
+        ("موسیقی", "موسیقی", "post-call/role-music.svg"),
+        ("طراحی لباس", "طراحی لباس", "post-call/role-tailor.svg"),
+        ("تهیه و تولید", "تهیه و تولید", "post-call/role-production.svg"),
+        ("طراحی صحنه و دکور", "طراحی صحنه", "post-call/role-set-design.svg"),
+        ("برگزار کننده جشنواره و رویداد", "برگزاری رویداد", "post-call/role-celebrate.svg"),
+    ]
+    artists_url = reverse("artists")
+    start_href = f"{reverse('login')}?next={reverse('me-project-new')}"
+
+    return render(
+        request,
+        "pages/post_call.html",
+        {
+            "start_href": start_href,
+            "post_call_stats": catalog.post_call_stats(),
+            "role_categories": [
+                {
+                    "title": title,
+                    "count": catalog.persian_number(role_group_counts.get(group, 0)),
+                    "icon": icon,
+                    "href": f"{artists_url}?{urlencode({'group': group})}",
+                }
+                for group, title, icon in role_categories
+            ],
+            "discover_artists": _post_call_artists(),
+            "bookmarked": _bookmarked_slugs(request.user),
+            "faqs": catalog.HOME_FAQS,
+            "footer_promo_simple": True,
+            "footer_promo_title": "پروژه‌ات را معرفی کن؛ آشنایی بعدی از همین‌جا شروع می‌شود",
+            "footer_promo_text": "بگو روی چه اثری کار می‌کنی و جای چه تخصص‌هایی در گروهت خالی است.",
+            "footer_promo_cta": "ثبت رایگان فراخوان",
+            "footer_promo_href": start_href,
+        },
+    )
+
+
+def _post_call_artists(limit=12):
+    """Newest artist cards for the landing carousel; prefer profiles with a photo."""
+    items, _ = catalog.page_artists(offset=0, limit=max(limit * 2, 12), sort="new")
+    with_photo = []
+    without_photo = []
+    for artist in items:
+        if artist.get("list_image_key") or artist.get("list_thumb_key"):
+            with_photo.append(artist)
+        else:
+            without_photo.append(artist)
+    picked = (with_photo + without_photo)[:limit]
+    for artist in picked:
+        extra = max(0, len(artist.get("role_titles") or []) - 2)
+        artist["extra_roles"] = catalog.persian_number(extra) if extra else ""
+    return picked
 
 
 def _bookmark_name(target, kind):
@@ -288,6 +364,7 @@ def artist_list(request):
         "q": request.GET.get("q", "").strip(),
         "city": _picked(request, "city"),
         "role": _picked(request, "role"),
+        "group": _picked(request, "group"),
         "art": _picked(request, "art"),
         "gender": _picked(request, "gender"),
         "bookmark": _picked(request, "bookmark"),
@@ -296,6 +373,18 @@ def artist_list(request):
     }
     sort, sort_label, sort_options = catalog.sort_state(request, "artists")
     filters["sort"] = sort
+    role_selected = list(filters["role"])
+    if filters["group"]:
+        from honaryaar.models import Role
+
+        role_selected = list(
+            dict.fromkeys(
+                [
+                    *role_selected,
+                    *Role.objects.filter(group__in=filters["group"]).values_list("slug", flat=True),
+                ]
+            )
+        )
     partial = request.headers.get("X-Requested-With") == "fetch" and "offset" in request.GET
     if partial:
         offset = min(max(_safe_int(request.GET.get("offset"), 0), 0), 10_000)
@@ -339,7 +428,7 @@ def artist_list(request):
             "role",
             "نقش",
             [(role["slug"], role["title"], role.get("group", "")) for role in catalog.roles_on_artists()],
-            filters["role"],
+            role_selected,
         ),
         ]
     )
@@ -436,6 +525,14 @@ def bookmark_opportunities(request):
     from honaryaar.models import Opportunity
 
     return _bookmark_many(request, Opportunity)
+
+
+@login_required
+@require_POST
+def bookmark_projects(request):
+    from honaryaar.models import Project
+
+    return _bookmark_many(request, Project)
 
 
 @login_required

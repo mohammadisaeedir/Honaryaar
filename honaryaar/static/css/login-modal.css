@@ -304,7 +304,25 @@ html[data-theme="dark"] .login-modal__icon-btn img {
         display: block;
         width: 98px;
         height: 40px;
+    }
+
+    .login-modal__logo img {
+        display: block;
+        width: 98px;
+        height: 40px;
         object-fit: contain;
+    }
+
+    .login-modal__logo .site-logo-dark {
+        display: none;
+    }
+
+    html[data-theme="dark"] .login-modal__logo .site-logo-light {
+        display: none;
+    }
+
+    html[data-theme="dark"] .login-modal__logo .site-logo-dark {
+        display: block;
     }
 
     .login-modal__panel {
