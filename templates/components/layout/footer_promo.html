@@ -17,7 +17,8 @@
                 </ul>
             {% endif %}
             <a class="footer-promo__action" href="{{ footer_promo_href|default:default_promo_href }}">
-                {{ footer_promo_cta|default:"نقش بعدی‌ات را پیدا کن" }}
+                <span>{{ footer_promo_cta|default:"نقش بعدی‌ات را پیدا کن" }}</span>
+                <img src="{% static 'footer-promo/plus.svg' %}" width="24" height="24" alt="" aria-hidden="true">
             </a>
         </div>
     </div>

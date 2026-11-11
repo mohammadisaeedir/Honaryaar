@@ -47,7 +47,8 @@ ln -sfn /etc/nginx/sites-available/honaryaar /etc/nginx/sites-enabled/honaryaar
 rm -f /etc/nginx/sites-enabled/default
 
 systemctl daemon-reload
-systemctl enable --now honaryaar
+systemctl enable honaryaar
+systemctl restart honaryaar
 systemctl enable --now nginx
 
 nginx -t

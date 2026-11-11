@@ -5,14 +5,14 @@
             <section class="site-footer__section site-footer__section--calls">
                 <h2 class="site-footer__title">فراخوان‌های هنری</h2>
                 <div class="site-footer__link-group">
-                    <h3 class="site-footer__label">شهرها</h3>
+                    <h3 class="site-footer__subtitle">شهرها</h3>
                     <ul class="site-footer__list">
                         <li><a href="{% url 'opportunities' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
                         <li><a href="{% url 'opportunities' %}">سایر شهرها</a></li>
                     </ul>
                 </div>
                 <div class="site-footer__link-group">
-                    <h3 class="site-footer__title">فرصت‌های هنری</h3>
+                    <h3 class="site-footer__subtitle">انواع فرصت‌های هنری</h3>
                     <ul class="site-footer__list">
                         {% for item in footer_productions %}
                             <li><a href="{% url 'opportunities' %}?production={{ item|urlencode }}">{{ item }}</a></li>
@@ -27,16 +27,19 @@
             <section class="site-footer__section site-footer__section--artists">
                 <h2 class="site-footer__title">هنرمندان فعال</h2>
                 <div class="site-footer__link-group">
-                    <h3 class="site-footer__label">شهرها</h3>
+                    <h3 class="site-footer__subtitle">شهرها</h3>
                     <ul class="site-footer__list">
                         <li><a href="{% url 'artists' %}?city={{ 'تهران'|urlencode }}">تهران</a></li>
                         <li><a href="{% url 'artists' %}">سایر شهرها</a></li>
                     </ul>
                 </div>
                 <div class="site-footer__link-group">
-                    <h3 class="site-footer__title">حوزه‌های هنری</h3>
+                    <h3 class="site-footer__subtitle">انواع فرصت‌های هنری</h3>
                     <ul class="site-footer__list">
-                        {% for role in footer_roles|slice:":5" %}
+                        {% for item in footer_productions %}
+                            <li><a href="{% url 'artists' %}?art={{ item|urlencode }}">{{ item }}</a></li>
+                        {% endfor %}
+                        {% for role in footer_roles|slice:":7" %}
                             <li><a href="{% url 'artists' %}?role={{ role.slug }}">{{ role.title }}</a></li>
                         {% endfor %}
                     </ul>
@@ -53,18 +56,10 @@
                     </ul>
                 </section>
                 <section class="site-footer__section">
-                    <h2 class="site-footer__title">راهنمای هنریار</h2>
+                    <h2 class="site-footer__title">صاحبان پروژه</h2>
                     <ul class="site-footer__list">
-                        <li><a href="{% url 'magazine' %}">مجله هنری</a></li>
-                        <li><a href="{% url 'terms' %}">قوانین و مقررات</a></li>
-                        <li><a href="{% url 'sitemap' %}">نقشه سایت</a></li>
-                    </ul>
-                </section>
-                <section class="site-footer__section">
-                    <h2 class="site-footer__title">ارتباط با ما</h2>
-                    <ul class="site-footer__list">
-                        <li><a href="{% url 'about' %}">درباره ما</a></li>
-                        <li><a href="{% url 'contact' %}">تماس با ما</a></li>
+                        <li><a href="{% url 'post-call' %}">ثبت رایگان فراخوان</a></li>
+                        <li><a href="{% url 'home' %}#new-home-faq-title">سوالات متداول</a></li>
                     </ul>
                 </section>
             </div>
@@ -95,6 +90,13 @@
                     </div>
                 </details>
                 <details class="site-footer__accordion">
+                    <summary><span>صاحبان پروژه</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
+                    <div class="site-footer__accordion-panel">
+                        <a href="{% url 'post-call' %}">ثبت رایگان فراخوان</a>
+                        <a href="{% url 'home' %}#new-home-faq-title">سوالات متداول</a>
+                    </div>
+                </details>
+                <details class="site-footer__accordion">
                     <summary><span>راهنمای هنریار</span><img src="{% static 'footer/chevron-down.svg' %}" width="24" height="24" alt=""></summary>
                     <div class="site-footer__accordion-panel">
                         <a href="{% url 'magazine' %}">مجله هنری</a>
@@ -115,6 +117,9 @@
         </div>
 
         <div class="site-footer__base">
+            <a class="site-footer__base-logo" href="{% url 'home' %}" aria-label="هنریار">
+                <img src="{% static 'brand/logo-fa.svg' %}" width="98" height="40" alt="هنریار">
+            </a>
             <p>تمامی حقوق برای وب‌سایت هنریار محفوظ است. ۱۴۰۵ ® | ساخته شده با عشق 💓</p>
         </div>
     </div>

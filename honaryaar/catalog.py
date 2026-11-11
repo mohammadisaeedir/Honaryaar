@@ -342,9 +342,9 @@ HOME_FAQS = [
 ]
 
 SOCIALS = [
-    {"label": "تلگرام", "href": "https://t.me/honaryaar", "icon": "telegram"},
+    {"label": "لینکدین", "href": "https://www.linkedin.com/company/honaryaar", "icon": "linkedin"},
     {"label": "اینستاگرام", "href": "https://instagram.com/honaryaar", "icon": "instagram"},
-    {"label": "بله", "href": "https://ble.ir/honaryaar", "icon": "bale"},
+    {"label": "تلگرام", "href": "https://t.me/honaryaar", "icon": "telegram"},
 ]
 
 ARTISTS = [
