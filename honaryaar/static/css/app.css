@@ -5004,6 +5004,10 @@ html[data-theme="dark"] .call-card__meta-divider {
     background: #faf8fc;
 }
 
+.post-call-artist__media {
+    position: relative;
+}
+
 .post-call-artist__photo {
     display: block;
     aspect-ratio: 294 / 224;
@@ -5896,7 +5900,10 @@ html[data-theme="dark"] .post-call-features__copy p {
     gap: 12px;
     direction: ltr;
 }
-.site-footer__utility { gap: 12px; }
+.site-footer__utility {
+    gap: 12px;
+    direction: ltr;
+}
 .site-footer__brand {
     justify-content: space-between;
     gap: 24px;
@@ -6466,16 +6473,21 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     display: flex;
     min-width: 0;
     flex-direction: column;
+    gap: 12px;
     overflow: hidden;
     border: 1px solid var(--color-line);
     border-radius: 16px;
     background: var(--color-card);
 }
 
+.artist-tile__media {
+    position: relative;
+}
+
 .artist-tile__photo {
     position: relative;
     display: block;
-    aspect-ratio: 1;
+    aspect-ratio: 294 / 224;
     background: var(--color-surface);
 }
 
@@ -6624,31 +6636,46 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: 24px;
+    padding: 0 20px 20px;
+}
+
+.artist-tile__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    direction: ltr;
 }
 
 .artist-tile__name {
-    font-size: 15px;
+    min-width: 0;
+    margin: 0;
+    font-size: 18px;
     font-weight: 600;
-    line-height: 22px;
+    line-height: 30px;
+    text-align: right;
 }
 
 .artist-tile__name a {
-    display: flex;
-    flex-direction: column;
+    display: block;
+    overflow: hidden;
     color: inherit;
     text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .artist-tile__family {
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .artist-tile__roles {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    justify-content: flex-end;
+    gap: 8px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -6657,21 +6684,24 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 .artist-tile__roles li {
     display: inline-flex;
     align-items: center;
-    min-height: 26px;
-    padding: 0 8px;
-    border: 1px solid var(--color-line);
-    border-radius: 999px;
-    background: var(--color-card);
-    color: var(--color-foreground);
+    justify-content: center;
+    gap: 4px;
+    min-height: 24px;
+    padding: 1px 10px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--color-muted);
+    color: #65596b;
     font-size: 12px;
-    line-height: 18px;
+    font-weight: 600;
+    line-height: 22px;
 }
 
 .artist-tile__more {
-    border-color: #f3b6d4;
-    background: #fde7f1;
-    color: #c13281;
-    font-weight: 700;
+    border: 0;
+    background: var(--color-muted);
+    color: #65596b;
+    font-weight: 600;
 }
 
 .artist-tile__foot {
@@ -6763,6 +6793,29 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
     color: #c13281;
 }
 
+.card-views--photo {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    min-height: 24px;
+    padding: 1px 10px;
+    border-radius: 16px;
+    background: #302735;
+    color: #e7e1eb;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 22px;
+    pointer-events: none;
+}
+
+.card-views--photo img {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    max-width: none;
+}
+
 .page-views {
     margin: 16px 0 0;
     color: var(--color-muted-foreground);
@@ -6804,8 +6857,43 @@ main.is-skel-cover > :not(.skel-pane) { display: none; }
 .artist-tile__marks {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
+}
+
+.artist-tile__marks .card-mark {
+    margin: 0;
+}
+
+.artist-tile__marks .card-mark__btn,
+.artist-tile__marks .card-mark .card-mark__btn,
+.artist-tile__marks a.card-mark.card-mark__btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border: 1px solid var(--color-line, #e7e1eb);
+    border-radius: var(--radius-input, 10px);
+    background: transparent;
+    color: #65596b;
+}
+
+html[data-theme="dark"] .card-views--photo {
+    background: #22161e;
+    color: #e7e1eb;
+}
+
+html[data-theme="dark"] .artist-tile__roles li,
+html[data-theme="dark"] .artist-tile__more {
+    background: var(--color-muted);
+    color: var(--color-muted-foreground);
+}
+
+html[data-theme="dark"] .artist-tile__marks .card-mark__btn,
+html[data-theme="dark"] .artist-tile__marks .card-mark .card-mark__btn,
+html[data-theme="dark"] .artist-tile__marks a.card-mark.card-mark__btn {
+    border-color: var(--color-border);
+    color: var(--color-muted-foreground);
 }
 
 .invite-table {

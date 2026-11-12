@@ -291,10 +291,16 @@
                         {% for artist in discover_artists %}
                             <li class="post-call-artists__slide">
                                 <article class="post-call-artist">
-                                    <a class="post-call-artist__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
-                                        {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
-                                        {% include "components/media/card_photo.html" with src=face %}
-                                    </a>
+                                    <div class="post-call-artist__media">
+                                        <a class="post-call-artist__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
+                                            {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
+                                            {% include "components/media/card_photo.html" with src=face %}
+                                        </a>
+                                        <p class="card-views card-views--photo">
+                                            <span dir="ltr">+{{ artist.views|default:0 }}</span>
+                                            <img src="{% static 'artist/view-eye.svg' %}" width="12" height="12" alt="">
+                                        </p>
+                                    </div>
                                     <div class="post-call-artist__body">
                                         <div class="post-call-artist__identity">
                                             <h3 class="post-call-artist__name">

@@ -1,4 +1,4 @@
-{% load honaryaar_ui %}
+{% load honaryaar_ui static %}
 <article class="artist-tile">
     <label class="pick-box"><input type="checkbox" data-pick value="{{ artist.slug }}" aria-label="انتخاب {{ artist.legal_name }}"></label>
     <div class="pick-summary">
@@ -11,48 +11,49 @@
         </span>
         {% if artist.role_titles %}<span class="pick-summary__meta">{{ artist.role_titles.0 }}</span>{% endif %}
     </div>
-    <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
-        {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
-        {% include "components/media/card_photo.html" with src=face %}
-    </a>
+    <div class="artist-tile__media">
+        <a class="artist-tile__photo" href="{% url 'artist' artist.slug %}" tabindex="-1" aria-hidden="true">
+            {% media_src artist.list_thumb_key 1 artist.list_public_acl artist.list_image_key "photo" as face %}
+            {% include "components/media/card_photo.html" with src=face %}
+        </a>
+        <p class="card-views card-views--photo">
+            <span dir="ltr">+{{ artist.views|default:0 }}</span>
+            <img src="{% static 'artist/view-eye.svg' %}" width="12" height="12" alt="">
+        </p>
+    </div>
     <div class="artist-tile__body">
-        <h3 class="artist-tile__name">
-            <a href="{% url 'artist' artist.slug %}">
-                {% if artist.first_name or artist.last_name %}
-                    {% if artist.first_name %}<span>{{ artist.first_name }}</span>{% endif %}
-                    {% if artist.last_name %}<span class="artist-tile__family">{{ artist.last_name }}</span>{% endif %}
-                {% else %}
-                    <span>{{ artist.name }}</span>
-                {% endif %}
-            </a>
-        </h3>
-        {% if artist.role_titles %}
-            <ul class="artist-tile__roles">
-                <li>{{ artist.role_titles.0 }}</li>
-                {% if artist.role_titles|length > 1 %}
-                    <li class="artist-tile__more">+{{ artist.role_titles|length|add:"-1" }}</li>
-                {% endif %}
-            </ul>
-        {% endif %}
-        <div class="artist-tile__foot">
-            <div class="artist-tile__meta">
-                {% if artist.city %}
-                    <p class="artist-tile__city">{% include "components/icon.html" with name="map-pin" size="16" %}<span>{{ artist.city }}</span></p>
-                {% endif %}
-                {% include "components/view_count.html" with views=artist.views %}
-            </div>
+        <div class="artist-tile__head">
             <div class="artist-tile__marks">
                 {% if request.user.is_authenticated %}
                     <button class="card-mark__btn" type="button" data-invite-open data-invite-slug="{{ artist.slug }}" data-invite-name="{{ artist.legal_name }}" data-invite-roles="{{ artist.role_titles|join:'||' }}" aria-label="دعوت">
-                        {% include "components/icon.html" with name="mail" size="16" %}
+                        {% include "components/icon.html" with name="mail" size="18" %}
                     </button>
                 {% else %}
                     <a class="card-mark__btn" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="دعوت">
-                        {% include "components/icon.html" with name="mail" size="16" %}
+                        {% include "components/icon.html" with name="mail" size="18" %}
                     </a>
                 {% endif %}
                 {% include "components/card_mark.html" with kind="profile" slug=artist.slug title=artist.legal_name marks=bookmarked %}
             </div>
+            <h3 class="artist-tile__name">
+                <a href="{% url 'artist' artist.slug %}">
+                    {% if artist.first_name or artist.last_name %}
+                        {% if artist.first_name %}{{ artist.first_name }} {% endif %}{% if artist.last_name %}<span class="artist-tile__family">{{ artist.last_name }}</span>{% endif %}
+                    {% else %}
+                        {{ artist.name }}
+                    {% endif %}
+                </a>
+            </h3>
         </div>
+        {% if artist.role_titles %}
+            <ul class="artist-tile__roles">
+                {% for title in artist.role_titles|slice:":2" %}
+                    <li>{{ title }}</li>
+                {% endfor %}
+                {% if artist.role_titles|length > 2 %}
+                    <li class="artist-tile__more">+{{ artist.role_titles|length|add:"-2" }}</li>
+                {% endif %}
+            </ul>
+        {% endif %}
     </div>
 </article>
